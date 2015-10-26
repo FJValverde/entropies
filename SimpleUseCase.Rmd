@@ -1,0 +1,38 @@
+---
+title: "Simple Confidence Regions on ET with ggtern"
+author: "Francisco J. Valverde-Albacete"
+date: "Aug, 6th,  2015"
+output: html_document
+---
+
+# Environment construction
+```{r}
+library(ggtern)
+library(entropy)  # To work out the appropriate coordinates.
+library(caret)    # To build the classifiers.
+library(mlbench)  # Many databases for ML tasks
+```
+
+# Datasets available
+
+The inventory of databases to be explored:
+
+```{r}
+# the inventory of databases you can access
+#library(datasets)
+name <- c("Ionosphere", "iris", "Glass") # 
+classVar <- c(35, 5, 10)   # ordinal of the class attribute
+className <- c("Class","Species", "Type")  # Name of class attribute
+K <- c(2, 3, 7)  # No. of classes
+datasets <- data.frame(name,classVar,className,K)
+
+# To select a dataset by name
+evalDataset <- function(dsName){
+    dsName <- as.character(dsName)
+    switch(dsName,
+        "iris" = {data(iris); iris},
+        "Ionosphere" = {data(Ionosphere); Ionosphere},
+        "Glass"={data(Glass); Glass})
+}
+datasets
+```
