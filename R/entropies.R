@@ -48,14 +48,23 @@ entropies.table <- function(Nxy, ...){
         df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
     } else {  # N is a multiway table: we analyze on the first two margins, but store the second
         Nx <- margin.table(Nxy, c(1,3:length(dims)))
-        Hx <- apply(Nx, 2, function(x) {do.call(entropy, c(list(y=x), vars)) })
+        Hx <- apply(Nx, c(2:length(dim(Nx))), function(x) {do.call(entropy, c(list(y=x), vars)) })
+        #Ux <- apply(Nx, 2, function(x) { log2(length(x))})
+        Ux <- apply(Nx, c(2:length(dim(Nx))), function(x) { log2(dims[1])})
         Ny <- margin.table(Nxy, c(2,3:length(dims)))
-        Hy <- apply(Ny, 2, function(x) {do.call(entropy, c(list(y=x), vars)) })
-        Ux <- apply(Nx, 2, function(x) { log2(length(x))})
-        Uy <- apply(Ny, 2, function(x) { log2(length(x))})
-        Hxy <- apply(Nxy, 3, function(x) {do.call(entropy, c(list(y=x), vars))})
-        df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
-        df <- cbind(df, dimnames(Nxy)[3:])# Keep the third  and greater dimension's names
+        Hy <- apply(Ny, c(2:length(dim(Ny))), function(x) {do.call(entropy, c(list(y=x), vars)) })
+        #Uy <- apply(Ny, 2, function(x) { log2(length(x))})
+        Uy <- apply(Ny, c(2:length(dim(Nx))), function(x) { log2(dims[1])})
+        Hxy <- apply(Nxy, 3:length(dims), function(x) {do.call(entropy, c(list(y=x), vars))})
+        #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
+        THx <- as.data.frame.table(Hx, responseName = "Hx")
+        TUx <- as.data.frame.table(Ux, responseName = "Ux")
+        THy <- as.data.frame.table(Hy, responseName = "Hy")
+        TUy <- as.data.frame.table(Uy, responseName = "Uy")
+        THxy <- as.data.frame.table(Hxy, responseName = "Hxy")
+        df <- left_join(left_join(left_join(TUx, TUy), left_join(THx, THy)), THxy)
+        #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
+        #df <- cbind(df, dimnames(Nxy)[3:length(dims)])# Keep the third  and greater dimension's names
         #name <- colnames(N[1,,]) # This is a hack to manifest the values in the 3rd dimension
     } 
     return(df)
