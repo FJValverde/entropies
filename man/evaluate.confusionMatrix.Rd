@@ -15,8 +15,6 @@
 The concatenation of the entropies (whether split or not), the
  \code{cm$overall} information from confusion matrix cm, and the \code{EMA}
  and \code{NIT} rate as explained in \cite{val:pel:14a}.
- @export
- @importFrom caret confusionMatrix
 }
 \description{
 The criteria evaluated at present are:

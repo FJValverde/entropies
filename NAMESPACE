@@ -2,6 +2,7 @@
 
 S3method(entropies,confusionMatrix)
 S3method(entropies,table)
+S3method(evaluate,confusionMatrix)
 S3method(evaluate,table)
 S3method(perplexities,confusionMatrix)
 S3method(perplexities,data.frame)
