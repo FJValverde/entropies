@@ -2,29 +2,26 @@
 % Please edit documentation in R/entropies.R
 \name{entropies}
 \alias{entropies}
-\title{Entropy decomposition of a contingency matrix}
+\title{Entropy decomposition of a contingency matrix or dataframe.}
 \usage{
 entropies(data, ...)
 }
 \arguments{
-\item{N}{An n-contingency matrix where n > 2}
-
-\item{unit}{The logarithm to be used in working out the entropies as per 
-\code{entropy}. Defaults to "log2".}
+\item{data}{The data being provided to the function.}
 }
 \value{
 A dataframe with the entropies of the marginals
 }
 \description{
-Given a contingency matrix, provide one row of entropy coordinates. 
-NOTE: the reference variable has to index the ROWS of the table, while the predicted
-variable indexes the columns, unlike, e.g. \code{\link[caret]{contingencyTable}}
+Returns several different flavours of entropies depending on the structure 
+the data is provided to the function. There are specialized versions for
+(contingency) tables, confusion matrices and data frames.
 }
 \details{
 Unless specified by the user explicitly, this function uses base 2 
-logarithms for the entropies.
+  logarithms for the entropies.
 }
 \seealso{
-\code{\link[entropy]{entropy}}
+\code{\link[entropy]{entropy}, \link[infotheo]{entropy}}
 }
 

@@ -5,7 +5,6 @@
 #' @importFrom dplyr mutate
 #' @importFrom dplyr select
 gatherCoords <- function(data, limit=TRUE){
-    require(dplyr)
     if (!(hasDerivedSplitEntropies(data))){
         stop("Non-appropiate data")
     }

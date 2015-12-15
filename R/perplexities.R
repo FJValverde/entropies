@@ -22,7 +22,6 @@ perplexities.data.frame<- function(data, ...){
     if (!hasSimpleEntropies(data)){
         stop("Missing fields in entropy data to work out performance indicators.")
     }
-    require(dplyr)
     return(data %>%
                mutate(MIxy = Hx + Hy - Hxy) %>% 
                transmute(
@@ -55,9 +54,10 @@ perplexities.table <- function(data, ...){
 #' @description Obtains the perplexities in a confusion matrix by calculating, first, 
 #' the entropies, and then the entropic coordinates for it.
 #' @param data A confusion matrix from an evaluation as in \code{\link[caret]{confusionMatrix}}
+#' @importFrom caret confusionMatrix
 #' @export
 perplexities.confusionMatrix <- function(data, ...){
-    require(caret) # For the confusionMatrix class. 
+    #require(caret) # For the confusionMatrix class. 
     #e <- entropies(data) # Work out the entropies and from there, work out the perplexities
     return(perplexities(entropies(data, ...), ...))
 }

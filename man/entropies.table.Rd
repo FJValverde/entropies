@@ -6,7 +6,15 @@
 \usage{
 \method{entropies}{table}(Nxy, ...)
 }
+\arguments{
+\item{Nxy}{An n-contingency matrix where n > 2}
+
+\item{unit}{The logarithm to be used in working out the entropies as per 
+\code{entropy}. Defaults to "log2".}
+}
 \description{
-Given a contingency matrix, provide one row of entropy coordinates.
+Given a contingency matrix, provide one row of entropy coordinates. 
+NOTE: the reference variable has to index the ROWS of the table, while the predicted
+variable indexes the columns, unlike, e.g. \code{\link[caret]{contingencyTable}}
 }
 
