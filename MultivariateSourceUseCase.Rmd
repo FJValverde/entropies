@@ -1,0 +1,282 @@
+---
+title: "Use case for the Multivariate Source Entropy Triangle"
+author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
+date: "14 de diciembre de 2015"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Environment construction
+
+```{r}
+#library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
+#library(entropy)  # To work out the appropriate coordinates.
+library(dplyr)     # That infamous Mr. Wickham!
+library(infotheo)  # The functionality provided by this has to be rerouted through entropies
+library(entropies) # This package
+library(ggtern)    # Ternary diagrams on ggplot
+library(vcd)       # Categorical benchmarks
+library(mlbench)   # ml benchmarkss
+```
+
+
+# An example of multivariate use
+
+## Datasets available
+
+The inventory of databases to be explored:
+
+```{r}
+# the inventory of databases you can access
+#library(datasets)
+name <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer") # 
+className <- c("Class","Species", "Type", "Improved", "Class")  # Name of class attribute
+classVar <- c(35, 5, 10, 5, 11)   # ordinal of the class attribute
+other <- c("", "", "", "", "ID", "Id") # Other attributes to dispose of: mainly identifiers.
+K <- c(2, 3, 7, 3, 2)  # No. of classes
+datasets <- data.frame(name,classVar,className,K, stringsAsFactors=FALSE)
+
+# To select a dataset by name
+# Caveat: you have to ensure that the containing package has been attached
+evalDataset <- function(dsName){
+    dsName <- as.character(dsName)
+    switch(dsName,
+        "iris" =         {data(iris); iris},
+        "Ionosphere" =   {data(Ionosphere); Ionosphere},
+        "Glass" =        {data(Glass); Glass},
+        "Arthritis" =    {data(Arthritis); Arthritis},
+        "BreastCancer" = {data(BreastCancer); BreastCancer}
+        )
+}
+# #To select the #of column of the classc
+# whichClass <- function(ds, className){which(colnames(evalDataset(ds))==className)}
+# #whichNumVar <-  function(r){whichClass(evalDataset(r$name), r$className)}
+# cardinalClass <- function(ds, className){
+#     length(unique(evalDataset(ds)[,className]))
+# }
+# classVar <-  mapply(whichClass, datasets$name, datasets$className)
+# K <- mapply(cardinalClass, datasets$name, classVar)
+# library(dplyr)
+# datasets <- data.frame(name,className, classVar, K)
+datasets
+# Let's print it on latex
+library(xtable)
+thisLatex <- xtable(datasets, caption="Some datasets considered in this study")
+align(thisLatex) <- xalign(thisLatex)
+thisLatex
+```
+
+## Obtaining the entropies
+
+Obtain the entropies and some other data for plotting from all datasets.
+
+```{r}
+# Analyze both with Classes and without
+withClasses <- c(TRUE, FALSE)
+#  "name"       "H_Uxi"      "H_Pxi"      "DeltaH_Pxi" "VI_Pxi"     "M_Pxi" 
+# "withClass", "dsName", "isClass"
+edf <- data.frame()
+for(dsName in unique(datasets$name)){
+    dsRecord <-  filter(datasets, name == dsName)
+    ds <- evalDataset(dsName)
+    for(withClass in withClasses){
+        if (withClass){
+            print(sprintf("Analyzing dataset with class label: %s", dsName))
+        }else {
+            print(sprintf("Analyzing dataset without class label: %s", dsName))
+            # as per: 
+            # http://stackoverflow.com/questions/5234117/how-to-drop-columns-by-name-in-a-data-frame
+            # Don't EVER use subset in PROGRAMS!
+            #ds <- subset(ds, subset=1:nrow(ds), select=dsRecord$className, drop=TRUE)
+            ds <- ds[, !colnames(ds) == dsRecord$className] #fastest in bechnmark at bot. of url
+        }
+        edf <- rbind(edf,
+                     sentropies(ds) %>% 
+#                     sentropies(ds, nbins=ceiling(nrow(ds)^(1/3))) %>%
+                         mutate(withClass = withClass,
+                                isClass = (as.character(dsRecord$className) ==
+                                                as.character(name)),
+                                dsName = dsName
+                         )
+        )
+    }
+}
+str(edf)
+```
+
+
+## Plotting the aggregate data
+
+Now we print the total entropy balance in the triangle
+
+```{r}
+excised <- c("name", "withClass", "isClass", "dsName") #Or any other that we add
+totalEdf <-  edf %>% 
+            group_by(dsName, withClass) %>%
+            summarise(H_Ux = sum(H_Uxi),
+                    H_Px = sum(H_Pxi),
+                    DeltaH_Px = sum(DeltaH_Pxi),
+                    VI_Px = sum(VI_Pxi),
+                    M_Px = sum(M_Pxi))
+totalEdf
+#Use the dsName for shape and the withClass for fill => use only fillable glyphs.
+smet <-  ggmetern(totalEdf) + geom_point(mapping=aes(shape=dsName, color=withClass), size=3)
+    #+ ggtitle("Aggregate entropy by dataset")
+smet +  scale_colour_manual(values = c("black", "red")) +
+    labs(shape="dataset", colour="Using class")
+```
+
+## Plotting the multisplit data
+
+We choose some of the interesting datasets from the diagram above to investigate:
+
+
+## Exploring individual datasets
+
+```{r}
+#thisDsName <- "Ionosphere" # CAVEAT! Not enough different glyphs!!!
+#thisDsName <- "iris"
+#thisDsName <- "Glass"
+thisDsName <- "Arthritis"
+thisDsName <- "BreastCancer"
+# negatively subsetting recipe from Stack Overflow
+thisEdf <-  rbind(edf %>% filter(dsName == thisDsName & name != "ALL") %>% 
+                      select(-starts_with("isClass")), #%>% 
+                      #filter(name != "ALL"),
+                  totalEdf %>% filter(dsName == thisDsName) %>% mutate(name = "@AGGREGATE") %>%
+                      select(name, #matches(".*"), 
+                             H_Uxi = H_Ux, H_Pxi = H_Px, DeltaH_Pxi = DeltaH_Px,
+                             VI_Pxi = VI_Px, M_Pxi = M_Px,
+                             withClass, dsName)
+                ) 
+#edf1 <- entropies(df, nbins=ceiling(nrow(df)^(1/3)))
+#edf1
+thisEt <-  ggmetern(thisEdf) + geom_point(size=4, aes(shape=name, colour=withClass))
+thisEt + scale_colour_manual(values = c("black", "red")) +
+    scale_shape_manual(values=1:14) + 
+    labs(shape="feature", colour="Using class")
+```
+
+
+# The absolute decomposition
+
+This actually rather resembles a set of stacked pies as seen from above!
+
+```{r}
+```
+
+```{r}
+# In case the switch is ON for excluding the aggregate.
+excludeAggregate <- TRUE
+#excludeAggregate <- FALSE
+
+analyzeWithClass <- FALSE
+#analyzeWithClass <- TRUE
+if (analyzeWithClass){
+    smedf <- filter(thisEdf, withClass) %>% select(-withClass)
+} else {
+# For this once let's just use the entropy with no class variable
+    smedf <- filter(thisEdf, !withClass) %>% select(-withClass) # source multivariate entropy data frame
+}
+#library(scales)
+p <-  ggmebars(smedf, excludeAggregate,proportional=FALSE)
+p + ylab("Source Multivariate Entropy") + xlab("Feature/Variable") #+ ae__
+    # scale_y_continuous(trans=log2_trans(),
+    #                 breaks=trans_breaks("log2", function(x) 2^x),
+    #                 labels=trans_format("log2", math_format(2^.x)))
+# 
+```
+
+
+The multisplit SMET can also offer the same information with a different encoding: using the fill color on the glyphs used to represent the features:
+
+```{r}
+ggmetern(filter(smedf, name != "@AGGREGATE")) +
+    geom_point(size=4, aes(shape=name, colour=H_Uxi)) + scale_shape_manual(values=1:14) + 
+    labs(shape="Feature", colour="$H_{U_{X_i}}") #+ theme(legend.position="bottom")
+    #geom_point(size=4, aes(shape=name, colour=withClass))
+```
+
+
+However, turning the stacked bar graph into a pie chart is a bad idea, since the remaining information $VI_{P_{X_i}}$ is de-emphasized:
+
+```{r}
+ p + ylab("Source Multivariate Entropy") + xlab("Feature/Variable") + coord_polar()
+```
+
+# SO FAR SEEMS OK
+## Facetting on different values
+
+
+```{r}
+selected <- c("iris", "Glass", "BreastCancer")
+#selEdf <- edf %>% filter(dsName %in% selected)
+thisSelEdf <-  rbind(edf %>% filter(dsName %in% selected) %>%select(-starts_with("isClass")),
+                  totalEdf %>% filter(dsName %in% selected) %>% mutate(name = "AGGREGATE") %>%
+                      select(name, #matches(".*"), 
+                             H_Uxi = H_Ux, H_Pxi = H_Px, DeltaH_Pxi = DeltaH_Px,
+                             VI_Pxi = VI_Px, M_Pxi = M_Px,
+                             withClass, dsName)
+                )
+#edf1 <- entropies(df, nbins=ceiling(nrow(df)^(1/3)))
+#edf1
+thisSelEt <-  ggmetern(thisEdf, size=4, aes(shape=name)) #, colour=withClass))
+thisSelEt + facet_grid(dsName ~ withClass) + 
+    scale_colour_manual(values = c("black", "red")) +
+    scale_shape_manual(values=1:14) + 
+    labs(shape="feature") #s, colour="Using class")
+```
+
+# Use on different datasets
+
+Get some categorical datasets from package "vcd"
+```{r}
+library(vcd)
+library(mlbench)
+pname <-  "vcd" # categorical variables
+pname <- "mlbench"
+ps  <- data(package=pname)     # get all the info for the data in the package
+vcdData <- ps$results[,"Item"] # get the name of all the data 
+#Now find the names of the datasets that are categorical!
+vcdDataframes  <- vcdData[unlist(lapply(ps$results[,"Item"],
+                                        function(x){is.data.frame(eval(as.name(x)))})
+                                 )
+                          ]
+#list them
+vcdDataframes
+```
+
+Do the same treatment on Arthritis:
+
+```{r}
+withClass <-  TRUE
+withClass <-  FALSE
+if (withClass){# Consider the class attribute
+    df <- iris
+    #df <- Arthritis
+    #df <- BreastCancer[,-1] # Take away identifiers.
+    df <- {data(Glass); Glass}
+    #df <- {data(DNA); DNA}
+}else{ #Do not consider the class attribute or e.g. identities.
+    df <- iris[, -c(5)]
+    #df <- Arthritis[,c(2:4)]
+    #df <- BreastCancer[,-c(1,11)] # 1 is an identifier, 11 is the Class
+    df <- Glass[,-c(10)] # 10 = Type and identifier of the type of Glass!
+    #df <- DNA[,-c(181)] # V. 181 = Class
+}
+edf <- entropies(df, nbins=ceiling(nrow(df)^(1/3)))
+# Number one is always the name of the features!
+addTotalEntropies <- function(edf, label="@Total"){
+  edf <-cbind(
+    data.frame(name=c(as.character(edf[,1]), label)),
+    rbind(edf[,-1], colSums(edf[,-1]))
+    )
+  return(edf)
+}
+edf <- addTotalEntropies(edf)
+ep <-  ggmetern(edf) + labs(shape="Feature")
+ep
+```
