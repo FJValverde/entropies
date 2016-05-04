@@ -15,6 +15,7 @@ vignette: >
 #library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
 #library(entropy)  # To work out the appropriate coordinates.
 library(dplyr)     # That infamous Mr. Wickham!
+library(tidyr)     # Tidying tall & wide dataframes
 library(infotheo)  # The functionality provided by this has to be rerouted through entropies
 library(entropies) # This package
 library(ggtern)    # Ternary diagrams on ggplot
@@ -115,15 +116,17 @@ Now we print the total entropy balance in the triangle
 ```{r}
 excised <- c("name", "withClass", "isClass", "dsName") #Or any other that we add
 totalEdf <-  edf %>% 
-            group_by(dsName, withClass) %>%
-            summarise(H_Ux = sum(H_Uxi),
-                    H_Px = sum(H_Pxi),
-                    DeltaH_Px = sum(DeltaH_Pxi),
-                    VI_Px = sum(VI_Pxi),
-                    M_Px = sum(M_Pxi))
+            mutate(name=dsName) %>%
+            group_by(name, withClass) %>%
+            summarise(H_Uxi = sum(H_Uxi),
+                    H_Pxi = sum(H_Pxi),
+                    DeltaH_Pxi = sum(DeltaH_Pxi),
+                    VI_Pxi = sum(VI_Pxi),
+                    M_Pxi = sum(M_Pxi))
+           
 totalEdf
 #Use the dsName for shape and the withClass for fill => use only fillable glyphs.
-smet <-  ggmetern(totalEdf) + geom_point(mapping=aes(shape=dsName, color=withClass), size=3)
+smet <-  ggmetern(totalEdf) + geom_point(mapping=aes(shape=name, color=withClass), size=3)
     #+ ggtitle("Aggregate entropy by dataset")
 smet +  scale_colour_manual(values = c("black", "red")) +
     labs(shape="dataset", colour="Using class")
@@ -139,22 +142,22 @@ We choose some of the interesting datasets from the diagram above to investigate
 ```{r}
 #thisDsName <- "Ionosphere" # CAVEAT! Not enough different glyphs!!!
 #thisDsName <- "iris"
-#thisDsName <- "Glass"
-thisDsName <- "Arthritis"
-thisDsName <- "BreastCancer"
+thisDsName <- "Glass"
+#thisDsName <- "Arthritis"
+#thisDsName <- "BreastCancer"
 # negatively subsetting recipe from Stack Overflow
 thisEdf <-  rbind(edf %>% filter(dsName == thisDsName & name != "ALL") %>% 
                       select(-starts_with("isClass")), #%>% 
                       #filter(name != "ALL"),
-                  totalEdf %>% filter(dsName == thisDsName) %>% mutate(name = "@AGGREGATE") %>%
-                      select(name, #matches(".*"), 
-                             H_Uxi = H_Ux, H_Pxi = H_Px, DeltaH_Pxi = DeltaH_Px,
-                             VI_Pxi = VI_Px, M_Pxi = M_Px,
+                  ungroup(totalEdf) %>% filter(name == thisDsName) %>% 
+                      mutate(dsName=name, name = "@AGGREGATE") %>%
+                      select(name, 
+                             H_Uxi, H_Pxi, DeltaH_Pxi, M_Pxi, VI_Pxi,
                              withClass, dsName)
                 ) 
 #edf1 <- entropies(df, nbins=ceiling(nrow(df)^(1/3)))
 #edf1
-thisEt <-  ggmetern(thisEdf) + geom_point(size=4, aes(shape=name, colour=withClass))
+thisEt <-  ggmetern(thisEdf) + geom_point(aes(shape=name, colour=withClass), inherit.aes=TRUE)
 thisEt + scale_colour_manual(values = c("black", "red")) +
     scale_shape_manual(values=1:14) + 
     labs(shape="feature", colour="Using class")
@@ -162,11 +165,6 @@ thisEt + scale_colour_manual(values = c("black", "red")) +
 
 
 # The absolute decomposition
-
-This actually rather resembles a set of stacked pies as seen from above!
-
-```{r}
-```
 
 ```{r}
 # In case the switch is ON for excluding the aggregate.

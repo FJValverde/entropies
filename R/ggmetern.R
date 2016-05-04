@@ -32,7 +32,7 @@ ggmetern <- function(data, ...) {
     # If we are to build the split triangle, we have to massage the data:
     if (hasMultiSplitEntropicCoords(data)){
         # Create the plot
-        ep <- ggtern::ggtern(data, aes(VI_Pxi, M_Pxi, DeltaH_Pxi), vars) #+ geom_point(...) # Is this worth? It only fixes the type of diagram!
+        ep <- ggtern::ggtern(data, aes(x=VI_Pxi, y=M_Pxi, z=DeltaH_Pxi), vars) #+ geom_point(...) # Is this worth? It only fixes the type of diagram!
         # Node labels for the split triangle
         TlabExp <- expression({italic(M)^{symbol("\242")}}["Xi"])
         RlabExp <- expression(paste(Delta, "", {italic(H)^{symbol("\242")}}["Xi"]))
@@ -40,7 +40,7 @@ ggmetern <- function(data, ...) {
         titleExp <- "Source split entropies"
         # Otherwise, check that it has multivariate source data, then plot
     } else if (hasMultiEntropicCoords(data)){
-        ep <- ggtern(data, aes(VI_Px,M_Px,DeltaH_Px)) #+ geom_point(...)
+        ep <- ggtern(data, aes(x=VI_Px, y=M_Px, z=DeltaH_Px), vars) #+ geom_point(...)
         # vertex labels for the non-split multivariate source triangle
         #TlabExp <- expression({italic(M)^{symbol("\242")}}["X"])
         TlabExp <- "$\\textit{M'}_{P_X}"
@@ -51,7 +51,7 @@ ggmetern <- function(data, ...) {
         LlabExp <-  "$\\textit{VI'}_{P_{X}"
         titleExp <- "Source entropies"
     } else if (hasCmetEntropicCoords((data))) {
-        ep <- ggtern(data, aes(VI_P, M_P, DeltaH_P)) #+ geom_point(...)
+        ep <- ggtern(data, aes(x=VI_P, y=M_P, z=DeltaH_P), vars) #+ geom_point(...)
         # Vertex labels for the channel multivariate entropy triangle
         # TlabExp <- expression({italic(M)^{symbol("\242")}}["XY"])
         # RlabExp <- expression(paste(Delta, "", {italic(H)^{symbol("\242")}}["XY"]))

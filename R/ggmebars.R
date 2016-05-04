@@ -3,20 +3,19 @@
 #' @description 
 #' This function creates a stacked bar graph of entropies issued from \code{\link{sentropies}}.
 #' 
-#'  @details The \code{\link{geom_bar}} geometry of \code{\link{ggplot2}} is imposed on the 
+#' @details The \code{\link{geom_bar}} geometry of \code{\link{ggplot2}} is imposed on the 
 #'  
-#' @param smdef A source multisplit entropy dataframe to be plotted, typically obtained with \code{\link{sentropies}.
+#' @param smdef A source multisplit entropy dataframe to be plotted, typically obtained with 
+#' \code{\link{sentropies}}.
 #' @return A plot object in the ggplot2 class of plots ready to be plotted.
-#' @seealso \code{\link{ggtern}}, \code{\link{ggmeter}}, \code{\link{ggplot2::geom_bar}}
+#' @seealso \code{\link{ggmetern}}, \code{\link{ggplot2::geom_bar}}
 #' @export
 #' @importFrom tidyr gather
-#' @import dplyr ggplot
+#' @import dplyr ggplot2
 #' @examples
 #' data(iris)
 #' sme <- sentropies(iris) # Considers class just another feature
 #' ggmebars(sme[-6,])
-# First get the proper tall data, modifying the recipe in p. 34. "R graphics..."
-library(tidyr)
 ggmebars <- function(smedf, excludeAggregate=FALSE, proportional=FALSE){
     # 1. THe recipe to build a stacked bar graph
     if (!hasMultiSplitEntropicCoords(smedf))# Needs to be split source entropy!!
@@ -36,8 +35,8 @@ ggmebars <- function(smedf, excludeAggregate=FALSE, proportional=FALSE){
                    VI_Pxi=VI_Pxi/H_Uxi * 100)
         
     }
-    smedfTall <- smedf %>% 
-        gather(component, sme, VI_Pxi, M_Pxi, DeltaH_Pxi)
+    # First get the proper tall data, modifying the recipe in p. 34. "R graphics..."
+    smedfTall <- smedf %>% gather(component, sme, VI_Pxi, M_Pxi, DeltaH_Pxi)
     # Choose the ordering for the bars
     ordering <- smedf$name[sort(smedf$VI_Pxi + smedf$M_Pxi, 
                                 decreasing=TRUE, 
