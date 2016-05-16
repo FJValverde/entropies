@@ -18,7 +18,7 @@
 #' ggmebars(sme[-6,])
 ggmebars <- function(smedf, excludeAggregate=FALSE, proportional=FALSE){
     # 1. THe recipe to build a stacked bar graph
-    if (!hasMultiSplitEntropicCoords(smedf))# Needs to be split source entropy!!
+    if (!hasSplitSmetCoords(smedf))# Needs to be split source entropy!!
         stop("Data do not represent source multivariate entropies")
     if (excludeAggregate){
         smedf <- filter(smedf, name != "@AGGREGATE")
@@ -45,6 +45,7 @@ ggmebars <- function(smedf, excludeAggregate=FALSE, proportional=FALSE){
     p <- ggplot(smedfTall, aes(x=name, y=sme, fill=component)) +
         geom_bar(stat="identity") +
         scale_x_discrete(limits=ordering) +
+        #scale_fill_manual(values=c("orange", "#99FF33", "#FF3300")) # orange is too dark for the bars
         scale_fill_manual(values=c("#FFFF88", "#99FF33", "#FF3300")) 
     #scale_fill_manual(values=c("yellow", "green", "red")) 
     #Colours from: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/

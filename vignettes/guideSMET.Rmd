@@ -1,0 +1,173 @@
+---
+title: "SMET Reading aid"
+author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
+date: "10 de mayo de 2016"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{A guide to understanding the positions in the SMET}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This vignettes tries to present instances of features that have specific stochastic properties to improve the understanding and intution of what each corner of the Source Multivariate Entropy Triangle (SMET) means.
+ 
+
+# Environment construction
+
+```{r environment, echo=FALSE, results="hide"}
+#library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
+#library(entropy)  # To work out the appropriate coordinates.
+library(dplyr)     # That infamous Mr. Wickham!
+library(tidyr)     # Tidying tall & wide dataframes
+library(infotheo)  # The functionality provided by this has to be rerouted through entropies
+library(entropies) # This package
+library(ggtern)    # Ternary diagrams on ggplot
+library(vcd)       # Categorical benchmarks
+library(mlbench)   # ml benchmarkss
+#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=6)
+```
+
+# Conceptual triangle
+
+```{r}
+m <- 
+    rbind(
+    c("irredundant", 0.05, 0.05, 0.9, "irredundant"), 
+    c("redundant", 0.05, 0.9, 0.05, "redundant"),
+    c("constant", 0.9, 0.05, 0.05, "constant")
+)
+d <- data.frame(
+    name = m[,1],
+    DeltaH_Pxi=as.numeric(m[,2]),
+    M_Pxi=as.numeric(m[,3]),
+    VI_Pxi=as.numeric(m[,4]),
+    point = m[,5]
+)
+multiSplitEntropies  <-  splitESmetCoords <-  c("name", "DeltaH_Pxi", "M_Pxi", "VI_Pxi") 
+names(d) <-  c(multiSplitEntropies, "point")
+```
+
+```{r}
+conceptual <- ggmetern(d) + 
+    geom_point(aes(shape = name), size=3) + 
+    scale_shape_manual(values=c(21, 22, 24)) +
+    #tern_limits(T=1.2, L=1.2, R=1.2) + # This afffect the contour DON'T USE IT!
+    scale_T_continuous(expand=c(0.1, 0.1)) +
+    scale_L_continuous(expand=c(0.1, 0.1)) +
+    scale_R_continuous(expand=c(0.1, 0.1)) +
+    labs(shape="Source type") +
+    theme_bw() +
+    theme_rotate(degrees=-60) + 
+    theme(
+        #tern.axis.col.T="black",
+        #tern.panel.background = element_rect(colour="white"), 
+        tern.axis.line = element_line(colour="black"),
+        tern.axis.ticks.minor = element_line(colour="black"),
+        #tern.axis.ticks.length.minor = unit(5, units="points"),
+        tern.panel.grid.major = element_line(colour="grey", linetype=3), #too coarse
+        tern.axis.text.show = TRUE,
+        tern.axis.arrow.show = TRUE
+        )
+conceptual
+ggsave(filename="annotated_SMET_triangle.jpeg", plot=conceptual)
+```
+
+
+# Data generation
+
+This describes a split triangle.
+
+```{r}
+m <- 240 # vector instances
+nRandom <- 5     # Add a number of balanced, random features
+dsRandom <- as.data.frame(matrix(rep(0, m*nRandom), nrow=m, ncol=nRandom)) 
+# Add the random balanced vectors
+rRandom <- 1:nRandom
+set.seed(29)
+for(f in rRandom){#generate random features: 
+    dsRandom[,f] <- rbinom(m, 1, 0.5)
+}
+names(dsRandom) <- paste0("b",rRandom)
+##########################################################################################
+nUnbalanced <- 5 # Add a number of unbalanced, random features
+dsUnbalanced <- as.data.frame(matrix(rep(0, m*nUnbalanced), nrow=m, ncol=nUnbalanced))
+# Add the random unbalanced vectors.
+rUnbalanced <-  1:nUnbalanced
+for(f in rUnbalanced){#generate random features: 
+    dsUnbalanced[,f] <- rbinom(m, 1, 0.99)
+}
+names(dsUnbalanced) <-  paste0("u", rUnbalanced)
+##########################################################################################
+nRedundant <- 5  # Add a number of very redundant features
+dsRedundant <- as.data.frame(matrix(rep(0, m*nRedundant), nrow=m, ncol=nRedundant))
+#n <- nRandom + nUnbalanced + nRedundant
+#ds <- as.data.frame(matrix(rep(0, m+n), nrow=m, ncol=n))
+# Add a number of very redundant vectors
+rRedundant <- 1:nRedundant
+v <- as.numeric(rbinom(m, 1, 0.5)) # They are also quite balanced
+for(f in rRedundant){
+    #dsRedundant[,f] <- jitter(v * f, amount=0.1*f)
+    dsRedundant[,f] <- jitter(v, factor=0.5)
+    #dsRedundant[,f] <- as.numeric(rbinom(m, 1, 0.5)) + 05
+}
+names(dsRedundant) <- paste0("r", rRedundant)
+
+##########################################################################################
+#names(ds) <- c(paste0("b",rRandom), paste0("u", rUnbalanced), paste0("r", rRedundant))
+```
+
+
+# Visualization
+
+```{r}
+###########################################################################
+edsRandom <- sentropies(dsRandom) %>% mutate(type="irredundant")
+            #(type=substr(name, 1,1)) %>% filter(type != "A")
+ggmetern(edsRandom) + # now create the plot
+    geom_point(aes(colour=name), size=3)
+edsUnbalanced <- sentropies(dsUnbalanced) %>% mutate(type="quasi-deterministic")
+    #mutate(type=substr(name, 1,1)) %>% filter(type != "A")
+ggmetern(edsUnbalanced) + # now create the plot
+    geom_point(aes(colour=name), size=3)
+edsRedundant <- sentropies(dsRedundant) %>% mutate(type="redundant")
+ggmetern(edsRedundant) + # now create the plot
+    geom_point(aes(colour=name), size=3)
+###########################################################################
+# Put together al the different types of points
+eds <- rbind(edsRandom, edsUnbalanced, edsRedundant) %>% filter(name != "ALL")
+#summary(eds)
+```
+
+```{r}
+# First add the densities
+et <- ggmetern(eds) #+ # now create the plot
+    # stat_density_tern(geom='polygon',
+    #                      n         = 200,
+    #                      aes(fill  = ..level..,
+    #                          alpha = ..level..)) +    
+    # scale_fill_gradient(low = "white",high = "black")  +
+    # guides(fill = "none", alpha= "none")
+    #guides(fill = "none", alpha = "none")
+# then add the points on the original data
+et <-  et +
+    geom_point(aes(shape=type), size=3) +
+    scale_T_continuous(expand=c(0.1, 0.1)) +
+    scale_L_continuous(expand=c(0.1, 0.1)) +
+    scale_R_continuous(expand=c(0.1, 0.1)) +
+    scale_colour_manual(values=c("red", "blue", "orange")) +
+    labs(shape="Feature type") + guides(color=FALSE) #scale_color_manual(guide=FALSE)
+    #scale_fill_manual(values=c("red", "blue", "yellow"))
+    #scale_fill_discrete() 
+# from http://stackoverflow.com/questions/9690648/point-clipped-on-x-axis-in-ggplot
+#et$layout$clip[et$layout$name=="panel"] <- "off" #does not work!
+et
+ggsave(filename="annotated_multisplit_SMET.jpeg", plot=et)
+```
+
+# Postscriptum
+
+```{r ps}
+sessionInfo()
+```

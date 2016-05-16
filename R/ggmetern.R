@@ -30,13 +30,17 @@
 ggmetern <- function(data, ...) {
     vars <- list(...)
     # If we are to build the split triangle, we have to massage the data:
-    if (hasMultiSplitEntropicCoords(data)){
+    if (hasSplitSmetCoords(data)){
         # Create the plot
-        ep <- ggtern::ggtern(data, aes(x=VI_Pxi, y=M_Pxi, z=DeltaH_Pxi), vars) #+ geom_point(...) # Is this worth? It only fixes the type of diagram!
+        ep <- ggtern::ggtern(data, aes(x=VI_Pxi, y=M_Pxi, z=DeltaH_Pxi), vars) +
+            theme_rotate(degrees=-60)#Source Entropy Diagrams are upside down!
         # Node labels for the split triangle
-        TlabExp <- expression({italic(M)^{symbol("\242")}}["Xi"])
-        RlabExp <- expression(paste(Delta, "", {italic(H)^{symbol("\242")}}["Xi"]))
-        LlabExp <- expression({italic(VI)^{symbol("\242")}}["Xi|Xi"^c])
+        #TlabExp <- expression({italic(M)^{symbol("\242")}}["Xi"])
+        TlabExp <- "$\\textit{M'}_{P_{X_i}}"
+        #RlabExp <- expression(paste(Delta, "", {italic(H)^{symbol("\242")}}["Xi"]))
+        RlabExp <- "$\\Delta\\textit{H'}_{P_{X_i}}"
+        #LlabExp <- expression({italic(VI)^{symbol("\242")}}["Xi|Xi"^c])
+        LlabExp <-  "$\\textit{VI'}_{P_{X_i}}"
         titleExp <- "Source split entropies"
         # Otherwise, check that it has multivariate source data, then plot
     } else if (hasMultiEntropicCoords(data)){
@@ -48,7 +52,7 @@ ggmetern <- function(data, ...) {
         RlabExp <- "$\\Delta\\textit{H'}_{P_X}"
         #LlabExp <- expression({italic(VI)^{symbol("\242")}}["X"])
         #LlabExp <- "$\\textit{H}_{P_{{X_i | X_i^c}}}"
-        LlabExp <-  "$\\textit{VI'}_{P_{X}"
+        LlabExp <-  "$\\textit{VI'}_{P_{X}}"
         titleExp <- "Source entropies"
     } else if (hasCmetEntropicCoords((data))) {
         ep <- ggtern(data, aes(x=VI_P, y=M_P, z=DeltaH_P), vars) #+ geom_point(...)
@@ -59,23 +63,27 @@ ggmetern <- function(data, ...) {
         TlabExp <- "$\\textit{M'}_{P_{XY}}"
         RlabExp <- "$\\Delta\\textit{H'}_{P_{XY}}"
         LlabExp <-  "$\\textit{VI'}_{P_{XY}"
-        titeExp <- "Channel entropies"
+        titleExp <- "Channel entropies"
     } else {
         stop("Non-appropiate data")
     }
     # A basic plot and theme
     ep <- ep + 
+        geom_mask() + #<<<<< Puts the mask below any layers to follow, charm by N. Hamilton
         #scale_shape_manual(values=c(1:nrow(data))) + 
         ggtern::theme_rgbw() + 
-        #ggtern::theme_showarrows() + # This theme overrides later adjustments
-        ggtern::theme_custom(col.T="forestgreen",col.L="red",col.R="blue") + 
+        ggtern::theme_custom(col.T="forestgreen",col.L="red",col.R="orange") + 
         ggtern::theme(complete=FALSE, 
-                       tern.axis.text.show=FALSE,
+                       tern.axis.text.show=TRUE,
                        tern.axis.arrow.show=TRUE,
                        tern.axis.clockwise=FALSE) +
-        #labs(title=titleExp, Rlab=RlabExp, Tlab=RlabExp, Llab=LlabExp)
-        ggtern::Tlab(TlabExp, labelarrow="") + 
-        ggtern::Rlab(RlabExp, labelarrow="") + 
-        ggtern::Llab(LlabExp, labelarrow="")
+        ggtern::Tlab(TlabExp) + 
+        ggtern::Rlab(RlabExp) + 
+        ggtern::Llab(LlabExp) #+
+        #ggtitle(titleExp)
+        #ggtern::theme_showarrows() + # This theme overrides later adjustments
+    if (hasMultiSplitEntropicCoords(data)){#Source Entropy Diagrams are upside down!
+        ep <- ep + theme_rotate(degrees=-60)
+    }
     return(ep)
 }
