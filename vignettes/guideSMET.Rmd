@@ -26,7 +26,7 @@ library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
 #knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=6)
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
 ```
 
 # Conceptual triangle
@@ -34,9 +34,12 @@ knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=6)
 ```{r}
 m <- 
     rbind(
-    c("irredundant", 0.05, 0.05, 0.9, "irredundant"), 
-    c("redundant", 0.05, 0.9, 0.05, "redundant"),
-    c("constant", 0.9, 0.05, 0.05, "constant")
+    c("irredundant", 0.00, 0.00, 1.0, "irredundant"), 
+    c("redundant", 0.0, 1.0, 0.0, "redundant"),
+    c("deterministic", 1.0, 0.0, 0.0, "deterministic"),
+    c("almost irredundant", 0.05, 0.05, 0.9, "irredundant"), 
+    c("almost redundant", 0.05, 0.9, 0.05, "redundant"),
+    c("almost deterministic", 0.9, 0.05, 0.05, "quasi-deterministic")
 )
 d <- data.frame(
     name = m[,1],
@@ -44,32 +47,40 @@ d <- data.frame(
     M_Pxi=as.numeric(m[,3]),
     VI_Pxi=as.numeric(m[,4]),
     point = m[,5]
-)
+) %>% mutate(extreme = DeltaH_Pxi == 1.0 | M_Pxi == 1.0 | VI_Pxi == 1.0)
 multiSplitEntropies  <-  splitESmetCoords <-  c("name", "DeltaH_Pxi", "M_Pxi", "VI_Pxi") 
-names(d) <-  c(multiSplitEntropies, "point")
+#names(d) <-  c(multiSplitEntropies, "point", "extremePoint")
 ```
 
 ```{r}
-conceptual <- ggmetern(d) + 
-    geom_point(aes(shape = name), size=3) + 
-    scale_shape_manual(values=c(21, 22, 24)) +
-    #tern_limits(T=1.2, L=1.2, R=1.2) + # This afffect the contour DON'T USE IT!
-    scale_T_continuous(expand=c(0.1, 0.1)) +
-    scale_L_continuous(expand=c(0.1, 0.1)) +
-    scale_R_continuous(expand=c(0.1, 0.1)) +
+conceptual <- ggmetern(filter(d, extreme), fancy=FALSE) + 
+    geom_point(aes(color=name), size=3) +
+    #labs(color="Source type") +
+    
+    #the points in the middel of the angles and dise
+    geom_point(data=filter(d, !extreme), aes(shape=name), size=3) +
+    scale_shape_manual(values=rep(22,3), guide=FALSE) + 
     labs(shape="Source type") +
-    theme_bw() +
-    theme_rotate(degrees=-60) + 
-    theme(
-        #tern.axis.col.T="black",
-        #tern.panel.background = element_rect(colour="white"), 
-        tern.axis.line = element_line(colour="black"),
-        tern.axis.ticks.minor = element_line(colour="black"),
-        #tern.axis.ticks.length.minor = unit(5, units="points"),
-        tern.panel.grid.major = element_line(colour="grey", linetype=3), #too coarse
-        tern.axis.text.show = TRUE,
-        tern.axis.arrow.show = TRUE
-        )
+    geom_text(aes(label=point, hjust="inward", vjust="inward"))
+    #annotate("segment", x=1950, xend=1980, )
+    # geom_point(aes(shape = name), size=3) + 
+    # scale_shape_manual(values=c(21, 22, 24)) +
+    # #tern_limits(T=1.2, L=1.2, R=1.2) + # This afffect the contour DON'T USE IT!
+    # scale_T_continuous(expand=c(0.1, 0.1)) +
+    # scale_L_continuous(expand=c(0.1, 0.1)) +
+    # scale_R_continuous(expand=c(0.1, 0.1)) +
+    # theme_bw() +
+    # theme_rotate(degrees=-60) + 
+    # theme(
+    #     #tern.axis.col.T="black",
+    #     #tern.panel.background = element_rect(colour="white"), 
+    #     tern.axis.line = element_line(colour="black"),
+    #     tern.axis.ticks.minor = element_line(colour="black"),
+    #     #tern.axis.ticks.length.minor = unit(5, units="points"),
+    #     tern.panel.grid.major = element_line(colour="grey", linetype=3), #too coarse
+    #     tern.axis.text.show = TRUE,
+    #     tern.axis.arrow.show = TRUE
+    #     )
 conceptual
 ggsave(filename="annotated_SMET_triangle.jpeg", plot=conceptual)
 ```
@@ -142,7 +153,7 @@ eds <- rbind(edsRandom, edsUnbalanced, edsRedundant) %>% filter(name != "ALL")
 
 ```{r}
 # First add the densities
-et <- ggmetern(eds) #+ # now create the plot
+#et <- ggmetern(eds, fancy=FALSE) #+ # now create the plot
     # stat_density_tern(geom='polygon',
     #                      n         = 200,
     #                      aes(fill  = ..level..,
@@ -151,17 +162,12 @@ et <- ggmetern(eds) #+ # now create the plot
     # guides(fill = "none", alpha= "none")
     #guides(fill = "none", alpha = "none")
 # then add the points on the original data
-et <-  et +
+et <-  ggmetern(eds, fancy=FALSE) + 
     geom_point(aes(shape=type), size=3) +
-    scale_T_continuous(expand=c(0.1, 0.1)) +
-    scale_L_continuous(expand=c(0.1, 0.1)) +
-    scale_R_continuous(expand=c(0.1, 0.1)) +
+    scale_shape_manual(values=c(21,22,23)) + #, guide=FALSE) + 
     scale_colour_manual(values=c("red", "blue", "orange")) +
     labs(shape="Feature type") + guides(color=FALSE) #scale_color_manual(guide=FALSE)
     #scale_fill_manual(values=c("red", "blue", "yellow"))
-    #scale_fill_discrete() 
-# from http://stackoverflow.com/questions/9690648/point-clipped-on-x-axis-in-ggplot
-#et$layout$clip[et$layout$name=="panel"] <- "off" #does not work!
 et
 ggsave(filename="annotated_multisplit_SMET.jpeg", plot=et)
 ```

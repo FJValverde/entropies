@@ -4,9 +4,12 @@
 \alias{ggmetern}
 \title{Grammar-of-Graphics Multivariate entropic ternary plot constructor}
 \usage{
-ggmetern(data, ...)
+ggmetern(data, fancy = TRUE, ...)
 }
 \arguments{
+\item{fancy}{A switch whether to use a fancier (coloured) or terser (B&W) \code{\link{ggplot2::theme}} in the plot.
+Defaults to fancy=TRUE, for exploratory analysis. fancy=FALSE is better for printed matter.}
+
 \item{experiments}{A dataframe with the data to be plotted, typically obtained with \code{entropicCordinates}.
 To plot the *split entropy triangle* this dataframe must have  at least the following variables \code{c("DeltaHx", "DeltaHx","MIxyX","MIxyY", "VIx", "VIy")}.
 To plot the *entropy triangle* this dataframe must have  either of the two configurations.}

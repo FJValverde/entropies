@@ -23,6 +23,8 @@ library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
 #knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+fancy <- TRUE  # set this for nicer on-screen visualization
+fancy <- FALSE # Set this for either printing matter
 ```
 
 
@@ -129,9 +131,9 @@ totalEdf <-  edf %>%
 totalEdf
 
 #Use the dsName for shape and the withClass for fill => use only fillable glyphs.
-smet <-  ggmetern(totalEdf) + geom_point(mapping=aes(shape=name, color=withClass), size=3) #+ 
+smet <-  ggmetern(totalEdf, fancy) + geom_point(mapping=aes(shape=name, color=withClass), size=3) #+ 
     #ggtitle("Relative Source Multivariate Entropy by dataset")
-smet +  scale_colour_manual(values = c("black", "red")) +
+smet +  #scale_colour_manual(values = c("black", "red")) +
     labs(shape="dataset", colour="Using class")
 ggsave("aggregated_with_No_label.jpeg", plot=smet)
 ```
@@ -144,7 +146,7 @@ We choose some of the interesting datasets from the diagram above to investigate
 
 ```{r, specific-data}
 #thisDsName <- "Ionosphere" # CAVEAT! Not enough different glyphs!!!
-thisDsName <- "iris"
+thisDsName <- "iris" # for paper, first run this value, then with "Glass"
 thisDsName <- "Glass"
 #thisDsName <- "Arthritis"
 #thisDsName <- "BreastCancer"
@@ -158,10 +160,10 @@ thisEdf <-  rbind(edf %>% filter(dsName == thisDsName & name != "ALL") %>%
                              H_Uxi, H_Pxi, DeltaH_Pxi, M_Pxi, VI_Pxi,
                              withClass, dsName)
                 ) 
-thisEt <-  ggmetern(thisEdf) + 
+thisEt <-  ggmetern(thisEdf, fancy) + 
     geom_mask() + #<<<<< Puts the mask below any layers to follow
     geom_point(aes(shape=name, colour=withClass), size=3)
-thisEt + scale_colour_manual(values = c("black", "red")) +
+thisEt + #scale_colour_manual(values = c("black", "red")) +
     scale_shape_manual(values=1:14) + 
     labs(shape="feature", colour="Using class") #+
     #ggtitle("Relative Source Multivariate Entropies per Feature")
@@ -198,7 +200,7 @@ p + ylab("Source Multivariate Entropy") + xlab("Feature/Variable") #+
 The multisplit SMET can also offer the same information with a different encoding: using the fill color on the glyphs used to represent the maximum entropy per feature:
 
 ```{r absolute-SMET}
-ggmetern(filter(smedf, name != "@AGGREGATE")) +
+ggmetern(filter(smedf, name != "@AGGREGATE"), fancy) +
     geom_point(size=4, aes(shape=name, colour=H_Uxi)) + 
     scale_shape_manual(values=1:14, guide=FALSE) + 
     scale_color_gradient(low="grey", high="black") +

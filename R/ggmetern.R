@@ -14,6 +14,8 @@
 #' To plot the *split entropy triangle* this dataframe must have  at least the following variables \code{c("DeltaHx", "DeltaHx","MIxyX","MIxyY", "VIx", "VIy")}.
 #' To plot the *entropy triangle* this dataframe must have  either of the two configurations. 
 # # @param split A toggle whether we want to use the split entropy diagram. Defaults to FALSE
+#' @param fancy A switch whether to use a fancier (coloured) or terser (B&W) \code{\link{ggplot2::theme}} in the plot.
+#' Defaults to fancy=TRUE, for exploratory analysis. fancy=FALSE is better for printed matter. 
 #' @return A plot object in the ggplot2 class of plots ready to be plotted.
 #' @seealso \code{\link{ggtern}}, \code{\link{entropies}}, \code{\link{entropicCoordinates}}
 #' @export
@@ -27,13 +29,13 @@
 # splitExperiments <- entropicCoords(entropies(UCBAdmissions), split=TRUE) # Non-split data
 # splitET <- ggentropytern(splitExperiments)
 # splitET # split entropy triangle
-ggmetern <- function(data, ...) {
+ggmetern <- function(data, fancy=TRUE, ...) {
     vars <- list(...)
     # If we are to build the split triangle, we have to massage the data:
     if (hasSplitSmetCoords(data)){
         # Create the plot
-        ep <- ggtern::ggtern(data, aes(x=VI_Pxi, y=M_Pxi, z=DeltaH_Pxi), vars) +
-            theme_rotate(degrees=-60)#Source Entropy Diagrams are upside down!
+        ep <- ggtern::ggtern(data, aes(x=VI_Pxi, y=M_Pxi, z=DeltaH_Pxi), vars) #+
+            #theme_rotate(degrees=-60)#Source Entropy Diagrams are upside down!
         # Node labels for the split triangle
         #TlabExp <- expression({italic(M)^{symbol("\242")}}["Xi"])
         TlabExp <- "$\\textit{M'}_{P_{X_i}}"
@@ -67,12 +69,14 @@ ggmetern <- function(data, ...) {
     } else {
         stop("Non-appropiate data")
     }
-    # A basic plot and theme
+    ep <- ep + geom_mask() #<<<<< Puts the mask below any layers to follow, charm by N. Hamilton
+    if (fancy){ # A theme for interactive visualization & exploration
+        ep <- ep + ggtern::theme_rgbw() + 
+            ggtern::theme_custom(col.T="forestgreen",col.L="red",col.R="orange")
+    }else{# A basic plot and theme for publishing
+        ep <- ep + ggtern::theme_bw()
+    }
     ep <- ep + 
-        geom_mask() + #<<<<< Puts the mask below any layers to follow, charm by N. Hamilton
-        #scale_shape_manual(values=c(1:nrow(data))) + 
-        ggtern::theme_rgbw() + 
-        ggtern::theme_custom(col.T="forestgreen",col.L="red",col.R="orange") + 
         ggtern::theme(complete=FALSE, 
                        tern.axis.text.show=TRUE,
                        tern.axis.arrow.show=TRUE,
