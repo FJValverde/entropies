@@ -1,0 +1,121 @@
+---
+title: "Classification induction using bonds"
+author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
+date: "Feb, 15th, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(mmp) # max-min-plus completed calculus
+library(mldr) # multi-label classification in R
+library(infotheo)  # The functionality provided by this has to be rerouted through entropies
+library(entropies) # This package
+library(ggtern)    # Ternary diagrams on ggplot
+```
+# Task description
+
+We are going to deal with the yeast and emotions tasks from Mulan. Yeast is not inside mldr, but emotions is. 
+
+```{r}
+#birds, emotions and genbase are in the database
+data(emotions)
+summary(emotions) # Numbers seem to agree with those of the MULAN website
+data(birds)
+summary(birds)
+data(genbase)
+summary(genbase)
+```
+
+## Obtaining the entropies
+
+<!-- Obtain the entropies and some other data for plotting from all datasets. -->
+
+<!-- ```{r} -->
+<!-- # Analyze both with Classes and without -->
+<!-- withClasses <- c(TRUE, FALSE) -->
+<!-- #  "name"       "H_Uxi"      "H_Pxi"      "DeltaH_Pxi" "VI_Pxi"     "M_Pxi"  -->
+<!-- # "withClass", "dsName", "isClass" -->
+<!-- edf <- data.frame() -->
+<!-- for(dsName in unique(datasets$name)){ -->
+<!--     dsRecord <-  filter(datasets, name == dsName) -->
+<!--     ds <- evalDataset(dsName) -->
+<!--     for(withClass in withClasses){ -->
+<!--         if (withClass){ -->
+<!--             print(sprintf("Analyzing dataset with class label: %s", dsName)) -->
+<!--         }else { -->
+<!--             print(sprintf("Analyzing dataset without class label: %s", dsName)) -->
+<!--             # as per:  -->
+<!--             # http://stackoverflow.com/questions/5234117/how-to-drop-columns-by-name-in-a-data-frame -->
+<!--             # Don't EVER use subset in PROGRAMS! -->
+<!--             #ds <- subset(ds, subset=1:nrow(ds), select=dsRecord$className, drop=TRUE) -->
+<!--             ds <- ds[, !colnames(ds) == dsRecord$className] #fastest in bechnmark at bot. of url -->
+<!--         } -->
+<!--         edf <- rbind(edf, -->
+<!--                      entropies(ds, nbins=ceiling(nrow(ds)^(1/3))) %>% -->
+<!--                          mutate(withClass = withClass, -->
+<!--                                 isClass = (as.character(dsRecord$className) == -->
+<!--                                                 as.character(name)), -->
+<!--                                 dsName = dsName -->
+<!--                          ) -->
+<!--         ) -->
+<!--     } -->
+<!-- } -->
+<!-- str(edf) -->
+<!-- ``` -->
+
+
+```{r}
+#ds <- birds; numFeatures <- 260; numLabels <- 19; dsName <- "birds" # bird singing database
+ds <- emotions; numFeatures <- 72; numLabels <- 6; dsName <- "emotions" # emotions in music
+#ds <- genbase; numFeatures <- 1186; numLabels <- 27; dsName <- "genbase" #genbase ds from mldr
+features <- 1:numFeatures
+labels <- numFeatures+(1:numLabels)
+# Source entropies of the labels
+Y <- data.frame(lapply(ds$dataset[,labels], as.factor))
+H_Y <- sentropies(Y)
+H_Y_bar <- cbind(name="labels", as.data.frame(lapply(H_Y[,2:6], sum)))# Total entropy of the labels
+H_Y_bar
+H_Y_bar[,2] == sum(H_Y_bar[,4:6]) # sanity check
+# Source entropies of the features
+X <- discretize(ds$dataset[,features], disc="equalwidth")
+H_X <- sentropies(X)
+H_X_bar <- cbind(name="features", as.data.frame(lapply(H_X[,2:6], sum))) # Total entropy of the features
+H_X_bar
+H_X_bar[,2] == sum(H_X_bar[,4:6]) # sanity check!
+
+mcetData <- jentropies(X,Y) %>% mutate(dsName=dsName)
+mcetData
+```
+
+# Get the triangles of the database
+
+Now working out the split triangle for the bar variables!
+
+```{r}
+totalMcetData <-  mcetData %>% group_by(dsName, name)
+met <-  ggmetern(totalMcetData) + geom_point(size=3, aes(shape=dsName, color=name))
+    #+ ggtitle("Aggregate entropy by dataset")
+met +  scale_colour_manual(values = c("black", "red", "green")) +
+    labs(shape="dataset", colour="Input-Output-Joint")
+```
+
+# Working on non mldr datasets
+
+For instance, working on Anderson's Iris
+```{r}
+ds <- iris; numFeatures <- 4; numLabels <- 1; dsName <- "iris"
+features <- 1:numFeatures
+labels <- numFeatures+(1:numLabels)
+Y <- as.data.frame(ds[,labels])
+if (!all(sapply(Y, is.factor))){
+    Y <- data.frame(lapply(Y, as.factor))
+}
+X <- discretize(ds[,features], disc="equalwidth")
+mcetData <- jentropies(X,Y) %>% mutate(dsName=dsName)
+mcetData
+totalMcetData <-  mcetData %>% group_by(dsName, name)
+met <-  ggmetern(totalMcetData) + geom_point(size=3, aes(shape=dsName, color=name))
+    #+ ggtitle("Aggregate entropy by dataset")
+met +  scale_colour_manual(values = c("black", "red", "green")) +
+    labs(shape="dataset", colour="Input-Output-Joint")
+```

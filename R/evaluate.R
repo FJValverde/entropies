@@ -22,12 +22,12 @@ evaluate <- function(data, ...) UseMethod("evaluate")
 #' @return The concatenation of the entropies (whether split or not), the
 #'  \code{cm$overall} information from confusion matrix cm, and the \code{EMA}
 #'  and \code{NIT} rate as explained in \cite{val:pel:14a}.
-#'  @export
-#'  @importFrom caret confusionMatrix
+#' @importFrom caret confusionMatrix
+#' @export
 evaluate.confusionMatrix <- function(cm, ...){
-    require(caret) # for class "confusionMatrix"
+    #require(caret) # for class "confusionMatrix" # Do NOT use require in packages!
     if (class(cm) != "confusionMatrix")
-        stop("evalCM: not a confusion matrix")
+        stop("evaluate.confusionMatrix: not a confusion matrix")
     #vars <- list(...) # in case we have to split
     #cmEntropies <- entropies(cm, vars)
     cmEntropicCoords <- entropicCoords(entropies(cm), ...)
@@ -53,7 +53,7 @@ evaluate.confusionMatrix <- function(cm, ...){
 #' @examples evaluate.table(UCBAdmissions) # from package datasets
 #' @export
 evaluate.table <- function(cm, ...){
-    data <- as.table(cm)
+    data <- as.table(cm) # Is this necessary after dispatch?
     dataEntropies <- entropies(data,...)
     dataPerp <- perplexities(dataEntropies)
     return(cbind(dataEntropies, 

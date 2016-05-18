@@ -1,5 +1,9 @@
-Use cases for the Entropy triangle
-========================================================
+---
+title: "Simple Use Case for the Entropy Triangle with ggtern"
+author: "Francisco J. Valverde-Albacete"
+date: "Nov, 28th,  2015"
+output: html_document
+---
 
 # Environment construction
 ```{r}
@@ -42,7 +46,8 @@ The data must be created from (multiclass) classifiers and then transformed into
 We'll use the Fisher Iris data throughout, and a stratified partitioning of the database.
 
 ```{r}
-dsRow <- datasets[2, ]
+dsRow <- datasets[2, ] # iris
+dsRow <- datasets[3, ] #Glass
 dsName <- dsRow$name
 dataset <- evalDataset(dsName)
 dsRow
@@ -61,7 +66,7 @@ summary(Y)
 # A simple classifier evaluation
 
 ```{r}
-library(caret)
+#library(caret)
 set.seed(2117)
 #Basic data partitioning
 inTrain <- createDataPartition(y=Y,
@@ -130,7 +135,7 @@ summary(Y)
 Run the experiments
 
 ```{r n-fold validation}
-models <- c("knn", "logreg") # c("logreg") 
+models <- c("knn") #c("knn", "logreg") # c("logreg") 
 results <- data.frame()
 for (i in 1:numFolds){
     for (m in models){
@@ -154,16 +159,14 @@ for (i in 1:numFolds){
         print(testCM$table)
         # 5. Gather results for analysis
         results <- rbind(results, 
-                         cbind(evaluate.confusionMatrix(trainCM), Fold=i, method=m, Phase="train"),
-                         cbind(evaluate.confusionMatrix(testCM), Fold=i, method=m, Phase="test")
+                         cbind(evaluate(trainCM), Fold=i,method=m, Phase="train"),
+                         cbind(evaluate(testCM), Fold=i, method=m, Phase="test")
         )
         print(sprintf("Fold %d, method %s Train accuracy = %f\t Test accuracy= %f", 
                       i, m, trainCM$overall[1],testCM$overall[1])
         )
     }
 }
-
-
 ```
 
 Now try to plot these results: disaggregate and aggregate...
@@ -220,7 +223,7 @@ summary(Y)
 
 First we create the folds: the number of folds is a parameter of this script.
 
-```{r data partitioning}
+```{r data partitioning-2}
 numFolds <- 5
 set.seed(1717) # For reproducibility
 folds <- createFolds(Y, numFolds)
@@ -233,7 +236,7 @@ summary(Y)
 
 Run the experiments
 
-```{r n-fold validation}
+```{r n-fold validation-2}
 models <- c("knn") # c("knn", "logreg") 
 results <- data.frame()
 for (i in 1:numFolds){
@@ -258,10 +261,10 @@ for (i in 1:numFolds){
         print(testCM$table)
         # 5. Gather results for analysis
         results <- rbind(results, 
-                         cbind(evaluate.confusionMatrix(trainCM, split=TRUE), 
+                         cbind(evaluate(trainCM, split=TRUE), 
                                Fold=i, method=m, Phase="train"
                                ),
-                         cbind(evaluate.confusionMatrix(testCM, split=TRUE), 
+                         cbind(evaluate(testCM, split=TRUE), 
                                Fold=i, method=m, Phase="test"
                                )
                         )
@@ -312,7 +315,7 @@ meT <- ggentropytern(data=meanResults, limit=TRUE) +
 meT
 ```
 
-# Environment
+# Session information
 
 ```{r}
 sessionInfo()

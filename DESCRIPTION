@@ -1,10 +1,22 @@
 Package: entropies
 Type: Package
-Title: Plotting ternary entropy diagrams for joint distributions, contingency matrices, etc.
+Title: Plotting ternary entropy diagrams for joint distributions, contingency
+    matrices, etc.
 Version: 0.9.1
 Date: 2015-02-23
 Author: F.J. Valverde-Albacete
 Maintainer: F.J. Valverde-Albacete <franciscojvalverde@gmail.com>
-Imports: entropy, ggtern
-Description: Uses the ggtern and entropy packages to plot ternary entropy diagrams whether in the split form or not.
+Imports: 
+    dplyr,
+    entropy,
+    ggtern,
+    infotheo
+Extends: 
+    caret
+Description: Uses the ggtern, entropy and packages to plot ternary entropy
+    diagrams whether in the split form or not, whether for multivariate or not. 
 License: GPL-3
+RoxygenNote: 5.0.1
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

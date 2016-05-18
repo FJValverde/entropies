@@ -1,0 +1,30 @@
+---
+title: "Infodynamics of classification"
+author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
+date: "9 de mayo de 2016"
+output: html_document
+---
+# Introduction
+
+This vignette tries to demonstrate the use of Infodynamics for exploratory analysis of classification performance in Machine Learning. Infodynamics is an analogue of Thermodynamics for dealing with quantity of information instead of quantity of energy.
+
+The premise is that if the information related to a random variable, the true class, wants to be "transported" somewhere to the predicted class, then the entropic balances of the true and predicted classes have to satisfy certain requisites.  
+
+
+# Environment construction
+
+```{r setup, include=FALSE}
+#library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
+#library(entropy)  # To work out the appropriate coordinates.
+library(dplyr)     # That infamous Mr. Wickham!
+library(tidyr)     # Tidying tall & wide dataframes
+library(infotheo)  # The functionality provided by this has to be rerouted through entropies
+library(entropies) # This package
+library(ggtern)    # Excellent package for ternary diagrams in the gg tradition
+library(vcd)       # Categorical benchmarks
+library(mlbench)   # ml benchmarkss
+#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=6)
+```
+
