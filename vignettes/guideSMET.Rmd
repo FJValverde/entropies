@@ -53,15 +53,29 @@ multiSplitEntropies  <-  splitESmetCoords <-  c("name", "DeltaH_Pxi", "M_Pxi", "
 ```
 
 ```{r}
+# THe points at the vertices
 conceptual <- ggmetern(filter(d, extreme), fancy=FALSE) + 
-    geom_point(aes(color=name), size=3) +
-    #labs(color="Source type") +
-    
-    #the points in the middel of the angles and dise
+    geom_point(aes(fill=name,shape=name), size=3) +    
+    #scale_fill_manual(values=c("red", "blue", "orange")) +
+    scale_shape_manual(values=c(21,22,23)) + #, guide=FALSE) +
+    #guides(fill=FALSE, shape=FALSE) 
+    guides(fill=FALSE) + labs(shape="Source type") 
+    #labs(shape="Feature type") + #guides(color=FALSE) #scale_color_manual(guide=FALSE)
+    #guides(fill=FALSE,shape=FALSE) #scale_color_manual(guide=FALSE)
+
+#the points in the middle of the angles and dise
+conceptual <- conceptual + 
     geom_point(data=filter(d, !extreme), aes(shape=name), size=3) +
-    scale_shape_manual(values=rep(22,3), guide=FALSE) + 
-    labs(shape="Source type") +
-    geom_text(aes(label=point, hjust="inward", vjust="inward"))
+    #scale_shape_manual(values=rep(22,3), guide=FALSE) + 
+    scale_shape_manual(values=rep(c(21,22,23),2)) + #, guide=FALSE) + 
+    #scale_colour_manual(values=c("red", "blue", "orange")) +
+    #guides(shape=guide_legend()) + #,fill=guide_colorbar()) + 
+    labs(shape="Source type")
+    #guides(shape=FALSE) +
+    
+    #labs(shape="Source type") +
+    #geom_text(aes(label=point, hjust="inward", vjust="inward"))
+    #geom_text(aes(label=point, hjust="inward", angle=45)) # Does NOT work!
     #annotate("segment", x=1950, xend=1980, )
     # geom_point(aes(shape = name), size=3) + 
     # scale_shape_manual(values=c(21, 22, 24)) +

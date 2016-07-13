@@ -86,7 +86,8 @@ sentropies.confusionMatrix <- function(ct, ...){
 #' Multivariate source entropy decomposition of a data frame
 #' 
 #' @return Another dataframe with the main entropy coordinates of every variable
-#'   in the original, which are now the rows of the returned data.frame.
+#'   in the original, which are now the rows of the returned data.frame. If the columns have no
+#'   names, artificial ones are returned based in pre prefix "x" and their column number.
 #' @export
 #' @import infotheo
 #' @import dplyr
@@ -98,51 +99,28 @@ sentropies.data.frame <- function(df, ...){
         df <- infotheo::discretize(df, disc="equalwidth", ...) # infotheo::str(dfdiscretize generates ints, not factors.
     }
     # suppose the dataframe is categorical
+    if (is.null(names(df))){
+        warning("No names for columns: providing dummy names!")
+        names(df) <- paste0("x",1:ncol(df))
+    }
+    name <-  names(df)
     # Find simple sentropies, divergences and sentropies of the uniform marginals. 
-    name <-  colnames(df)
     edf <- data.frame(
-        name = name, # After an idyosincracy of dplyr, the rownames donot survive a mutate.
-        H_Pxi = unlist(lapply(df, function(v){natstobits(infotheo::entropy(v))})),
+        name = name, # After an idyosincracy of dplyr, the rownames do not survive a mutate.
         H_Uxi = unlist(lapply(df, function(v){log2(length(unique(v)))})),
-        stringsAsFactors = FALSE #Keep the original variable names as factors!
+        H_Pxi = unlist(lapply(df, function(v){natstobits(infotheo::entropy(v))})),
+         stringsAsFactors = FALSE #Keep the original variable names as factors!
         ) %>% dplyr::mutate(DeltaH_Pxi = H_Uxi - H_Pxi) 
                #M_Pxi = H_Pxi - VI_Pxi)
     if (ncol(df) == 1){
         warning("Single variable: providing only entropy")
-#         edf <- data.frame(
-#             name = colnames(df),
-#             H_Uxi = log2(length(unique(df[,1]))),
-#             H_Pxi = infotheo::entropy(df[,1])
-#         ) %>% mutate(DeltaH_Pxi = H_Uxi - H_Pxi)
+        VI_Pxi <- edf[1,"H_Pxi"]
     } else {
-        #entropyNames <- c("name", "H_Uxi", "H_Pxi", "VI_Pxi", "DeltaH_Pxi","M_Pxi")
-        #colnames(edf) <- entropyNames
-        #name <- colnames(df) # get the colnames once and for all
-        #nn <- length(name)
-        #H_Uxi <-  unlist(lapply(df, function(v){log2(length(unique(v)))}))
-        #H_Pxi <- unlist(lapply(df, function(v){natstobits(infotheo::entropy(v))}))
-        #VI_Pxi <- sapply(name, function(n){infotheo::condentropy(df[,n], Y=df[,setdiff(name, n)])})
-#         edf <- data.frame(
-#             name = colnames(df), # After an idyosincracy of dplyr, the rownames donot survive a mutate.
-#             H_Uxi = unlist(lapply(df, function(v){log2(length(unique(v)))})),
-#             H_Pxi = unlist(lapply(df, function(v){natstobits(infotheo::entropy(v))})), 
-#             VI_Pxi = sapply(name, function(n){infotheo::condentropy(df[,n], Y=df[,setdiff(name, n)])})
-#         ) %>% 
-#             mutate(DeltaH_Pxi = H_Uxi - H_Pxi, 
-#                    M_Pxi = H_Pxi - VI_Pxi)
         VI_Pxi <- vector("numeric", length(name))
         for(i in 1:length(name)){
             VI_Pxi[i] <- natstobits(condentropy(df[,i], df[,-i], ...))
         }
-        edf <- edf %>% mutate(
-            M_Pxi = H_Pxi - VI_Pxi, 
-            VI_Pxi
-        )
-#         edf <- mutate(edf,
-#                       VI_Pxi = sapply(name, function(x){natstobits(infotheo::condentropy(df[,x], df[, setdiff(name, x)]))}),
-#                       M_Pxi = H_Pxi - VI_Pxi
-#                       )
     }
+    edf <- edf %>% mutate(M_Pxi = H_Pxi - VI_Pxi, VI_Pxi)
     return(rbind(edf,cbind(name="ALL", as.data.frame(lapply(edf[,2:6], sum)))))
-    #return(edf)
 }

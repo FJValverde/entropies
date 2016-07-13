@@ -8,7 +8,8 @@
 }
 \value{
 Another dataframe with the main entropy coordinates of every variable
-  in the original, which are now the rows of the returned data.frame.
+  in the original, which are now the rows of the returned data.frame. If the columns have no
+  names, artificial ones are returned based in pre prefix "x" and their column number.
 }
 \description{
 Multivariate source entropy decomposition of a data frame

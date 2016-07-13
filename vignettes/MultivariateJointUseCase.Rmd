@@ -1,121 +1,132 @@
 ---
-title: "Classification induction using bonds"
+title: "Classification analysis using CMET"
 author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
 date: "Feb, 15th, 2016"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-library(mmp) # max-min-plus completed calculus
-library(mldr) # multi-label classification in R
+# Environment construction
+
+```{r, echo=FALSE, environment}
+#library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
+#library(entropy)  # To work out the appropriate coordinates.
+library(dplyr)     # That infamous Mr. Wickham!
+library(tidyr)     # Tidying tall & wide dataframes
 library(infotheo)  # The functionality provided by this has to be rerouted through entropies
 library(entropies) # This package
 library(ggtern)    # Ternary diagrams on ggplot
+library(vcd)       # Categorical benchmarks
+library(mlbench)   # ml benchmarkss
+#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+fancy <- TRUE  # set this for nicer on-screen visualization
+fancy <- FALSE # Set this for either printing matter
 ```
-# Task description
 
-We are going to deal with the yeast and emotions tasks from Mulan. Yeast is not inside mldr, but emotions is. 
+# Classification data analysis using the SCET
 
-```{r}
-#birds, emotions and genbase are in the database
-data(emotions)
-summary(emotions) # Numbers seem to agree with those of the MULAN website
-data(birds)
-summary(birds)
-data(genbase)
-summary(genbase)
+## Datasets available
+
+The inventory of databases to be explored:
+
+```{r data-munging}
+# the inventory of databases you can access
+#library(datasets)
+name <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer") # 
+className <- c("Class","Species", "Type", "Improved", "Class")  # Name of class attribute
+classVar <- c(35, 5, 10, 5, 11)   # ordinal of the class attribute
+other <- c("", "", "", "", "ID", "Id") # Other attributes to dispose of: mainly identifiers.
+K <- c(2, 3, 7, 3, 2)  # No. of classes
+# To select a dataset by name
+# Caveat: you have to ensure that the containing package has been attached
+evalDataset <- function(dsName){
+    dsName <- as.character(dsName)
+    switch(dsName,
+        "iris" =         {data(iris); iris},
+        "Ionosphere" =   {data(Ionosphere); Ionosphere},
+        "Glass" =        {data(Glass); Glass},
+        "Arthritis" =    {data(Arthritis); Arthritis},
+        "BreastCancer" = {data(BreastCancer); BreastCancer}
+        )
+}
+m <- sapply(name, function(n){nrow(evalDataset(n))})
+n <- sapply(name, function(n){ncol(evalDataset(n))}) - 1 
+datasets <- data.frame(name, className, as.integer(K), as.integer(n), m, stringsAsFactors=FALSE)
+ 
+# #To select the #of column of the classc
+# whichClass <- function(ds, className){which(colnames(evalDatasset(ds))==className)}
+# #whichNumVar <-  function(r){whichClass(evalDataset(r$name), r$className)}
+# cardinalClass <- function(ds, className){
+#     length(unique(evalDataset(ds)[,className]))
+# }
+# classVar <-  mapply(whichClass, datasets$name, datasets$className)
+# K <- mapply(cardinalClass, datasets$name, classVar)
+# library(dplyr)
+# datasets <- data.frame(name,className, classVar, K)
+datasets
+# Let's print it on latex
+library(xtable)
+ds4latexing <- datasets
+row.names(ds4latexing) <- NULL
+names(ds4latexing) <- c("Dataset Name", "class name", "class card.", "features", "instances")
+thisLatex <- xtable(ds4latexing, 
+                    caption="Some datasets considered in this study",
+                    label="tab:datasets")
+align(thisLatex) <- xalign(thisLatex)
+thisLatex
 ```
 
 ## Obtaining the entropies
 
-<!-- Obtain the entropies and some other data for plotting from all datasets. -->
+Obtain the entropies and some other data for plotting from all datasets.
 
-<!-- ```{r} -->
-<!-- # Analyze both with Classes and without -->
-<!-- withClasses <- c(TRUE, FALSE) -->
-<!-- #  "name"       "H_Uxi"      "H_Pxi"      "DeltaH_Pxi" "VI_Pxi"     "M_Pxi"  -->
-<!-- # "withClass", "dsName", "isClass" -->
-<!-- edf <- data.frame() -->
-<!-- for(dsName in unique(datasets$name)){ -->
-<!--     dsRecord <-  filter(datasets, name == dsName) -->
-<!--     ds <- evalDataset(dsName) -->
-<!--     for(withClass in withClasses){ -->
-<!--         if (withClass){ -->
-<!--             print(sprintf("Analyzing dataset with class label: %s", dsName)) -->
-<!--         }else { -->
-<!--             print(sprintf("Analyzing dataset without class label: %s", dsName)) -->
-<!--             # as per:  -->
-<!--             # http://stackoverflow.com/questions/5234117/how-to-drop-columns-by-name-in-a-data-frame -->
-<!--             # Don't EVER use subset in PROGRAMS! -->
-<!--             #ds <- subset(ds, subset=1:nrow(ds), select=dsRecord$className, drop=TRUE) -->
-<!--             ds <- ds[, !colnames(ds) == dsRecord$className] #fastest in bechnmark at bot. of url -->
-<!--         } -->
-<!--         edf <- rbind(edf, -->
-<!--                      entropies(ds, nbins=ceiling(nrow(ds)^(1/3))) %>% -->
-<!--                          mutate(withClass = withClass, -->
-<!--                                 isClass = (as.character(dsRecord$className) == -->
-<!--                                                 as.character(name)), -->
-<!--                                 dsName = dsName -->
-<!--                          ) -->
-<!--         ) -->
-<!--     } -->
-<!-- } -->
-<!-- str(edf) -->
-<!-- ``` -->
-
-
-```{r}
-#ds <- birds; numFeatures <- 260; numLabels <- 19; dsName <- "birds" # bird singing database
-ds <- emotions; numFeatures <- 72; numLabels <- 6; dsName <- "emotions" # emotions in music
-#ds <- genbase; numFeatures <- 1186; numLabels <- 27; dsName <- "genbase" #genbase ds from mldr
-features <- 1:numFeatures
-labels <- numFeatures+(1:numLabels)
-# Source entropies of the labels
-Y <- data.frame(lapply(ds$dataset[,labels], as.factor))
-H_Y <- sentropies(Y)
-H_Y_bar <- cbind(name="labels", as.data.frame(lapply(H_Y[,2:6], sum)))# Total entropy of the labels
-H_Y_bar
-H_Y_bar[,2] == sum(H_Y_bar[,4:6]) # sanity check
-# Source entropies of the features
-X <- discretize(ds$dataset[,features], disc="equalwidth")
-H_X <- sentropies(X)
-H_X_bar <- cbind(name="features", as.data.frame(lapply(H_X[,2:6], sum))) # Total entropy of the features
-H_X_bar
-H_X_bar[,2] == sum(H_X_bar[,4:6]) # sanity check!
-
-mcetData <- jentropies(X,Y) %>% mutate(dsName=dsName)
-mcetData
-```
-
-# Get the triangles of the database
-
-Now working out the split triangle for the bar variables!
-
-```{r}
-totalMcetData <-  mcetData %>% group_by(dsName, name)
-met <-  ggmetern(totalMcetData) + geom_point(size=3, aes(shape=dsName, color=name))
-    #+ ggtitle("Aggregate entropy by dataset")
-met +  scale_colour_manual(values = c("black", "red", "green")) +
-    labs(shape="dataset", colour="Input-Output-Joint")
-```
-
-# Working on non mldr datasets
-
-For instance, working on Anderson's Iris
-```{r}
-ds <- iris; numFeatures <- 4; numLabels <- 1; dsName <- "iris"
-features <- 1:numFeatures
-labels <- numFeatures+(1:numLabels)
-Y <- as.data.frame(ds[,labels])
-if (!all(sapply(Y, is.factor))){
-    Y <- data.frame(lapply(Y, as.factor))
+```{r find-entropies}
+# Analyze both with Classes and without
+#withClasses <- c(TRUE, FALSE)
+#  "name"       "H_Uxi"      "H_Pxi"      "DeltaH_Pxi" "VI_Pxi"     "M_Pxi" 
+# "withClass", "dsName", "isClass"
+edf <- data.frame()
+for(dsName in unique(datasets$name)){
+    dsRecord <-  filter(datasets, name == dsName)
+    ds <- evalDataset(dsName)
+#    for(withClass in withClasses){
+#        if (withClass){
+            print(sprintf("Analyzing dataset with class label: %s", dsName))
+#        }else {
+#            print(sprintf("Analyzing dataset without class label: %s", dsName))
+            # as per: 
+            # http://stackoverflow.com/questions/5234117/how-to-drop-columns-by-name-in-a-data-frame
+            # Don't EVER use subset in PROGRAMS!
+            #ds <- subset(ds, subset=1:nrow(ds), select=dsRecord$className, drop=TRUE)
+#            ds <- ds[, !colnames(ds) == dsRecord$className] #fastest in bechnmark at bot. of url
+#        }
+        edf <- rbind(edf,
+                     jentropies(select(ds, which(names(ds) == dsRecord$className)),
+                                select(ds, which(names(ds) != dsRecord$className))) %>%
+                         mutate(type=name, #X, Y, XY are used to draw different graphs,
+                                name=dsName # This is the name of the dataset
+                                )
+#                     sentropies(ds, nbins=ceiling(nrow(ds)^(1/3))) %>%
+                         # mutate(withClass = withClass,
+                         #        isClass = (as.character(dsRecord$className) ==
+                         #                        as.character(name)),
+                         #        dsName = dsName
+                         # )
+        )
+#    }
 }
-X <- discretize(ds[,features], disc="equalwidth")
-mcetData <- jentropies(X,Y) %>% mutate(dsName=dsName)
-mcetData
-totalMcetData <-  mcetData %>% group_by(dsName, name)
-met <-  ggmetern(totalMcetData) + geom_point(size=3, aes(shape=dsName, color=name))
-    #+ ggtitle("Aggregate entropy by dataset")
-met +  scale_colour_manual(values = c("black", "red", "green")) +
-    labs(shape="dataset", colour="Input-Output-Joint")
+str(edf)
+# show the split entropies
+filter(edf, type != "XY")
 ```
+
+```{r}
+cmet <- ggmetern(edf, fancy=TRUE) +
+    geom_point(aes(color=name, shape=type), size=3) +
+    scale_shape_manual(values=c(4, 20, 1)) +
+    labs(color="Dataset name", shape="Var type")
+cmet
+ggsave(filename="aggregated_and_split_uniclass_CMET.jpeg")
+```
+
+

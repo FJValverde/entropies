@@ -21,6 +21,7 @@ library(entropies) # This package
 library(ggtern)    # Ternary diagrams on ggplot
 library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
+library(candisc)   # Wine dataset
 #knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
 fancy <- TRUE  # set this for nicer on-screen visualization
@@ -37,27 +38,38 @@ The inventory of databases to be explored:
 ```{r data-munging}
 # the inventory of databases you can access
 #library(datasets)
-name <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer") # 
-className <- c("Class","Species", "Type", "Improved", "Class")  # Name of class attribute
-classVar <- c(35, 5, 10, 5, 11)   # ordinal of the class attribute
-other <- c("", "", "", "", "ID", "Id") # Other attributes to dispose of: mainly identifiers.
-K <- c(2, 3, 7, 3, 2)  # No. of classes
-datasets <- data.frame(name,classVar,className,K, stringsAsFactors=FALSE)
+dsNames <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
+className <- c("Class","Species", "Type", "Improved", "Class", "Class", "Cultivar")  # Name of class attribute
+classVar <- c(35, 5, 10, 5, 11, 61, 1)   # ordinal of the class attribute
+idNumber <- c(NaN, NaN, NaN, 1, 1, NaN, NaN) # Other attributes to dispose of: mainly identifiers.
 
+K <- c(2, 3, 7, 3, 2, 2, 3)  # No. of classes in the class variable
 # To select a dataset by name
 # Caveat: you have to ensure that the containing package has been attached
 evalDataset <- function(dsName){
     dsName <- as.character(dsName)
-    switch(dsName,
+    switch(dsName, #TODO: improve this way of "invoking" the dataset.
         "iris" =         {data(iris); iris},
         "Ionosphere" =   {data(Ionosphere); Ionosphere},
         "Glass" =        {data(Glass); Glass},
         "Arthritis" =    {data(Arthritis); Arthritis},
-        "BreastCancer" = {data(BreastCancer); BreastCancer}
-        )
+        "BreastCancer" = {data(BreastCancer); BreastCancer},
+        "Sonar" =        {data(Sonar); Sonar},
+        "Wine" =         {data(Wine); Wine}
+        )#This value "FALLS THROUGH"
 }
+m <- sapply(dsNames, function(n){nrow(evalDataset(n))}) # no. of instances in the dataset
+n <- sapply(dsNames, function(n){ncol(evalDataset(n))}) - 1 - as.numeric(!is.nan(idNumber)) # no. of features in the dataset.
+datasets <- data.frame(name=dsNames, 
+                       className, 
+                       idNumber, 
+                       K=as.integer(K), 
+                       n=as.integer(n), 
+                       m, 
+                       stringsAsFactors=FALSE)
+ 
 # #To select the #of column of the classc
-# whichClass <- function(ds, className){which(colnames(evalDataset(ds))==className)}
+# whichClass <- function(ds, className){which(colnames(evalDatasset(ds))==className)}
 # #whichNumVar <-  function(r){whichClass(evalDataset(r$name), r$className)}
 # cardinalClass <- function(ds, className){
 #     length(unique(evalDataset(ds)[,className]))
@@ -67,9 +79,18 @@ evalDataset <- function(dsName){
 # library(dplyr)
 # datasets <- data.frame(name,className, classVar, K)
 datasets
-# Let's print it on latex
+```
+
+Let's print this information to latex:
+
+```{r}
 library(xtable)
-thisLatex <- xtable(datasets, caption="Some datasets considered in this study")
+ds4latexing <- datasets %>% select(-className, -idNumber)
+row.names(ds4latexing) <- NULL
+names(ds4latexing) <- c("Dataset Name", "class card.", "num. features", "num. instances")
+thisLatex <- xtable(ds4latexing, 
+                    caption="Some datasets considered in this study",
+                    label="tab:datasets")
 align(thisLatex) <- xalign(thisLatex)
 thisLatex
 ```
@@ -84,9 +105,15 @@ withClasses <- c(TRUE, FALSE)
 #  "name"       "H_Uxi"      "H_Pxi"      "DeltaH_Pxi" "VI_Pxi"     "M_Pxi" 
 # "withClass", "dsName", "isClass"
 edf <- data.frame()
-for(dsName in unique(datasets$name)){
-    dsRecord <-  filter(datasets, name == dsName)
-    ds <- evalDataset(dsName)
+for(i in 1:nrow(datasets)){
+    dsRecord <-  datasets[i, ] #filter(datasets, name == dsName)
+    dsName <- dsRecord$name
+    ds <- infotheo::discretize( # Controlled discretization of the database.
+        evalDataset(dsName), 
+        nbins=max(ceiling(nrow(Glass)^(1/2)), dsRecord$K)# At least the classes.
+    )
+    if (!is.nan(dsRecord$idNumber)) # ids as features: spureously correlated with class labels
+        ds <- ds[,-dsRecord$idNumber]
     for(withClass in withClasses){
         if (withClass){
             print(sprintf("Analyzing dataset with class label: %s", dsName))
@@ -100,7 +127,6 @@ for(dsName in unique(datasets$name)){
         }
         edf <- rbind(edf,
                      sentropies(ds) %>% 
-#                     sentropies(ds, nbins=ceiling(nrow(ds)^(1/3))) %>%
                          mutate(withClass = withClass,
                                 isClass = (as.character(dsRecord$className) ==
                                                 as.character(name)),
@@ -129,27 +155,43 @@ totalEdf <-  edf %>%
                     M_Pxi = sum(M_Pxi))
            
 totalEdf
+# Plot the triangle with only the aggregate data with no Class
+smet <-  ggmetern(totalEdf %>% filter(withClass == FALSE), fancy) + 
+    geom_point(mapping=aes(shape=name), size=3)+
+    scale_shape_manual(values=1:nrow(datasets)) +
+    labs(shape="Dataset")
+if (fancy){
+    smet <- smet + ggtitle("Source Multivariate Entropy by dataset")
+}
+smet
+ggsave("aggregated_without_label.jpeg", plot=smet)
 
 #Use the dsName for shape and the withClass for fill => use only fillable glyphs.
-smet <-  ggmetern(totalEdf, fancy) + geom_point(mapping=aes(shape=name, color=withClass), size=3) #+ 
-    #ggtitle("Relative Source Multivariate Entropy by dataset")
-smet +  #scale_colour_manual(values = c("black", "red")) +
-    labs(shape="dataset", colour="Using class")
-ggsave("aggregated_with_No_label.jpeg", plot=smet)
+smet <-  ggmetern(totalEdf, fancy) + 
+    geom_point(mapping=aes(shape=name, color=withClass), size=3)+
+    scale_color_manual(values=c("red", "black")) +
+    scale_shape_manual(values=1:nrow(datasets)) +
+    labs(shape="Dataset", colour="Using class")
+if (fancy){
+    smet <- smet + ggtitle("Source Multivariate Entropy by dataset")
+}
+smet
+ggsave("aggregated_withWo_label.jpeg", plot=smet)
 ```
 
 ## Plotting the multisplit data
 
-## Exploring individual datasets
-
 We choose some of the interesting datasets from the diagram above to investigate:
 
 ```{r, specific-data}
-#thisDsName <- "Ionosphere" # CAVEAT! Not enough different glyphs!!!
+#TODO: make a grid of these plots to be able to see anything different. 
+thisDsName <- "Ionosphere" # CAVEAT! Not enough different glyphs!!!
 thisDsName <- "iris" # for paper, first run this value, then with "Glass"
-thisDsName <- "Glass"
-#thisDsName <- "Arthritis"
-#thisDsName <- "BreastCancer"
+# thisDsName <- "Glass"
+# thisDsName <- "Arthritis"
+# thisDsName <- "BreastCancer"
+# thisDsName <- "Sonar"
+# thisDsName <- "Wine"
 # negatively subsetting recipe from Stack Overflow
 thisEdf <-  rbind(edf %>% filter(dsName == thisDsName & name != "ALL") %>% 
                       select(-starts_with("isClass")), #%>% 
@@ -160,18 +202,55 @@ thisEdf <-  rbind(edf %>% filter(dsName == thisDsName & name != "ALL") %>%
                              H_Uxi, H_Pxi, DeltaH_Pxi, M_Pxi, VI_Pxi,
                              withClass, dsName)
                 ) 
-thisEt <-  ggmetern(thisEdf, fancy) + 
-    geom_mask() + #<<<<< Puts the mask below any layers to follow
-    geom_point(aes(shape=name, colour=withClass), size=3)
-thisEt + #scale_colour_manual(values = c("black", "red")) +
-    scale_shape_manual(values=1:14) + 
-    labs(shape="feature", colour="Using class") #+
-    #ggtitle("Relative Source Multivariate Entropies per Feature")
+# Create different geometris for different feature set cardinalities:
+# First consider the features in the dataset without the class variable
+thisEt <-  ggmetern(filter(thisEdf, withClass == FALSE),  fancy) 
+if ((nrow(thisEdf) - 1)/2 > 14){#too many points to be represented with glpsh
+    thisEt <- thisEt + #geom_density_tern(aes(fill=..level..)) +
+        stat_density_tern(geom='polygon',
+                        aes(fill=..level..),
+                        #base=base,  ###NB Base Specification
+                        colour='grey50') + 
+        scale_fill_gradient(low='green',high='red')  +
+        geom_point(size=1)
+}else {
+    thisEt <- thisEt + geom_point(aes(shape=name), size=3) +
+        scale_shape_manual(values=1:14) + 
+        labs(shape="Feature") #+
+    #ggtitle("Source Multivariate Entropies per Feature")
+}
+thisEt
+ggsave(filename=sprintf("%s_without_class.jpeg", thisDsName))
+
+# Now consider the same set with the class label included.
+# A color blind palette from: http://www.cookbook-r.com/Graphs/Colors_%28ggplot2%29/#a-colorblind-friendly-palette
+# The palette with grey:
+#cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# The palette with black:
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+thisEt <-  ggmetern(thisEdf, fancy) 
+if ((nrow(thisEdf) - 1)/2 > 14){#too many points to be represented with glpsh
+    thisEt <- thisEt + #geom_density_tern(aes(fill=..level..)) +
+        stat_density_tern(geom='polygon',
+                        aes(fill=..level..),
+                        #base=base,  ###NB Base Specification
+                        colour='grey50') + 
+        scale_fill_gradient(low='green',high='red')  +
+        geom_point(size=1)
+}else {
+    thisEt <- thisEt + geom_point(aes(shape=name, colour=withClass), size=3) +
+        scale_shape_manual(values=1:14) + 
+        #scale_color_discrete("color_blind")
+        scale_colour_manual(values=cbbPalette)
+    #ggtitle("Source Multivariate Entropies per Feature")
+}
+thisEt + labs(shape="Feature", color="Using class") #+
 ggsave(filename=sprintf("%sW_WO_class.jpeg", thisDsName))
 ```
 
 
-# The absolute decomposition
+### The absolute decomposition
 
 ```{r stacked-bars}
 # In case the switch is ON for excluding the aggregate.
