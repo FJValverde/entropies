@@ -166,10 +166,18 @@ if (fancy){
 smet
 ggsave("aggregated_without_label.jpeg", plot=smet)
 
+# A color blind palette from: http://www.cookbook-r.com/Graphs/Colors_%28ggplot2%29/#a-colorblind-friendly-palette
+# The palette with grey:
+#cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# The palette with black:
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
 #Use the dsName for shape and the withClass for fill => use only fillable glyphs.
 smet <-  ggmetern(totalEdf, fancy) + 
-    geom_point(mapping=aes(shape=name, color=withClass), size=3)+
-    scale_color_manual(values=c("red", "black")) +
+    geom_point(mapping=aes(shape=name, color=withClass), size=3) +
+    scale_colour_manual(values=cbbPalette) +
+    #scale_color_manual(values=c("red", "black")) +
     scale_shape_manual(values=1:nrow(datasets)) +
     labs(shape="Dataset", colour="Using class")
 if (fancy){
@@ -223,12 +231,6 @@ thisEt
 ggsave(filename=sprintf("%s_without_class.jpeg", thisDsName))
 
 # Now consider the same set with the class label included.
-# A color blind palette from: http://www.cookbook-r.com/Graphs/Colors_%28ggplot2%29/#a-colorblind-friendly-palette
-# The palette with grey:
-#cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-# The palette with black:
-cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 thisEt <-  ggmetern(thisEdf, fancy) 
 if ((nrow(thisEdf) - 1)/2 > 14){#too many points to be represented with glpsh
     thisEt <- thisEt + #geom_density_tern(aes(fill=..level..)) +
