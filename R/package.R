@@ -7,7 +7,7 @@ splitSmetCoords  <-  c("name", "H_Uxi", "H_Pxi", "VI_Pxi") # multivariate split 
 
 #' A caracterization of the variables in a data.frame of derived non-split entropies.
 derivedNonSplitEntropies <- c("Uxy", "DeltaHxy", "MIxy2", "VIxy")
-multiEntropicCoords <-  c("DeltaH_Px", "M_Px", "VI_Px") #multivariate entropic coordinates
+multiEntropicCoords <-  c("DeltaH_Px", "M_Px", "VI_Px") #source multivariate aggregate coordinates
 # Strictly speaking VI_Px is not derived
 
 #' A caracterization of the variables in a data.frame of derived non-split entropies.
@@ -31,11 +31,15 @@ hasDerivedNonSplitEntropies <- function(df) {all(derivedNonSplitEntropies %in% n
 #' working out the multivariate simple entropic coordinates
 hasMultiAggregateEntropies <- function(df){all(multiAggregateEntropies %in% names(df))}
 
-#' a function to detect if the multivariate split entropies are present: this enables 
+#' Functions to detect SMET coordinates
+#' a function to detect if the source multivariate split entropies are present: this enables 
 #' working out the multivariate split entropic coordinates
 hasSplitSmetCoords <- function(df){all(derivedSplitSmetCoords %in% names(df))}
 
-#' A function to detect if the multivariate entropic coordinates are present
+#' A function to detect if the source multivariate aggregate entropic coordinates are present
+hasAggregateSmetCoords <- function(df){all(multiEntropicCoords %in% names(df))}
+
+#' deprecated!
 hasMultiEntropicCoords <- function(df){all(multiEntropicCoords %in% names(df))}
 
 

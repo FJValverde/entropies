@@ -2,13 +2,15 @@
 % Please edit documentation in R/package.R
 \name{hasSplitSmetCoords}
 \alias{hasSplitSmetCoords}
-\title{a function to detect if the multivariate split entropies are present: this enables 
+\title{Functions to detect SMET coordinates
+a function to detect if the source multivariate split entropies are present: this enables 
 working out the multivariate split entropic coordinates}
 \usage{
 hasSplitSmetCoords(df)
 }
 \description{
-a function to detect if the multivariate split entropies are present: this enables 
+Functions to detect SMET coordinates
+a function to detect if the source multivariate split entropies are present: this enables 
 working out the multivariate split entropic coordinates
 }
 

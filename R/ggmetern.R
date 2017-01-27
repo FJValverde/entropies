@@ -32,7 +32,8 @@
 ggmetern <- function(data, fancy=TRUE, ...) {
     vars <- list(...)
     # If we are to build the split triangle, we have to massage the data:
-    if (hasSplitSmetCoords(data)){
+    #if (hasSplitSmetCoords(data)){
+    if (hasSplitSmetCoords(data)) {
         # Create the plot
         ep <- ggtern::ggtern(data, aes(x=VI_Pxi, y=M_Pxi, z=DeltaH_Pxi), vars) #+
             #theme_rotate(degrees=-60)#Source Entropy Diagrams are upside down!
@@ -42,10 +43,12 @@ ggmetern <- function(data, fancy=TRUE, ...) {
         #RlabExp <- expression(paste(Delta, "", {italic(H)^{symbol("\242")}}["Xi"]))
         RlabExp <- "$\\Delta\\textit{H'}_{P_{X_i}}"
         #LlabExp <- expression({italic(VI)^{symbol("\242")}}["Xi|Xi"^c])
-        LlabExp <-  "$\\textit{VI'}_{P_{X_i}}"
+        #LlabExp <-  "$\\textit{VI'}_{P_{X_i}}"
+        LlabExp <-  "$\\textit{H'}_{P_{X_i|X_i^c}}"
         titleExp <- "Source split entropies"
         # Otherwise, check that it has multivariate source data, then plot
-    } else if (hasMultiEntropicCoords(data)){
+    #} else if (hasMultiEntropicCoords(data)){  
+    } else if (hasAggregateSmetCoords(data)){
         ep <- ggtern(data, aes(x=VI_Px, y=M_Px, z=DeltaH_Px), vars) #+ geom_point(...)
         # vertex labels for the non-split multivariate source triangle
         #TlabExp <- expression({italic(M)^{symbol("\242")}}["X"])
@@ -86,8 +89,9 @@ ggmetern <- function(data, fancy=TRUE, ...) {
         ggtern::Llab(LlabExp) #+
         #ggtitle(titleExp)
         #ggtern::theme_showarrows() + # This theme overrides later adjustments
-    if (hasMultiSplitEntropicCoords(data)){#Source Entropy Diagrams are upside down!
+    if (hasSplitSmetCoords(data) || hasAggregateSmetCoords(data)){#Source Entropy Diagrams are upside down!
         ep <- ep + theme_rotate(degrees=-60)
     }
+    ep <- ep + ggtern::theme_showarrows() 
     return(ep)
 }

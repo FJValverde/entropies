@@ -2,11 +2,11 @@
 % Please edit documentation in R/package.R
 \name{hasMultiEntropicCoords}
 \alias{hasMultiEntropicCoords}
-\title{A function to detect if the multivariate entropic coordinates are present}
+\title{deprecated!}
 \usage{
 hasMultiEntropicCoords(df)
 }
 \description{
-A function to detect if the multivariate entropic coordinates are present
+deprecated!
 }
 

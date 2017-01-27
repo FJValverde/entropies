@@ -31,6 +31,8 @@ knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
 
 # Conceptual triangle
 
+This is the conceptual triangle for the AGGREGATE source multivariate entropy triangle:
+
 ```{r}
 m <- 
     rbind(
@@ -43,12 +45,12 @@ m <-
 )
 d <- data.frame(
     name = m[,1],
-    DeltaH_Pxi=as.numeric(m[,2]),
-    M_Pxi=as.numeric(m[,3]),
-    VI_Pxi=as.numeric(m[,4]),
+    DeltaH_Px=as.numeric(m[,2]),
+    M_Px=as.numeric(m[,3]),
+    VI_Px=as.numeric(m[,4]),
     point = m[,5]
-) %>% mutate(extreme = DeltaH_Pxi == 1.0 | M_Pxi == 1.0 | VI_Pxi == 1.0)
-multiSplitEntropies  <-  splitESmetCoords <-  c("name", "DeltaH_Pxi", "M_Pxi", "VI_Pxi") 
+) %>% mutate(extreme = DeltaH_Px == 1.0 | M_Px == 1.0 | VI_Px == 1.0)
+#multiSplitEntropies  <-  splitESmetCoords <-  c("name", "DeltaH_Pxi", "M_Pxi", "VI_Pxi") 
 #names(d) <-  c(multiSplitEntropies, "point", "extremePoint")
 ```
 
