@@ -4,7 +4,7 @@
 #' This function creates a ternary plot on entropic coordinates whether 
 #' split or not for multivariate sets of random variables.
 #' 
-#'  @details The axes of the plot are changed according to whether the three
+#' @details The axes of the plot are changed according to whether the three
 #' aggregate variables "DeltaH_Px", "M_Px" and "VI_Px" are defined (not split) or
 #' the split variables "DeltaH_Pxi", "DeltaH_Pxi","M_Pxi" in the dataframe passed as parameter. 
 #'   Note that no geometry is imposed on the plot.
@@ -23,7 +23,7 @@
 #' @examples
 #' data(UCBAdmissions)
 #' experiments <- entropicCoords(entropies(UCBAdmissions)) # Non-split data
-#' eT <- ggentropytern(experiments) + geom_point(aes(VIxy,MIxy2,DeltaHxy, colour=Dept, shape=Dept))
+#' eT <- ggmetern(experiments) + geom_point(aes(VIxy,MIxy2,DeltaHxy, colour=Dept, shape=Dept))
 #' eT + ggtitle("UCB admissions by department. X=admittance status, Y=gender") # non-split entropy triangle
 #' 
 # splitExperiments <- entropicCoords(entropies(UCBAdmissions), split=TRUE) # Non-split data
@@ -39,12 +39,12 @@ ggmetern <- function(data, fancy=TRUE, ...) {
             #theme_rotate(degrees=-60)#Source Entropy Diagrams are upside down!
         # Node labels for the split triangle
         #TlabExp <- expression({italic(M)^{symbol("\242")}}["Xi"])
-        TlabExp <- "$\\textit{M'}_{P_{X_i}}"
+        TlabExp <- "$\\textit{M'}_{P_{X_i}}$"
         #RlabExp <- expression(paste(Delta, "", {italic(H)^{symbol("\242")}}["Xi"]))
-        RlabExp <- "$\\Delta\\textit{H'}_{P_{X_i}}"
+        RlabExp <- "$\\Delta\\textit{H'}_{P_{X_i}}$"
         #LlabExp <- expression({italic(VI)^{symbol("\242")}}["Xi|Xi"^c])
         #LlabExp <-  "$\\textit{VI'}_{P_{X_i}}"
-        LlabExp <-  "$\\textit{H'}_{P_{X_i|X_i^c}}"
+        LlabExp <-  "$\\textit{H'}_{P_{X_i|X_i^c}}$"
         titleExp <- "Source split entropies"
         # Otherwise, check that it has multivariate source data, then plot
     #} else if (hasMultiEntropicCoords(data)){  
@@ -65,9 +65,9 @@ ggmetern <- function(data, fancy=TRUE, ...) {
         # TlabExp <- expression({italic(M)^{symbol("\242")}}["XY"])
         # RlabExp <- expression(paste(Delta, "", {italic(H)^{symbol("\242")}}["XY"]))
         # LlabExp <- expression({italic(VI)^{symbol("\242")}}["XY"])
-        TlabExp <- "$\\textit{M'}_{P_{XY}}"
-        RlabExp <- "$\\Delta\\textit{H'}_{P_{XY}}"
-        LlabExp <-  "$\\textit{VI'}_{P_{XY}"
+        TlabExp <- "\\textit{M'}_{P_{XY}}"
+        RlabExp <- "$\\Delta\\textit{H'}_{P_{XY}}$"
+        LlabExp <-  "$\\textit{VI'}_{P_{XY}$"
         titleExp <- "Channel entropies"
     } else {
         stop("Non-appropiate data")
@@ -84,6 +84,7 @@ ggmetern <- function(data, fancy=TRUE, ...) {
                        tern.axis.text.show=TRUE,
                        tern.axis.arrow.show=TRUE,
                        tern.axis.clockwise=FALSE) +
+        ggtern::theme_latex(TRUE) + #global switch to latex which we must turn ON by default
         ggtern::Tlab(TlabExp) + 
         ggtern::Rlab(RlabExp) + 
         ggtern::Llab(LlabExp) #+

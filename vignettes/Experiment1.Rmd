@@ -1,0 +1,81 @@
+---
+title: "Accumulating Randomness"
+author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
+date: "18 de mayo de 2016"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{A guide to understanding the positions in the SMET}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+This vignette uses the SMET to explore the limits of randomness in generating multivariate distributions. 
+
+
+# Environment construction
+
+```{r environment, echo=FALSE, results="hide"}
+#library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
+#library(entropy)  # To work out the appropriate coordinates.
+library(dplyr)     # That infamous Mr. Wickham!
+library(tidyr)     # Tidying tall & wide dataframes
+library(infotheo)  # The functionality provided by this has to be rerouted through entropies
+library(entropies) # This package
+library(ggtern)    # Ternary diagrams on ggplot
+library(vcd)       # Categorical benchmarks
+library(mlbench)   # ml benchmarkss
+#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=6)
+```
+
+
+# Exploring the redundancy in 
+
+```{r}
+nInstances <- c(10, 50, 100, 500, 1000, 5000, 10000) # vector instances
+#nRandom <- 5     # Add a number of balanced, random features
+# Add the random balanced vectors
+#rRandom <- 1:nRandom
+set.seed(29)
+edf <- data.frame() # to accumulate the entropic measures as we increase.
+tol <-  1e-5
+for(m in nInstances){#generate random features: 
+    medf <- data.frame() # to accumulate the entropic measures as we increase.
+    dsRandom <- data.frame() # to accumulate the distributions per m
+    n <-  1
+    dsRandom <- as.data.frame(x=as.factor(rbinom(m, 1, 0.5)))
+    names(dsRandom) <-  NULL
+    medf <-  rbind(medf, sentropies(dsRandom) %>% filter(name == "ALL") %>% mutate(m, n))
+    repeat{
+        n <- n + 1
+        dsRandom <- cbind(dsRandom, as.factor(rbinom(m, 1, 0.5)))
+        medf <-  rbind(medf, sentropies(dsRandom) %>% filter(name == "ALL") %>% mutate(m, n))
+        if (medf[n, ]$VI_Pxi < tol | n == 200)
+            break
+    }
+    edf <- rbind(edf, medf)
+}
+edf <-  filter(edf, name == "ALL") %>% mutate(m=as.numeric(m), n=as.numeric(n))
+##########################################################################################
+```
+
+
+The number of features needed to zero the residual entropy almost plateaus. 
+
+```{r}
+
+ggplot(data=filter(edf, VI_Pxi < tol)) + geom_line(aes(x=m, y=n)) +
+    scale_x_log10(breaks=nInstances)
+    #scale_x_continuous(breaks=nInstances)
+```
+
+In the entropy triangle the plot is different
+
+```{r}
+ggmetern(filter(edf, m==100), fancy=FALSE) + geom_point(aes(shape=as.factor(m), color=n)) + 
+    labs(shape="Num. instances", color="Num. variables") + 
+    scale_shape_manual(values=19:(19+7))
+```
+

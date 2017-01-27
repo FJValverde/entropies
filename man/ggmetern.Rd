@@ -20,20 +20,20 @@ A plot object in the ggplot2 class of plots ready to be plotted.
 \description{
 This function creates a ternary plot on entropic coordinates whether 
 split or not for multivariate sets of random variables.
-
- @details The axes of the plot are changed according to whether the three
+}
+\details{
+The axes of the plot are changed according to whether the three
 aggregate variables "DeltaH_Px", "M_Px" and "VI_Px" are defined (not split) or
 the split variables "DeltaH_Pxi", "DeltaH_Pxi","M_Pxi" in the dataframe passed as parameter. 
   Note that no geometry is imposed on the plot.
-}
-\details{
+
 Only the plot and aesthetics are generated, the geometry is not decided. A further 
 column, including the name of the original variables may be used to annotate the plot.
 }
 \examples{
 data(UCBAdmissions)
 experiments <- entropicCoords(entropies(UCBAdmissions)) # Non-split data
-eT <- ggentropytern(experiments) + geom_point(aes(VIxy,MIxy2,DeltaHxy, colour=Dept, shape=Dept))
+eT <- ggmetern(experiments) + geom_point(aes(VIxy,MIxy2,DeltaHxy, colour=Dept, shape=Dept))
 eT + ggtitle("UCB admissions by department. X=admittance status, Y=gender") # non-split entropy triangle
 
 }

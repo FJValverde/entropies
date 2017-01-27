@@ -8,7 +8,7 @@ output: html_document
 # Environment construction
 
 ```{r, echo=FALSE, environment}
-library(dplyr)     # That infamous Mr. Wickham!
+library(dplyr)     # That (in)famous Mr. Wickham!
 library(tidyr)     # Tidying tall & wide dataframes
 library(infotheo)  # The functionality provided by this has to be rerouted through entropies
 library(entropies) # This package
@@ -18,7 +18,7 @@ library(mlbench)   # ml benchmarkss
 #knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
 fancy <- TRUE  # set this for nicer on-screen visualization
-fancy <- FALSE # Set this for either printing matter
+fancy <- FALSE # Set this for either printing matter or...
 ```
 
 # Classification data analysis using the SCET
@@ -47,20 +47,9 @@ evalDataset <- function(dsName){
         "BreastCancer" = {data(BreastCancer); BreastCancer}
         )
 }
-m <- sapply(name, function(n){nrow(evalDataset(n))})
-n <- sapply(name, function(n){ncol(evalDataset(n))}) - 1 
-datasets <- data.frame(name, className, as.integer(K), as.integer(n), m, stringsAsFactors=FALSE)
- 
-# #To select the #of column of the classc
-# whichClass <- function(ds, className){which(colnames(evalDatasset(ds))==className)}
-# #whichNumVar <-  function(r){whichClass(evalDataset(r$name), r$className)}
-# cardinalClass <- function(ds, className){
-#     length(unique(evalDataset(ds)[,className]))
-# }
-# classVar <-  mapply(whichClass, datasets$name, datasets$className)
-# K <- mapply(cardinalClass, datasets$name, classVar)
-# library(dplyr)
-# datasets <- data.frame(name,className, classVar, K)
+m <- sapply(name, function(n){nrow(evalDataset(n))}) # Number of instances
+n <- sapply(name, function(n){ncol(evalDataset(n))}) - 1 # Number of features
+datasets <- data.frame(name, className, K=as.integer(K), n=as.integer(n), m, stringsAsFactors=FALSE)
 datasets
 # Let's print it on latex
 library(xtable)
@@ -79,10 +68,6 @@ thisLatex
 Obtain the entropies and some other data for plotting from all datasets.
 
 ```{r find-entropies}
-# Analyze both with Classes and without
-#withClasses <- c(TRUE, FALSE)
-#  "name"       "H_Uxi"      "H_Pxi"      "DeltaH_Pxi" "VI_Pxi"     "M_Pxi" 
-# "withClass", "dsName", "isClass"
 edf <- data.frame()
 for(dsName in unique(datasets$name)){
     dsRecord <-  filter(datasets, name == dsName)
@@ -125,6 +110,12 @@ cmet <- ggmetern(edf, fancy=TRUE) +
     labs(color="Dataset name", shape="Var type")
 cmet
 ggsave(filename="aggregated_and_split_uniclass_CMET.jpeg")
+```
+
+# Postscriptum
+
+```{r ps}
+sessionInfo()
 ```
 
 
