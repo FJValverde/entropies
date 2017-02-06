@@ -2,7 +2,7 @@
 % Please edit documentation in R/jentropies.R
 \name{jentropies.table}
 \alias{jentropies.table}
-\title{Entropy decomposition of a contingency matrix}
+\title{Entropy decomposition of a possibly higher-order contingency matrix}
 \usage{
 \method{jentropies}{table}(Nxy, ...)
 }

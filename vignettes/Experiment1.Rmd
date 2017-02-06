@@ -4,7 +4,7 @@ author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
 date: "18 de mayo de 2016"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{A guide to understanding the positions in the SMET}
+  %\VignetteIndexEntry{How do some random distributions appear in the SMET}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

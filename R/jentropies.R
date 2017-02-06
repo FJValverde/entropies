@@ -89,7 +89,7 @@ jentropies.data.frame <- function(X, Y, ...){
     #return(edf)
 }
 
-#' Entropy decomposition of a contingency matrix
+#' Entropy decomposition of a possibly higher-order contingency matrix
 #' 
 #' Given a contingency matrix, provide one row of entropy coordinates. 
 #' NOTE: the reference variable has to index the ROWS of the table, while the predicted
@@ -104,7 +104,7 @@ jentropies.data.frame <- function(X, Y, ...){
 ## @example jentropies(UCBAdmissions)
 jentropies.table <- function(Nxy, ...){
     # 0. Parameter checking
-    Nxy <- as.table(Nxy) # is this necessary?
+    #Nxy <- as.table(Nxy) # is this necessary? Can it be called without this?
     dims <- dim(Nxy)
     if (length(dims) < 2)
         stop("Cannot process joint entropies for tables with less than 2 dimensions.")
@@ -120,40 +120,41 @@ jentropies.table <- function(Nxy, ...){
     # CAVEAT: use a more elegant kludge
     vars <- list(...);
     #    if (!("unit" %in% names(vars)))
-    if (is.null(vars$unit))
-        vars$unit <- "log2"
+    if (is.null(vars$unit)) vars$unit <- "log2"
     if (length(dims)==2){ # N is a plain contingency on X and Y
-        Nx <- apply(Nxy, 1, sum) # to be transformed into a probability
-        #N <- sum(Nx)
-        #H_x <- sapply(Nx, function(n){- n/N * log2(n/N)})
-        H_x <- entropy::entropy(Nx, unit="log2")
-        #Hx <- do.call(entropy, c(list(y=Nx), vars)) #entropy(Nx,vars)
-        Ny <- apply(Nxy, 2, sum)
-        H_y <- sum(sapply(Ny, function(n){- n/N * log2(n/N)}))
-        H_y <- entropy::entropy(Ny, unit="log2")
-        #H_xy <- sum(sum((Nxy/N)*log2((Nxy * N)/(Nx %*% t(Ny)))))
-        #H_xy <- sum(sum(-(Nxy/N)*log2(Nxy/N)))
-        H_xy <- entropy::entropy(Nxy, unit="log2")
-        #Hy <- do.call(entropy, c(list(y=Ny), vars)) #entropy(Ny, vars)
-        Ux <- log2(dims[1]) #entropy(rep(1/dims[1],dims[1]),unit="log2",...)
-        Uy <- log2(dims[2]) #entropy(rep(1/dims[2],dims[2]),unit="log2",...)
-        #Hxy <- do.call(entropy, c(list(y=Nxy), vars)) #entropy(Nxy, vars) 
-        VI_P <- c(H_xy - H_y, H_xy - H_x)
-        edf <- data.frame(
-            name = c("X", "Y"), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
-            H_P = c(H_x, H_y), #natstobits(c(infotheo::entropy(X), infotheo::entropy(Y))),
-            H_U = c(
-                Ux, Uy
-                #sum(sapply(X, function(v){log2(length(unique(v)))})),
-                #sum(sapply(Y, function(v){log2(length(unique(v)))}))
-            ),
-            stringsAsFactors = FALSE #Keep the original variable names as factors!
-        ) %>% dplyr::mutate(
-            DeltaH_P = H_U - H_P, 
-            M_P = H_P - VI_P,
-            VI_P = VI_P #The ordering of the fields is important for exploratory purposes.s
-        ) 
-        #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
+        edf <- jentropies2d.table(Nxy, vars)
+        # #edf <- 
+        # Nx <- apply(Nxy, 1, sum) # to be transformed into a probability
+        # #N <- sum(Nx)
+        # #H_x <- sapply(Nx, function(n){- n/N * log2(n/N)})
+        # H_x <- entropy::entropy(Nx, unit="log2")
+        # #Hx <- do.call(entropy, c(list(y=Nx), vars)) #entropy(Nx,vars)
+        # Ny <- apply(Nxy, 2, sum)
+        # #H_y <- sum(sapply(Ny, function(n){- n/N * log2(n/N)}))
+        # H_y <- entropy::entropy(Ny, unit="log2")
+        # #H_xy <- sum(sum((Nxy/N)*log2((Nxy * N)/(Nx %*% t(Ny)))))
+        # #H_xy <- sum(sum(-(Nxy/N)*log2(Nxy/N)))
+        # H_xy <- entropy::entropy(Nxy, unit="log2")
+        # #Hy <- do.call(entropy, c(list(y=Ny), vars)) #entropy(Ny, vars)
+        # Ux <- log2(dims[1]) #entropy(rep(1/dims[1],dims[1]),unit="log2",...)
+        # Uy <- log2(dims[2]) #entropy(rep(1/dims[2],dims[2]),unit="log2",...)
+        # #Hxy <- do.call(entropy, c(list(y=Nxy), vars)) #entropy(Nxy, vars) 
+        # VI_P <- c(H_xy - H_y, H_xy - H_x)
+        # edf <- data.frame(
+        #     name = c("X", "Y"), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
+        #     H_P = c(H_x, H_y), #natstobits(c(infotheo::entropy(X), infotheo::entropy(Y))),
+        #     H_U = c(
+        #         Ux, Uy
+        #         #sum(sapply(X, function(v){log2(length(unique(v)))})),
+        #         #sum(sapply(Y, function(v){log2(length(unique(v)))}))
+        #     ),
+        #     stringsAsFactors = FALSE #Keep the original variable names as factors!
+        # ) %>% dplyr::mutate(
+        #     DeltaH_P = H_U - H_P, 
+        #     M_P = H_P - VI_P,
+        #     VI_P = VI_P #The ordering of the fields is important for exploratory purposes.s
+        # ) 
+        # #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
     } else {  #DEAD CODE # N is a multiway table: we analyze on the first two margins, but store the second
         Nx <- margin.table(Nxy, c(1,3:length(dims)))
         Hx <- apply(Nx, c(2:length(dim(Nx))), function(x) {do.call(entropy, c(list(y=x), vars)) })
@@ -176,5 +177,49 @@ jentropies.table <- function(Nxy, ...){
         #name <- colnames(N[1,,]) # This is a hack to manifest the values in the 3rd dimension
     } 
     #return(df)
-    return(rbind(edf,cbind(name="XY", as.data.frame(lapply(edf[,2:6], sum)))))
+    return(edf)
 }
+
+#' Entropy decomposition of a 2-d contingenty table
+#' 
+#' Given a 2-d contingency table, provide a single vector of joint entropies. 
+#' @param Nxy An n-contingency matrix where n > 2
+#' @param unit The logarithm to be used in working out the sentropies as per 
+#' \code{entropy}. Defaults to "log2".
+#' @export
+#' @import infotheo
+#' @import dplyr
+jentropies2d.table<- function(Nxy, ...){
+    Nx <- apply(Nxy, 1, sum) # to be transformed into a probability
+    #N <- sum(Nx)
+    #H_x <- sapply(Nx, function(n){- n/N * log2(n/N)})
+    H_x <- entropy::entropy(Nx, unit="log2")
+    #Hx <- do.call(entropy, c(list(y=Nx), vars)) #entropy(Nx,vars)
+    Ny <- apply(Nxy, 2, sum)
+    #H_y <- sum(sapply(Ny, function(n){- n/N * log2(n/N)}))
+    H_y <- entropy::entropy(Ny, unit="log2")
+    #H_xy <- sum(sum((Nxy/N)*log2((Nxy * N)/(Nx %*% t(Ny)))))
+    #H_xy <- sum(sum(-(Nxy/N)*log2(Nxy/N)))
+    H_xy <- entropy::entropy(Nxy, unit="log2")
+    #Hy <- do.call(entropy, c(list(y=Ny), vars)) #entropy(Ny, vars)
+    Ux <- log2(dim(Nxy)[1]) #entropy(rep(1/dims[1],dims[1]),unit="log2",...)
+    Uy <- log2(dim(Nxy)[2]) #entropy(rep(1/dims[2],dims[2]),unit="log2",...)
+    #Hxy <- do.call(entropy, c(list(y=Nxy), vars)) #entropy(Nxy, vars) 
+    VI_P <- c(H_xy - H_y, H_xy - H_x)
+    edf <- data.frame(
+        name = c("X", "Y"), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
+        H_P = c(H_x, H_y), #natstobits(c(infotheo::entropy(X), infotheo::entropy(Y))),
+        H_U = c(
+            Ux, Uy
+            #sum(sapply(X, function(v){log2(length(unique(v)))})),
+            #sum(sapply(Y, function(v){log2(length(unique(v)))}))
+        ),
+        stringsAsFactors = FALSE #Keep the original variable names as factors!
+    ) %>% dplyr::mutate(
+        DeltaH_P = H_U - H_P, 
+        M_P = H_P - VI_P,
+        VI_P = VI_P #The ordering of the fields is important for exploratory purposes.s
+    ) 
+    #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
+    return(rbind(edf,cbind(name="XY", as.data.frame(lapply(edf[,2:6], sum)))))
+}    
