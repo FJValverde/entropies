@@ -108,8 +108,8 @@ jentropies.table <- function(Nxy, ...){
     dims <- dim(Nxy)
     if (length(dims) < 2)
         stop("Cannot process joint entropies for tables with less than 2 dimensions.")
-    if (length(dims) > 2)
-        stop("Cannot process joint entropies for tables of more than 2 dimensionss")
+    # if (length(dims) > 2)
+    #     stop("Cannot process joint entropies for tables of more than 2 dimensionss")
     #    if (length(dims) < 2 | length(dims) > 3)
     #        stop("Cannot process tables with more than 3 dimensions or less than 2 dimensions.")
     if (dims[1] < 2 | dims[2] < 2)
@@ -155,26 +155,40 @@ jentropies.table <- function(Nxy, ...){
         #     VI_P = VI_P #The ordering of the fields is important for exploratory purposes.s
         # ) 
         # #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
-    } else {  #DEAD CODE # N is a multiway table: we analyze on the first two margins, but store the second
-        Nx <- margin.table(Nxy, c(1,3:length(dims)))
-        Hx <- apply(Nx, c(2:length(dim(Nx))), function(x) {do.call(entropy, c(list(y=x), vars)) })
-        #Ux <- apply(Nx, 2, function(x) { log2(length(x))})
-        Ux <- apply(Nx, c(2:length(dim(Nx))), function(x) { log2(dims[1])})
-        Ny <- margin.table(Nxy, c(2,3:length(dims)))
-        Hy <- apply(Ny, c(2:length(dim(Ny))), function(x) {do.call(entropy, c(list(y=x), vars)) })
-        #Uy <- apply(Ny, 2, function(x) { log2(length(x))})
-        Uy <- apply(Ny, c(2:length(dim(Nx))), function(x) { log2(dims[1])})
-        Hxy <- apply(Nxy, 3:length(dims), function(x) {do.call(entropy, c(list(y=x), vars))})
-        #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
-        THx <- as.data.frame.table(as.table(Hx), responseName = "Hx")
-        TUx <- as.data.frame.table(as.table(Ux), responseName = "Ux")
-        THy <- as.data.frame.table(as.table(Hy), responseName = "Hy")
-        TUy <- as.data.frame.table(as.table(Uy), responseName = "Uy")
-        THxy <- as.data.frame.table(as.table(Hxy), responseName = "Hxy")
-        df <- left_join(left_join(left_join(TUx, TUy), left_join(THx, THy)), THxy)
-        #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
-        #df <- cbind(df, dimnames(Nxy)[3:length(dims)])# Keep the third  and greater dimension's names
-        #name <- colnames(N[1,,]) # This is a hack to manifest the values in the 3rd dimension
+    } else {  # N is a dim > 2 multiway table: we analyze on the first two margins, but store the rest
+        ctsColnames <- colnames(expand.grid(dimnames(Nxy)))
+        if (length(dim(Nxy)) == 3){#a special case, e.g. Nxy <- datasets::UCBAdmissions
+            cts <- as.matrix(apply(Nxy, 3, jentropies2d.table, vars))
+            ctsGrid <- as.data.frame(dimnames(cts)[[1]], colnames=ctsColnames[3])
+            colnames(ctsGrid) <- ctsColnames[3]
+        } else{# N > 3, e.g. Nxy <- datasets::Titanic
+            cts <- apply(Nxy, 3:length(dim(Nxy)), jentropies2d.table, vars)#the vars carry the rest of the params
+            # cts is both a matrix and a list of X dims(factors) elements. 
+            ctsGrid <- expand.grid(dimnames(cts))
+        }
+        edf <- data.frame()#accumulatorfor rows
+        for(i in 1:length(cts)){#cts a list: add to entropies the remaining factors
+            edf <- rbind(edf, cbind(cts[[i]], ctsGrid[i,]))
+        }
+        # Nx <- margin.table(Nxy, c(1,3:length(dims)))
+        # Hx <- apply(Nx, c(2:length(dim(Nx))), function(x) {do.call(entropy, c(list(y=x), vars)) })
+        # #Ux <- apply(Nx, 2, function(x) { log2(length(x))})
+        # Ux <- apply(Nx, c(2:length(dim(Nx))), function(x) { log2(dims[1])})
+        # Ny <- margin.table(Nxy, c(2,3:length(dims)))
+        # Hy <- apply(Ny, c(2:length(dim(Ny))), function(x) {do.call(entropy, c(list(y=x), vars)) })
+        # #Uy <- apply(Ny, 2, function(x) { log2(length(x))})
+        # Uy <- apply(Ny, c(2:length(dim(Nx))), function(x) { log2(dims[1])})
+        # Hxy <- apply(Nxy, 3:length(dims), function(x) {do.call(entropy, c(list(y=x), vars))})
+        # #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
+        # THx <- as.data.frame.table(as.table(Hx), responseName = "Hx")
+        # TUx <- as.data.frame.table(as.table(Ux), responseName = "Ux")
+        # THy <- as.data.frame.table(as.table(Hy), responseName = "Hy")
+        # TUy <- as.data.frame.table(as.table(Uy), responseName = "Uy")
+        # THxy <- as.data.frame.table(as.table(Hxy), responseName = "Hxy")
+        # df <- left_join(left_join(left_join(TUx, TUy), left_join(THx, THy)), THxy)
+        # #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
+        # #df <- cbind(df, dimnames(Nxy)[3:length(dims)])# Keep the third  and greater dimension's names
+        # #name <- colnames(N[1,,]) # This is a hack to manifest the values in the 3rd dimension
     } 
     #return(df)
     return(edf)
