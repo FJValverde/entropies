@@ -66,7 +66,6 @@ datasets <- data.frame(name=dsNames,
                        n=as.integer(n), 
                        m, 
                        stringsAsFactors=FALSE)
- 
 # #To select the #of column of the classc
 # whichClass <- function(ds, className){which(colnames(evalDatasset(ds))==className)}
 # #whichNumVar <-  function(r){whichClass(evalDataset(r$name), r$className)}
@@ -107,9 +106,10 @@ edf <- data.frame()
 for(i in 1:nrow(datasets)){
     dsRecord <-  datasets[i, ] #filter(datasets, name == dsName)
     dsName <- dsRecord$name
+    ds <- evalDataset(dsName)
     ds <- infotheo::discretize( # Controlled discretization of the database.
-        evalDataset(dsName), 
-        nbins=max(ceiling(nrow(Glass)^(1/2)), dsRecord$K)# At least the classes.
+        ds, 
+        nbins=max(ceiling(nrow(ds)^(1/2)), dsRecord$K)# At least the classes.
     )
     if (!is.nan(dsRecord$idNumber)) # ids as features: spureously correlated with class labels
         ds <- ds[,-dsRecord$idNumber]

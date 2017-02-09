@@ -14,19 +14,82 @@ This vignette explores how does uncertainty of classification results manifest i
 # Environment construction
 
 ```{r environment, echo=FALSE, results="hide"}
-#library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
-#library(entropy)  # To work out the appropriate coordinates.
-library(dplyr)     # That infamous Mr. Wickham!
-library(tidyr)     # Tidying tall & wide dataframes
-library(infotheo)  # The functionality provided by this has to be rerouted through entropies
+library(dplyr)     # That infamous Mr. Wickham's! ;)
+library(tidyr)     # Tidying tall & wide dataframes. Infamous too! ;)
+#library(infotheo)  # The functionality provided by this has to be rerouted through entropies
 library(entropies) # This package
 library(ggtern)    # Ternary diagrams on ggplot
 library(caret)     # Adopt caret's Weltanschauung for ML
-#library(vcd)       # Categorical benchmarks
-library(mlbench)   # ml benchmarkss
+library(datasets) # Many different datasets for R: iris
+library(vcd)       # Categorical benchmarks: Arthritis
+library(mlbench)   # ml benchmarks: Ionosphere, Glass, BreastCancer, Sonar
+library(candisc)   # datasets: Wine
 #knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 #knitr::opts_chunk$set(echo = TRUE)
 #knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=6)
+```
+
+## Datasets available
+
+The inventory of databases to be explored:
+
+```{r data-munging}
+# the inventory of databases you can access
+dsNames <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
+classNames <- c("Class","Species", "Type", "Improved", "Class", "Class", "Cultivar")  # Name of class attribute
+K <- c(2, 3, 7, 3, 2, 2, 3)  # No. of classes in the class variable, as per the database
+#classVar <- c(35, 5, 10, 5, 11, 61, 1)   
+idNumber <- c(NaN, NaN, NaN, 1, 1, NaN, NaN)
+# Other attributes to dispose of: mainly identifiers.
+# If there where more to dispone of, the interface would have to change.
+# To select a dataset by name
+# Caveat: you have to ensure that the containing package has been attached
+evalDataset <- function(dsName){
+    dsName <- as.character(dsName)
+    switch(dsName, #TODO: improve this way of "invoking" the dataset.
+        "iris" =         {data(iris); iris},
+        "Ionosphere" =   {data(Ionosphere); Ionosphere},
+        "Glass" =        {data(Glass); Glass},
+        "Arthritis" =    {data(Arthritis); Arthritis},
+        "BreastCancer" = {data(BreastCancer); BreastCancer},
+        "Sonar" =        {data(Sonar); Sonar},
+        "Wine" =         {data(Wine); Wine}
+    ) #This value "FALLS THROUGH"
+}
+# #To select the #of column of the class
+findClassId <- function(ds, className){which(colnames(evalDataset(ds))==className)}
+findClassCardinality <-function(ds,classId){#classCardinality("iris",5)
+    length(levels(evalDataset(ds)[,classId]))
+    }
+classIds <-  mapply(findClassId, dsNames, classNames)# ordinal of the class attribute
+Kreal <- as.vector(mapply(findClassCardinality, dsNames, classNames))  
+# Actaul No. of classes in the class variable
+# CAVEAT: Glass has actually only 6 classes, since class 4 examples are missing.
+m <- sapply(dsNames, function(n){nrow(evalDataset(n))}) # no. of instances in the dataset
+n <- sapply(dsNames, function(n){ncol(evalDataset(n))}) - 1 # class excepted 
+datasets <- data.frame(name=dsNames, 
+                       className=classNames, 
+                       classId=classIds,
+                       idNumber, 
+                       K=as.integer(K), 
+                       n=as.integer(n), 
+                       m, 
+                       stringsAsFactors=FALSE) # To prevent casting away of names.
+datasets
+```
+
+Let's print this information to latex:
+
+```{r}
+library(xtable)
+ds4latexing <- datasets %>% dplyr::select(-className, -classId, -idNumber)
+row.names(ds4latexing) <- NULL
+names(ds4latexing) <- c("Dataset Name", "class card.", "num. features", "num. instances")
+thisLatex <- xtable(ds4latexing, 
+                    caption="Some datasets considered in this study",
+                    label="tab:datasets")
+align(thisLatex) <- xalign(thisLatex)
+thisLatex
 ```
 
 # Data preparation
@@ -38,114 +101,148 @@ The following code is extracted from caret's main vignette:
 # load the library
 #library(caret)
 # load the iris dataset
-data(iris)
+#data(iris)
+#data(atmosphere)
 # define training control
 train_control <- trainControl(method="cv", 
                               number=10,
                               returnData = TRUE,                   
                               savePredictions="all"
                             )
-# fix the parameters of the algorithm: Naive Bayes
-thisGrid <- expand.grid(fL=c(0), usekernel=c(FALSE), adjust=c(0)) # These parameters depend on Naive Bayes!
-# train the model
-thisModel <- train(Species~., 
-                   data=iris, 
-                   trControl=train_control, 
-                   method="nb", 
-                   tuneGrid=thisGrid, # These parameters depend on Naive Bayes!
-                   savePredictions="all"
-                   )
-# summarize results
-print(thisModel)
+# # fix the parameters of the algorithm: Naive Bayes
+# thisMethod <- "nb" #naive bay
+# These parameters depend on Naive Bayes!
+# thisGrid <- expand.grid(fL=c(0), usekernel=c(FALSE), adjust=c(0))
+# thisPreprocess <- ""
+# fix the parameters of the algorithm: knn
+thisMethod <- "knn" #k-nearest neighbours
+thisGrid <- NULL
+thisPreprocess <- c("center", "scale")
+
+# train the model for each dataset
+edf <- data.frame()
+#for(i in 1:nrow(datasets)){#go over datasets
+#for(i in c(1,2,3,6)){#iris, Glass
+#for(i in c(2,3)){#iris, Glass
+for(i in c(2,3,6,7)){#iris(??), Glass(well-behaved, so-so), Sonar (well-behaved, bad), Wine (??)
+    set.seed(17)
+    #process the dataset
+    dsRecord <-  datasets[i, ] #filter(datasets, name == dsName)
+    dsName <- dsRecord$name
+    print(paste("processing", dsName, "with", thisMethod))
+    theseData <- evalDataset(dsName)
+    # The formula for classification can safely now include everything but the class
+    thisFormula <- formula(paste0(dsRecord$className,"~."))
+    #train models for the dataset i and the method j
+    trainClasses <- theseData[,dsRecord$classId]
+    trainData <- theseData[,-dsRecord$classId]
+    # For machine learning, it is important to dispose of columns that correlate 
+    # perfectly, if artificially, with the class, for instance, identifiers. These are 
+    # unwanted effects of the data sampling, not the data themselves. 
+    if (!is.nan(dsRecord$idNumber)){
+        trainData <- trainData[,-dsRecord$idNumber]#dplyr::select(theseData,formula(paste0("-",idNumber)))
+    }
+    thisModel <- train(#thisFormula,data=theseData, 
+                    trainData, trainClasses, 
+                    preProcess=thisPreprocess,
+                    trControl=train_control, 
+                    method=thisMethod, 
+                    tuneGrid=thisGrid # These parameters depend on Naive Bayes!
+                    #savePredictions="all"
+    )
+    # summarize results
+    print(thisModel)
+# ```
+# 
+# ## Evaluation on the the test set for each fold
+# 
+# ```{r}
+    predictions <- thisModel$pred
+    #This has the preds and obs for each fold and value of the grid
+    ct  <- table(predictions %>% dplyr::select(pred, obs, Resample))
+    # 'Resample' is the grid.
+    #obtain the informations
+    edf <-  rbind(edf,
+                  cbind(jentropies(ct),Classifier=thisMethod,Dataset=dsName)
+                  )
+}
 ```
 
-## Evaluation on the the test set for each fold
+## Printing of the results of each fold
+
+Printing densities
+```{r}
+fancy <- TRUE
+fancy <- FALSE
+smet <-  ggmetern(edf %>% filter(name == "XY"), fancy) + 
+    geom_point(mapping=aes(colour=Dataset), #color="red", 
+               size=1) +
+#    geom_confidence_tern() +
+    geom_density_tern() +
+#    stat_confidence_tern(breaks=c(50)) 
+    facet_wrap(~Dataset) 
+#    stat_confidence_tern(breaks=c(99,95,90)) 
+#    scale_shape_manual(values=1:nrow(datasets)) +
+#    labs(shape="Dataset")
+smet
+```
+
+The density for iris and wine seem strange:
+* for iris, the dots at the tip of the triangle do not seem to be taken into consideration while the zone towards the bottom right seems to be over-emphasized.
+
+* for wine the same we can observe the same behaviour with respect to the points at the tip. 
+
+This is important since the tip of the triangle is the "desired outcome" for any possible classifier.
+
+This behaviour seems to be reproduce in the geom_confidence_tern geometry too:
 
 ```{r}
-predictions <- thisModel$pred#This has the preds and obs for each fold and value of the grid
-ct  <- table(predictions %>% dplyr::select(pred, obs, Resample))# 'Resample' is the grid.
-#obtain the informations
-ents <-  jentropies(ct)
+fancy <- TRUE
+fancy <- FALSE
+smet <-  ggmetern(edf %>% filter(name == "XY"), fancy) + 
+    geom_point(mapping=aes(colour=Dataset), #color="red", 
+               size=1) +
+    geom_confidence_tern() +
+#    geom_density_tern() +
+#    stat_confidence_tern(breaks=c(50)) 
+    facet_wrap(~Dataset) 
+#    stat_confidence_tern(breaks=c(99,95,90)) 
+#    scale_shape_manual(values=1:nrow(datasets)) +
+#    labs(shape="Dataset")
+smet
 ```
+
+The unaccountable spread of the results for iris and the non-inclusion of the tip for wine (I cannot see whether this is the case for iris too.) 
 
 
  
-# From the caret book
+# # From the caret book
 
-```{r}
-# data importing
-library(mlbench)
-data(Sonar)
-str(Sonar[, 1:10])
-# data splitting
-library(caret)
-set.seed(998)
-inTraining <- createDataPartition(Sonar$Class, p = .75, list = FALSE)
-training <- Sonar[ inTraining,]
-testing  <- Sonar[-inTraining,]
-```
+<!-- ```{r} -->
+<!-- # data importing -->
+<!-- library(mlbench) -->
+<!-- data(Sonar) -->
+<!-- str(Sonar[, 1:10]) -->
+<!-- # data splitting -->
+<!-- library(caret) -->
+<!-- set.seed(998) -->
+<!-- inTraining <- createDataPartition(Sonar$Class, p = .75, list = FALSE) -->
+<!-- training <- Sonar[ inTraining,] -->
+<!-- testing  <- Sonar[-inTraining,] -->
+<!-- ``` -->
 
-## With cross validation
+<!-- ## With cross validation -->
 
-```{r}
-set.seed(119)
-k <- 10 # num. of folds
-dataClass <- Sonar$Class # Different for each database!
-folds <- createFolds(dataClass, k,)
-#generate a list of confusion matrices by going over the rest of the folds
-```
+<!-- ```{r} -->
+<!-- set.seed(119) -->
+<!-- k <- 10 # num. of folds -->
+<!-- dataClass <- Sonar$Class # Different for each database! -->
+<!-- folds <- createFolds(dataClass, k,) -->
+<!-- #generate a list of confusion matrices by going over the rest of the folds -->
+<!-- ``` -->
 
 # Postscriptum
 
 ```{r ps}
 sessionInfo()
 ```
-
-<!-- # TO BE DELETED, FROM HERE ONWARDS -->
-<!-- Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format: -->
-
-<!-- - Never uses retina figures -->
-<!-- - Has a smaller default figure size -->
-<!-- - Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style -->
-
-<!-- ## Vignette Info -->
-
-<!-- Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette. -->
-
-<!-- ## Styles -->
-
-<!-- The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows: -->
-
-<!--     output:  -->
-<!--       rmarkdown::html_vignette: -->
-<!--         css: mystyles.css -->
-
-<!-- ## Figures -->
-
-<!-- The figure sizes have been customised so that you can easily put two images side-by-side.  -->
-
-<!-- ```{r, fig.show='hold'} -->
-<!-- plot(1:10) -->
-<!-- plot(10:1) -->
-<!-- ``` -->
-
-<!-- You can enable figure captions by `fig_caption: yes` in YAML: -->
-
-<!--     output: -->
-<!--       rmarkdown::html_vignette: -->
-<!--         fig_caption: yes -->
-
-<!-- Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**. -->
-
-<!-- ## More Examples -->
-
-<!-- You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`. -->
-
-<!-- ```{r, echo=FALSE, results='asis'} -->
-<!-- knitr::kable(head(mtcars, 10)) -->
-<!-- ``` -->
-
-<!-- Also a quote using `>`: -->
-
-<!-- > "He who gives up [code] safety for [code] speed deserves neither." -->
-<!-- ([via](https://twitter.com/hadleywickham/status/504368538874703872)) -->

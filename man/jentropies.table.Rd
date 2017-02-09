@@ -10,11 +10,13 @@
 \item{Nxy}{An n-contingency matrix where n > 2}
 
 \item{unit}{The logarithm to be used in working out the sentropies as per 
-\code{entropy}. Defaults to "log2".}
+\code{\link[entropy]{entropy}}. Defaults to "log2".}
 }
 \description{
 Given a contingency matrix, provide one row of entropy coordinates. 
 NOTE: the reference variable has to index the ROWS of the table, while the predicted
-variable indexes the columns, unlike, e.g. \code{\link[caret]{contingencyTable}}
+variable indexes the columns, unlike, e.g. \code{\link[caret]{contingencyTable}}. 
+That is the entropies are obtained for the first two margins. If other margins are 
+needed you will need to reorder them.
 }
 
