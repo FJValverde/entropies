@@ -9,4 +9,3 @@ hasSimpleEntropies(df)
 \description{
 a function to detect if the simple entropies are present.
 }
-

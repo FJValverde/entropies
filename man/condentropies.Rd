@@ -24,4 +24,3 @@ Unless specified by the user explicitly, this function uses base 2
 \seealso{
 \code{\link[entropy]{entropy}, \link[infotheo]{entropy}}
 }
-

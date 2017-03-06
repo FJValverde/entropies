@@ -39,4 +39,3 @@ entropicCoords(entropies(UCBAdmissions), purge=TRUE, split=TRUE)
 \seealso{
 \code{entropies}
 }
-

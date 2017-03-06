@@ -12,4 +12,3 @@ derivedSplitEntropies
 A caracterization of the variables in a data.frame of derived non-split entropies.
 }
 \keyword{datasets}
-

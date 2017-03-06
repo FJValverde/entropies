@@ -40,4 +40,3 @@ eT + ggtitle("UCB admissions by department. X=admittance status, Y=gender") # no
 \seealso{
 \code{\link{ggtern}}, \code{\link{entropies}}, \code{\link{entropicCoordinates}}
 }
-

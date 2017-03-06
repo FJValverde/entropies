@@ -9,4 +9,3 @@ hasMultiEntropicCoords(df)
 \description{
 deprecated!
 }
-

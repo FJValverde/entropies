@@ -16,4 +16,3 @@ A dataframe with the perplexities associated to the data
 \description{
 A function to work out the perplexities of a data frame with entropic information in it.
 }
-

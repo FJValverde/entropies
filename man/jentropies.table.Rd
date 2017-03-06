@@ -19,4 +19,3 @@ variable indexes the columns, unlike, e.g. \code{\link[caret]{contingencyTable}}
 That is the entropies are obtained for the first two margins. If other margins are 
 needed you will need to reorder them.
 }
-

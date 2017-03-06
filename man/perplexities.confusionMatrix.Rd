@@ -13,4 +13,3 @@
 Obtains the perplexities in a confusion matrix by calculating, first, 
 the entropies, and then the entropic coordinates for it.
 }
-

@@ -9,4 +9,3 @@ hasDerivedSplitEntropies(df)
 \description{
 A function to detect if the derived split entropies are present.
 }
-

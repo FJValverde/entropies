@@ -25,4 +25,3 @@ The criteria evaluated at present are:
 \item perplexities, as issued from \code{\link{perplexities}}
 }
 }
-

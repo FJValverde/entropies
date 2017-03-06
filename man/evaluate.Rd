@@ -17,4 +17,3 @@ At least, the concatenation of the entropies (whether split or not), the \code{E
 \description{
 A function to evaluate confusion matrices, and contingency tables
 }
-

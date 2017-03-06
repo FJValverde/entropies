@@ -9,4 +9,3 @@ hasMultiSplitEntropicCoords(df)
 \description{
 A function to detect if the multivariate split entropic coordinates are present
 }
-

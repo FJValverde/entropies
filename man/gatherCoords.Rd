@@ -12,4 +12,3 @@ gatherCoords(data, limit = TRUE)
 \description{
 A function to massage the split coordinates back to non-split with an indication of origin
 }
-

@@ -27,4 +27,3 @@ ggmebars(sme[-6,])
 \seealso{
 \code{\link{ggmetern}}, \code{\link{ggplot2::geom_bar}}
 }
-

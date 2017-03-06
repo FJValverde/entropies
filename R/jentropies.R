@@ -38,12 +38,12 @@ jentropies.data.frame <- function(X, Y, ...){
     # Find simple entropies, divergences and entropies of the uniform marginals. 
     VI_P <- natstobits(c(condentropy(X,Y), condentropy(Y,X)))
     edf <- data.frame(
-        name = c("X", "Y"), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
-        H_P = natstobits(c(infotheo::entropy(X), infotheo::entropy(Y))),
+        type = c("X", "Y"), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
         H_U = c(
             sum(sapply(X, function(v){log2(length(unique(v)))})),
             sum(sapply(Y, function(v){log2(length(unique(v)))}))
         ),
+        H_P = natstobits(c(infotheo::entropy(X), infotheo::entropy(Y))),
         stringsAsFactors = FALSE #Keep the original variable names as factors!
     ) %>% dplyr::mutate(
         DeltaH_P = H_U - H_P, 
@@ -85,7 +85,7 @@ jentropies.data.frame <- function(X, Y, ...){
     #     #                       )
     # }
     # Add the joint balance equations
-    return(rbind(edf,cbind(name="XY", as.data.frame(lapply(edf[,2:6], sum)))))
+    return(rbind(edf,cbind(type="XY", as.data.frame(lapply(edf[,2:6], sum)))))
     #return(edf)
 }
 
@@ -225,7 +225,7 @@ jentropies2d.table<- function(Nxy, ...){
     #Hxy <- do.call(entropy, c(list(y=Nxy), vars)) #entropy(Nxy, vars) 
     VI_P <- c(H_xy - H_y, H_xy - H_x)
     edf <- data.frame(
-        name = c("X", "Y"), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
+        type = c("X", "Y"), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
         H_P = c(H_x, H_y), #natstobits(c(infotheo::entropy(X), infotheo::entropy(Y))),
         H_U = c(
             Ux, Uy
@@ -239,5 +239,5 @@ jentropies2d.table<- function(Nxy, ...){
         VI_P = VI_P #The ordering of the fields is important for exploratory purposes.s
     ) 
     #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
-    return(rbind(edf,cbind(name="XY", as.data.frame(lapply(edf[,2:6], sum)))))
+    return(rbind(edf,cbind(type="XY", as.data.frame(lapply(edf[,2:6], sum)))))
 }    

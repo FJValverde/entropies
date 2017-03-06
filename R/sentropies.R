@@ -4,9 +4,12 @@
 #' the data is provided to the function. There are specialized versions for
 #' (contingency) tables, confusion matrices and data frames.
 #' @param data The data being provided to the function. 
-#' @return  A dataframe with the sentropies of the marginals
+#' @param unit The logarithm to be used in working out the sentropies as per 
+#' \code{entropy}. Defaults to "log2".
+#' @return  A dataframe with the sentropies of the marginals. If type="dual" then \code{hasAggregateSmetCoords(sentropies(data, type="dual"))}, 
+#' otherwise, \code{hasSplitSmetCoords(sentropies(data))}.
 #' @details Unless specified by the user explicitly, this function uses base 2 
-#'   logarithms for the sentropies.
+#'   logarithms for the sentropies. 
 #' @seealso \code{\link[entropy]{entropy}, \link[infotheo]{entropy}}
 #' @import dplyr
 #' @export
@@ -39,8 +42,7 @@ sentropies.table <- function(Nxy, ...){
     #unless otherwise specified, we use log2 logarithms
     # CAVEAT: use a more elegant kludge
     vars <- list(...);
-#    if (!("unit" %in% names(vars)))
-    if (is.null(vars$unit))
+    if (is.null(vars$unit))#force entropy in bits unles otherwise selected
         vars$unit <- "log2"
     if (length(dims)==2){ # N is a plain contingency on X and Y
         Nx <- apply(Nxy, 1, sum); 
@@ -75,8 +77,9 @@ sentropies.table <- function(Nxy, ...){
     return(df)
 }
 
-#' Entropy decomposition of a confusion table
+#' Entropy decomposition of a confusion table from caret
 #' 
+#' @inherit sentropies.table
 #' @export
 #' @importFrom caret confusionMatrix
 sentropies.confusionMatrix <- function(ct, ...){
@@ -87,11 +90,24 @@ sentropies.confusionMatrix <- function(ct, ...){
 #' 
 #' @return Another dataframe with the main entropy coordinates of every variable
 #'   in the original, which are now the rows of the returned data.frame. If the columns have no
-#'   names, artificial ones are returned based in pre prefix "x" and their column number.
+#'   names, artificial ones are returned based in pre prefix "x" and their column number. 
+#'   The entropies are always in bits.
+#' @param data The data being provided to the function. 
+#' @param type The type of analysis being requested. Unles type=="dual" it will perform 
+#' a normal analysis providing total + dual total correlation. If "dual" is used, then
+#' only the dual total correlation will be provided. In this case, no individual split equations 
+#' will be output, only a single aggregate, and the names of the columns are changed accordingly. 
+# @param unit The logarithm to be used in working out the sentropies as per 
+# \code{entropy}. Defaults to "log2".
+# @details Unless specified by the user explicitly, this function uses base 2 
+#   logarithms for the sentropies.
 #' @export
-#' @import infotheo
+#' @importFrom infotheo natstobits 
+#' @importFrom infotheo condentropy
+#' @importFrom infotheo entropy
+# @import infotheo
 #' @import dplyr
-sentropies.data.frame <- function(df, ...){
+sentropies.data.frame <- function(df, type="total", ...){
     if (ncol(df) == 0 || nrow(df) == 0)
         stop("Can only work with non-empty data.frames!")
     if (!all(sapply(df, is.factor))){
@@ -99,28 +115,47 @@ sentropies.data.frame <- function(df, ...){
         df <- infotheo::discretize(df, disc="equalwidth", ...) # infotheo::str(dfdiscretize generates ints, not factors.
     }
     # suppose the dataframe is categorical
-    if (is.null(names(df))){
-        warning("No names for columns: providing dummy names!")
-        names(df) <- paste0("x",1:ncol(df))
-    }
-    name <-  names(df)
-    # Find simple sentropies, divergences and sentropies of the uniform marginals. 
-    edf <- data.frame(
-        name = name, # After an idyosincracy of dplyr, the rownames do not survive a mutate.
-        H_Uxi = unlist(lapply(df, function(v){log2(length(unique(v)))})),
-        H_Pxi = unlist(lapply(df, function(v){natstobits(infotheo::entropy(v))})),
-         stringsAsFactors = FALSE #Keep the original variable names as factors!
-        ) %>% dplyr::mutate(DeltaH_Pxi = H_Uxi - H_Pxi) 
-               #M_Pxi = H_Pxi - VI_Pxi)
+    switch(type, #TODO: improve this way of "invoking" the dataset.
+        "dual" =        {TOTAL <- FALSE},
+        {TOTAL <- TRUE} #catch-all for total processing
+    ) #This value "FALLS THROUGH"
+    vars <- list(...);
+    # if (!is.null(vars$type) && vars$type == "dual"){# Source decomposition with TOTAL C_P_X and D_P_X
+    #     TOTAL <- FALSE
+    # }# else {#Source decomposition with ONLY D_P_X, to align it with the CMEBE
+    # #    TOTAL <- FALSE
+    # #}
+    H_Uxi <- unlist(lapply(df, function(v){log2(length(unique(v)))}))
+    H_Pxi <- unlist(lapply(df, function(v){natstobits(entropy(v))}))
     if (ncol(df) == 1){
         warning("Single variable: providing only entropy")
-        VI_Pxi <- edf[1,"H_Pxi"]
+        VI_Pxi <- H_Pxi # All of the entropy is non-redundant
     } else {
-        VI_Pxi <- vector("numeric", length(name))
-        for(i in 1:length(name)){
-            VI_Pxi[i] <- natstobits(condentropy(df[,i], df[,-i], ...))
+        VI_Pxi <- vector("numeric", ncol(df))
+        for(i in 1:ncol(df)){
+            VI_Pxi[i] <- natstobits(condentropy(df[,i], df[,-i],...)
+                #condentropy(dplyr::select(df,i), dplyr::select(df,-i), vars)
+                )
         }
     }
-    edf <- edf %>% mutate(M_Pxi = H_Pxi - VI_Pxi, VI_Pxi)
-    return(rbind(edf,cbind(name="ALL", as.data.frame(lapply(edf[,2:6], sum)))))
+    if(TOTAL){#return the TOTAl decomposition and aggregates
+        if (is.null(names(df))){
+            warning("No names for columns: providing dummy names!")
+            names(df) <- paste0("x",1:ncol(df))
+        }
+        # Find simple sentropies, divergences and sentropies of the uniform marginals. 
+        edf <- data.frame(
+            name = names(df), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
+            H_Uxi = H_Uxi,
+            H_Pxi = H_Pxi,
+            stringsAsFactors = FALSE #Keep the original variable names as factors!
+        ) %>% dplyr::mutate(DeltaH_Pxi = H_Uxi - H_Pxi, M_Pxi = H_Pxi - VI_Pxi, VI_Pxi)
+        edf <- rbind(edf,cbind(name="ALL", as.data.frame(lapply(edf[,2:6], sum))))
+    } else {#return only an aggregate with the DUAL total correlation D_Px
+        H_Px <-  natstobits(entropy(df)) #a single number!
+        VI_Px <-  sum(VI_Pxi)
+        edf <- data.frame(name="ALL", H_Ux = sum(H_Uxi), H_Px) %>% 
+            dplyr::mutate(DeltaH_Px = H_Ux - H_Px, D_Px = H_Px - VI_Px, VI_Px)
+    }
+    return(edf)
 }

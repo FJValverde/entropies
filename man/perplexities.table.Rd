@@ -17,4 +17,3 @@ dimension and an extra factor variable on that dimension.
 \examples{
 perplexities(UCBAdmissions)
 }
-

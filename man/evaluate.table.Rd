@@ -21,4 +21,3 @@ The criteria evaluated at present are:
 \examples{
 evaluate.table(UCBAdmissions) # from package datasets
 }
-

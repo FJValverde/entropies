@@ -12,4 +12,3 @@ cmetEntropicCoords
 A caracterization of the variables in a data.frame of channel multivariate entropies
 }
 \keyword{datasets}
-

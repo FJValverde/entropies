@@ -11,4 +11,3 @@ hasMultiAggregateEntropies(df)
 a function to detect if the multivariate simple entropies are present: this enables 
 working out the multivariate simple entropic coordinates
 }
-

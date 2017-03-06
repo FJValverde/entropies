@@ -12,4 +12,3 @@ simpleEntropies
 A characterization of the variables in a data.frame needed to define the perplexities.
 }
 \keyword{datasets}
-

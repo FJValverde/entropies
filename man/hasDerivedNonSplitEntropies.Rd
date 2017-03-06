@@ -9,4 +9,3 @@ hasDerivedNonSplitEntropies(df)
 \description{
 A function to detect if the derived, non-split entropies are present.
 }
-

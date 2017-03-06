@@ -10,11 +10,12 @@ output: html_document
 ```{r, echo=FALSE, environment}
 library(dplyr)     # That (in)famous Mr. Wickham!
 library(tidyr)     # Tidying tall & wide dataframes
-library(infotheo)  # The functionality provided by this has to be rerouted through entropies
+#library(infotheo)  # The functionality provided by this has to be rerouted through entropies
 library(entropies) # This package
 library(ggtern)    # Ternary diagrams on ggplot
 library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
+library(candisc)   # Wine dataset
 #knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
 fancy <- TRUE  # set this for nicer on-screen visualization
@@ -25,37 +26,58 @@ fancy <- FALSE # Set this for either printing matter or...
 
 ## Datasets available
 
-The inventory of databases to be explored:
-
 ```{r data-munging}
 # the inventory of databases you can access
 #library(datasets)
-name <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer") # 
-className <- c("Class","Species", "Type", "Improved", "Class")  # Name of class attribute
-classVar <- c(35, 5, 10, 5, 11)   # ordinal of the class attribute
-other <- c("", "", "", "", "ID", "Id") # Other attributes to dispose of: mainly identifiers.
-K <- c(2, 3, 7, 3, 2)  # No. of classes
+dsNames <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
+className <- c("Class","Species", "Type", "Improved", "Class", "Class", "Cultivar")  # Name of class attribute
+classVar <- c(35, 5, 10, 5, 11, 61, 1)   # ordinal of the class attribute
+idNumber <- c(NaN, NaN, NaN, 1, 1, NaN, NaN) # Other attributes to dispose of: mainly identifiers.
+
+K <- c(2, 3, 7, 3, 2, 2, 3)  # No. of classes in the class variable
 # To select a dataset by name
 # Caveat: you have to ensure that the containing package has been attached
 evalDataset <- function(dsName){
     dsName <- as.character(dsName)
-    switch(dsName,
+    switch(dsName, #TODO: improve this way of "invoking" the dataset.
         "iris" =         {data(iris); iris},
         "Ionosphere" =   {data(Ionosphere); Ionosphere},
         "Glass" =        {data(Glass); Glass},
         "Arthritis" =    {data(Arthritis); Arthritis},
-        "BreastCancer" = {data(BreastCancer); BreastCancer}
-        )
+        "BreastCancer" = {data(BreastCancer); BreastCancer},
+        "Sonar" =        {data(Sonar); Sonar},
+        "Wine" =         {data(Wine); Wine}
+    ) #This value "FALLS THROUGH"
 }
-m <- sapply(name, function(n){nrow(evalDataset(n))}) # Number of instances
-n <- sapply(name, function(n){ncol(evalDataset(n))}) - 1 # Number of features
-datasets <- data.frame(name, className, K=as.integer(K), n=as.integer(n), m, stringsAsFactors=FALSE)
+m <- sapply(dsNames, function(n){nrow(evalDataset(n))}) # no. of instances in the dataset
+n <- sapply(dsNames, function(n){ncol(evalDataset(n))}) - 1 - as.numeric(!is.nan(idNumber)) # no. of features in the dataset.
+datasets <- data.frame(name=dsNames, 
+                       className, 
+                       idNumber, 
+                       K=as.integer(K), 
+                       n=as.integer(n), 
+                       m, 
+                       stringsAsFactors=FALSE)
+# #To select the #of column of the classc
+# whichClass <- function(ds, className){which(colnames(evalDatasset(ds))==className)}
+# #whichNumVar <-  function(r){whichClass(evalDataset(r$name), r$className)}
+# cardinalClass <- function(ds, className){
+#     length(unique(evalDataset(ds)[,className]))
+# }
+# classVar <-  mapply(whichClass, datasets$name, datasets$className)
+# K <- mapply(cardinalClass, datasets$name, classVar)
+# library(dplyr)
+# datasets <- data.frame(name,className, classVar, K)
 datasets
-# Let's print it on latex
+```
+
+Let's print this information to latex:
+
+```{r}
 library(xtable)
-ds4latexing <- datasets
+ds4latexing <- datasets %>% dplyr::select(-className, -idNumber)
 row.names(ds4latexing) <- NULL
-names(ds4latexing) <- c("Dataset Name", "class name", "class card.", "features", "instances")
+names(ds4latexing) <- c("Dataset Name", "class card.", "num. features", "num. instances")
 thisLatex <- xtable(ds4latexing, 
                     caption="Some datasets considered in this study",
                     label="tab:datasets")
@@ -83,33 +105,194 @@ for(dsName in unique(datasets$name)){
             #ds <- subset(ds, subset=1:nrow(ds), select=dsRecord$className, drop=TRUE)
 #            ds <- ds[, !colnames(ds) == dsRecord$className] #fastest in bechnmark at bot. of url
 #        }
+        #Kdataset <- select(ds, which(names(ds) == dsRecord$className))
+        Kdataset <- dplyr::select(ds, matches(dsRecord$className))
+        Xdataset <- dplyr::select(ds, -matches(dsRecord$className))
         edf <- rbind(edf,
-                     jentropies(select(ds, which(names(ds) == dsRecord$className)),
-                                select(ds, which(names(ds) != dsRecord$className))) %>%
-                         mutate(type=name, #X, Y, XY are used to draw different graphs,
-                                name=dsName # This is the name of the dataset
-                                )
+                     cbind(dsName,
+                           transform="observation",
+                           jentropies(Kdataset,Xdataset)#CMET on the class and the observations
+                           )
 #                     sentropies(ds, nbins=ceiling(nrow(ds)^(1/3))) %>%
-                         # mutate(withClass = withClass,
-                         #        isClass = (as.character(dsRecord$className) ==
-                         #                        as.character(name)),
-                         #        dsName = dsName
-                         # )
+                    )
+        #select those columns which are numeric
+        numColumns <- sapply(Xdataset, is.numeric)
+        if (!any(numColumns)) next
+        #catColumns <- !numColumns#categorical columns in X (not including the class)
+        Tdataset <- Xdataset[,numColumns]#Until  we know how to apply Box-Cox
+        # Tdataset <- log(Xdataset)#Box-Cox transformation
+        # edf <- rbind(edf,
+        #              cbind(dsName,
+        #                    transform="Box-Cox:log",
+        #                    jentropies(Xdataset,Tdataset)
+        #                    )
+        #              )
+        pca <- prcomp(Tdataset, center = TRUE, scale. = TRUE) 
+        Ydataset <- cbind(
+                        Xdataset[,!numColumns],
+                        predict(pca, newdata=Tdataset)
         )
-#    }
+        edf <- rbind(edf,
+                     cbind(dsName, 
+                           transform="PCAonBoxCox:log",
+                           jentropies(Tdataset, Ydataset)
+                           )
+        )
 }
 str(edf)
 # show the split entropies
-filter(edf, type != "XY")
+#filter(edf, type != "XY")
+#show all entropies for a data base
+print(filter(edf, dsName == "iris"))
 ```
 
-```{r}
-cmet <- ggmetern(edf, fancy=TRUE) +
-    geom_point(aes(color=name, shape=type), size=3) +
+Visualize both the aggregate and the split entropies.
+
+```{r, fig.width=12, fig.height=16}
+fancy <- TRUE
+fancy <- FALSE
+#select some entropies to visualize
+vedf <- edf #filter(edf, type != "XY")
+cmet <- ggmetern(vedf, fancy) +
+    geom_point(aes(color=transform, shape=type), size=3) +
     scale_shape_manual(values=c(4, 20, 1)) +
     labs(color="Dataset name", shape="Var type")
-cmet
-ggsave(filename="aggregated_and_split_uniclass_CMET.jpeg")
+cmet + facet_wrap(~dsName, ncol=2)
+#ggsave(filename="aggregated_and_split_uniclass_CMET.jpeg")
+```
+
+# Transformation using centering and PCA
+
+This should probably go in a differetn vignette or example.
+
+```{r transformation}
+# from:
+# https://tgmstat.wordpress.com/2013/11/28/computing-and-visualizing-pca-in-r/
+data(iris)
+
+# log transform 
+log.ir <- log(iris[, 1:4])
+ir.species <- iris[, 5]#saving the class
+
+# apply PCA - scale. = TRUE is highly 
+# advisable, but default is FALSE. 
+ir.pca <- prcomp(log.ir,
+                 center = TRUE,
+                 scale. = TRUE) 
+
+# print method
+print(ir.pca)
+
+# plot method
+plot(ir.pca, type = "l")
+
+# summary method: describes the importance of the components.
+summary(ir.pca)
+
+```
+
+Next we see how the information from the original data is transferred to the principal components accumulatively:
+
+```{r PCA}
+# Predict PCs
+pca.ir <- as.data.frame(predict(ir.pca, newdata=log.ir))
+
+etdf <- data.frame()
+etdf <- rbind(etdf,
+              cbind(transfo="iris_log",
+                     jentropies(iris[,1:4], log.ir)
+                     )
+)
+etdf <- rbind(etdf,
+              cbind(transfo="log_pca",
+                     jentropies(log.ir, pca.ir)
+                     )
+)
+for( i in (1:4)){
+    etdf <- rbind(etdf,
+                  cbind(transfo=paste0("iris_pca1_",i),
+                        jentropies(iris[,1:4], as.data.frame(pca.ir[,1:i]))
+                  )
+    )
+}
+```
+
+```{r visualization in CMET}
+# show the split entropies
+vetdf <- filter(etdf, type != "XY")
+fancy <- TRUE
+fancy <- FALSE
+transfo_cmet <- ggmetern(vetdf, fancy) +
+    geom_point(aes(color=transfo, shape=type), size=3) +
+    scale_shape_manual(values=c(4, 20, 1)) +
+    labs(color="transfo name", shape="Var type")
+transfo_cmet
+
+```
+
+The observation of the gain of adopting the PCA has to be seen in the source triangle
+
+```{r}
+sedf <- data.frame()
+#sEnt <- sentropies(iris[,1:4])
+sedf <- rbind(sedf,
+              cbind(data="iris", transform="none", 
+                     sentropies(iris[,1:4], type="dual")
+                     )
+        )
+pca <- as.data.frame(pca.ir)
+for( i in (1:4)){
+    sedf <- rbind(sedf,
+                  cbind(data=paste0("iris_pca1_",i), transform="PCA",
+                        sentropies(dplyr::select(pca,1:i), type="dual")
+                  )
+    )
+}
+```
+
+```{r visualization in SMET PCA}
+# show the split entropies
+vsedf <- filter(sedf, name == "ALL")
+fancy <- TRUE
+fancy <- FALSE
+transfo_smet <- ggmetern(vsedf, fancy) +
+    geom_point(aes(color=data), size=3) +
+    scale_shape_manual(values=c(4, 20, 1)) +
+    labs(color="data name")
+transfo_smet
+```
+
+# Comparison with ICA
+
+```{r}
+library(ica)
+ica <- icaimax(
+    iris[,1:4], nc=4,
+    center=TRUE
+)
+ica.iris <- data.frame(ica$Y)
+#Now get the same approximations as before.
+for( i in (1:4)){
+    sedf <- rbind(sedf,
+                  cbind(data=paste0("iris_ica1_",i), transform="ICA", 
+                        sentropies(as.data.frame(ica.iris[,1:i]), type="dual")
+                  )
+    )
+}
+```
+
+Visualisation comparing transforms:
+
+```{r visualization in SMET ALL}
+# show the split entropies
+vsedf <- filter(sedf, name == "ALL")
+fancy <- TRUE
+fancy <- FALSE
+transfo_smet <- ggmetern(vsedf, fancy) +
+    geom_point(aes(color=data, shape=transform), size=3) +
+    scale_shape_manual(values=c(4, 20, 1)) +
+    labs(color="data name", shape="Transform type")
+transfo_smet
 ```
 
 # Postscriptum

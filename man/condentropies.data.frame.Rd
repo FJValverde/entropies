@@ -13,4 +13,3 @@ Another dataframe with the main entropy coordinates of every variable Xi
 \description{
 Entropy decomposition of a data frame (multivariate decomposition)
 }
-

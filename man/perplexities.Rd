@@ -16,4 +16,3 @@ A dataframe with the perplexities associated to the data
 There are primitives to obtain this for \code{data.frame} and
 \code{\link[caret]{confusionMatrix}}.
 }
-

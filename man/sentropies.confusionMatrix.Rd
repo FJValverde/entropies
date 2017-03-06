@@ -2,11 +2,10 @@
 % Please edit documentation in R/sentropies.R
 \name{sentropies.confusionMatrix}
 \alias{sentropies.confusionMatrix}
-\title{Entropy decomposition of a confusion table}
+\title{Entropy decomposition of a confusion table from caret}
 \usage{
 \method{sentropies}{confusionMatrix}(ct, ...)
 }
 \description{
-Entropy decomposition of a confusion table
+Entropy decomposition of a confusion table from caret
 }
-

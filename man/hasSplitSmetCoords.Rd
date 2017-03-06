@@ -13,4 +13,3 @@ Functions to detect SMET coordinates
 a function to detect if the source multivariate split entropies are present: this enables 
 working out the multivariate split entropic coordinates
 }
-

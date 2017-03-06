@@ -1,5 +1,8 @@
 # PACKAGE-WIDE auxiliary functions and variables NOT EXPORTED.
 
+#TODO: For our own sanity, this should refer to "variables" when there is no intent of plotting them
+# and to "coords" when they are designed to be plotted in an ET.
+
 #' A characterization of the variables in a data.frame needed to define the perplexities.
 simpleEntropies <- c("Ux", "Uy", "Hx", "Hy", "Hxy")
 multiAggregateEntropies <-  c("H_Ux", "H_Px", "VI_Px")    # multivariate simple entropies
@@ -9,6 +12,8 @@ splitSmetCoords  <-  c("name", "H_Uxi", "H_Pxi", "VI_Pxi") # multivariate split 
 derivedNonSplitEntropies <- c("Uxy", "DeltaHxy", "MIxy2", "VIxy")
 multiEntropicCoords <-  c("DeltaH_Px", "M_Px", "VI_Px") #source multivariate aggregate coordinates
 # Strictly speaking VI_Px is not derived
+aggregateSmetCoords <- c("H_Ux", "DeltaH_Px", "M_Px", "VI_Px") #source multivariate aggregate coordinates
+dualAggregateSmetCoords <- c("H_Ux", "DeltaH_Px", "M_Px", "VI_Px") # SMET coords without C_P_X
 
 #' A caracterization of the variables in a data.frame of derived non-split entropies.
 derivedSplitEntropies <- c("DeltaHx", "DeltaHy", "MIxyX", "MIxyY", "VIx", "VIy")
@@ -37,8 +42,8 @@ hasMultiAggregateEntropies <- function(df){all(multiAggregateEntropies %in% name
 hasSplitSmetCoords <- function(df){all(derivedSplitSmetCoords %in% names(df))}
 
 #' A function to detect if the source multivariate aggregate entropic coordinates are present
-hasAggregateSmetCoords <- function(df){all(multiEntropicCoords %in% names(df))}
-
+hasAggregateSmetCoords <- function(df){all(aggregateSmetCoords %in% names(df))}
+hasDualAggregateSmetCoords <- function(df){all(dualAggregateSmetCoords %in% names(df))}
 #' deprecated!
 hasMultiEntropicCoords <- function(df){all(multiEntropicCoords %in% names(df))}
 

@@ -8,9 +8,13 @@ sentropies(data, ...)
 }
 \arguments{
 \item{data}{The data being provided to the function.}
+
+\item{unit}{The logarithm to be used in working out the sentropies as per 
+\code{entropy}. Defaults to "log2".}
 }
 \value{
-A dataframe with the sentropies of the marginals
+A dataframe with the sentropies of the marginals. If type="dual" then \code{hasAggregateSmetCoords(sentropies(data, type="dual"))}, 
+otherwise, \code{hasSplitSmetCoords(sentropies(data))}.
 }
 \description{
 Returns several different flavours of sentropies depending on the structure 
@@ -24,4 +28,3 @@ Unless specified by the user explicitly, this function uses base 2
 \seealso{
 \code{\link[entropy]{entropy}, \link[infotheo]{entropy}}
 }
-

@@ -9,4 +9,3 @@ hasCmetEntropicCoords(df)
 \description{
 A function to detect if the the channel multivariate entropic coordinates are present
 }
-
