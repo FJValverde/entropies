@@ -19,52 +19,44 @@
 #' @return A plot object in the ggplot2 class of plots ready to be plotted.
 #' @seealso \code{\link{ggtern}}, \code{\link{entropies}}, \code{\link{entropicCoordinates}}
 #' @export
-#' @importFrom ggtern ggtern
-#' @examples
-#' data(UCBAdmissions)
-#' experiments <- entropicCoords(entropies(UCBAdmissions)) # Non-split data
-#' eT <- ggmetern(experiments) + geom_point(aes(VIxy,MIxy2,DeltaHxy, colour=Dept, shape=Dept))
-#' eT + ggtitle("UCB admissions by department. X=admittance status, Y=gender") # non-split entropy triangle
-#' 
+#' @import ggtern
+# @examples
+# data(UCBAdmissions)
+# experiments <- entropicCoords(entropies(UCBAdmissions)) # Non-split data
+# eT <- ggmetern(experiments) + geom_point(aes(VIxy,MIxy2,DeltaHxy, colour=Dept, shape=Dept))
+# eT + ggtitle("UCB admissions by department. X=admittance status, Y=gender") # non-split entropy triangle
+# 
 # splitExperiments <- entropicCoords(entropies(UCBAdmissions), split=TRUE) # Non-split data
 # splitET <- ggentropytern(splitExperiments)
 # splitET # split entropy triangle
 ggmetern <- function(data, fancy=TRUE, ...) {
     vars <- list(...)
-    # If we are to build the split triangle, we have to massage the data:
-    #if (hasSplitSmetCoords(data)){
     if (hasSplitSmetCoords(data)) {
         # Create the plot
         ep <- ggtern::ggtern(data, aes(x=VI_Pxi, y=M_Pxi, z=DeltaH_Pxi), vars) #+
-            #theme_rotate(degrees=-60)#Source Entropy Diagrams are upside down!
         # Node labels for the split triangle
-        #TlabExp <- expression({italic(M)^{symbol("\242")}}["Xi"])
         TlabExp <- "$\\textit{M'}_{P_{X_i}}$"
-        #RlabExp <- expression(paste(Delta, "", {italic(H)^{symbol("\242")}}["Xi"]))
         RlabExp <- "$\\Delta\\textit{H'}_{P_{X_i}}$"
-        #LlabExp <- expression({italic(VI)^{symbol("\242")}}["Xi|Xi"^c])
-        #LlabExp <-  "$\\textit{VI'}_{P_{X_i}}"
         LlabExp <-  "$\\textit{H'}_{P_{X_i|X_i^c}}$"
-        titleExp <- "Source split entropies"
-        # Otherwise, check that it has multivariate source data, then plot
-    #} else if (hasMultiEntropicCoords(data)){  
+        titleExp <- "Source Multivariate split entropies"
+    # Otherwise, check that it has multivariate source data, then plot
     } else if (hasAggregateSmetCoords(data)){
         ep <- ggtern(data, aes(x=VI_Px, y=M_Px, z=DeltaH_Px), vars) #+ geom_point(...)
-        # vertex labels for the non-split multivariate source triangle
-        #TlabExp <- expression({italic(M)^{symbol("\242")}}["X"])
+        # vertex labels for the non-split multivariate source triangle with total correlation
         TlabExp <- "$\\textit{M'}_{P_X}"
-        #RlabExp <- expression(paste(Delta, "", {italic(H)^{symbol("\242")}}["X"]))
-        RlabExp <- "$\\Delta\\textit{H'}_{P_X}"
-        #LlabExp <- expression({italic(VI)^{symbol("\242")}}["X"])
-        #LlabExp <- "$\\textit{H}_{P_{{X_i | X_i^c}}}"
+        RlabExp <- "$\\Delta\\textit{H'}_{\\Pi_{X}}"#\\overline X does not work!
         LlabExp <-  "$\\textit{VI'}_{P_{X}}"
-        titleExp <- "Source entropies"
+        titleExp <- "Aggregate Source Multivariate  entropies"
+    } else if (hasDualAggregateSmetCoords(data)){
+        ep <- ggtern(data, aes(x=VI_Px, y=D_Px, z=DeltaH_Px), vars) #+ geom_point(...)
+        # vertex labels for the non-split multivariate source triangle
+        TlabExp <- "$\\textit{D'}_{P_X}"
+        RlabExp <- "$\\Delta\\textit{H'}_{P_X}"#\\overline X does not work!
+        LlabExp <-  "$\\textit{VI'}_{P_{X}}"
+        titleExp <- "Dual Aggregate Source Multivariate entropies"
     } else if (hasCmetEntropicCoords((data))) {
         ep <- ggtern(data, aes(x=VI_P, y=M_P, z=DeltaH_P), vars) #+ geom_point(...)
         # Vertex labels for the channel multivariate entropy triangle
-        # TlabExp <- expression({italic(M)^{symbol("\242")}}["XY"])
-        # RlabExp <- expression(paste(Delta, "", {italic(H)^{symbol("\242")}}["XY"]))
-        # LlabExp <- expression({italic(VI)^{symbol("\242")}}["XY"])
         TlabExp <- "\\textit{M'}_{P_{XY}}"
         RlabExp <- "$\\Delta\\textit{H'}_{P_{XY}}$"
         LlabExp <-  "$\\textit{VI'}_{P_{XY}$"
@@ -84,15 +76,17 @@ ggmetern <- function(data, fancy=TRUE, ...) {
                        tern.axis.text.show=TRUE,
                        tern.axis.arrow.show=TRUE,
                        tern.axis.clockwise=FALSE) +
-        ggtern::theme_latex(TRUE) + #global switch to latex which we must turn ON by default
+        ggtern::theme_latex(TRUE) + #global switch to latex: ON by default
         ggtern::Tlab(TlabExp) + 
         ggtern::Rlab(RlabExp) + 
         ggtern::Llab(LlabExp) #+
-        #ggtitle(titleExp)
-        #ggtern::theme_showarrows() + # This theme overrides later adjustments
-    if (hasSplitSmetCoords(data) || hasAggregateSmetCoords(data)){#Source Entropy Diagrams are upside down!
+        #ggtitle(titleExp) #otherwise this would be too intrusive here!
+        #ggtern::theme_showarrows() + # This theme HERE overrides later adjustments
+    if (hasSplitSmetCoords(data) || 
+        hasAggregateSmetCoords(data) || 
+        hasDualAggregateSmetCoords(data)){#Source Entropy Diagrams are upside down!
         ep <- ep + theme_rotate(degrees=-60)
     }
-    ep <- ep + ggtern::theme_showarrows() 
+    ep <- ep + ggtern::theme_showarrows() # last thing to do.
     return(ep)
 }

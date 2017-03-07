@@ -11,7 +11,7 @@ vignette: >
 
 # Environment construction
 
-```{r, echo=FALSE, environment}
+```{r, echo=FALSE, warning=FALSE, environment}
 #library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
 #library(entropy)  # To work out the appropriate coordinates.
 library(dplyr)     # That infamous Mr. Wickham!
@@ -24,8 +24,9 @@ library(mlbench)   # ml benchmarkss
 library(candisc)   # Wine dataset
 #knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+knitr::opts_chunk$set(warning=FALSE)# Should not appear in the knitted document
 fancy <- TRUE  # set this for nicer on-screen visualization
-fancy <- FALSE # Set this for either printing matter
+#fancy <- FALSE # Set this for either printing matter
 ```
 
 # An example of multivariate use
@@ -34,7 +35,7 @@ fancy <- FALSE # Set this for either printing matter
 
 The inventory of databases to be explored:
 
-```{r data-munging}
+```{r dataset processing}
 # the inventory of databases you can access
 #library(datasets)
 dsNames <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
@@ -81,7 +82,7 @@ datasets
 
 Let's print this information to latex:
 
-```{r}
+```{r datasets to latex}
 library(xtable)
 ds4latexing <- datasets %>% select(-className, -idNumber)
 row.names(ds4latexing) <- NULL
@@ -97,7 +98,9 @@ thisLatex
 
 Obtain the entropies and some other data for plotting from all datasets.
 
-```{r find-entropies}
+```{r find-entropies, warning=FALSE}
+#source("../R/getSourceEntropies.R")
+edf <- getSourceEntropies(iris, className="Species")
 # Analyze both with Classes and without
 withClasses <- c(TRUE, FALSE)
 #  "name"       "H_Uxi"      "H_Pxi"      "DeltaH_Pxi" "VI_Pxi"     "M_Pxi" 
@@ -153,7 +156,7 @@ totalEdf <-  edf %>%
                     VI_Px = sum(VI_Pxi),
                     M_Px = sum(M_Pxi))
            
-totalEdf
+#totalEdf
 # Plot the triangle with only the aggregate data with no Class
 smet <-  ggmetern(totalEdf %>% filter(withClass == FALSE), fancy) + 
     geom_point(mapping=aes(shape=name), size=3)+
@@ -186,7 +189,7 @@ smet
 ggsave("aggregated_withWo_label.jpeg", plot=smet)
 ```
 
-# Observing the entropy balances in the class features
+## Observing the entropy balances in the class features
 
 ```{r}
 onlyClasses <- edf %>% filter(isClass==TRUE)

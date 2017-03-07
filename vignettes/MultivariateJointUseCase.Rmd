@@ -111,7 +111,7 @@ for(dsName in unique(datasets$name)){
         edf <- rbind(edf,
                      cbind(dsName,
                            transform="observation",
-                           jentropies(Kdataset,Xdataset)#CMET on the class and the observations
+                           jentropies(Kdataset,Xdataset)# entropies of observations
                            )
 #                     sentropies(ds, nbins=ceiling(nrow(ds)^(1/3))) %>%
                     )
@@ -193,10 +193,34 @@ summary(ir.pca)
 
 Next we see how the information from the original data is transferred to the principal components accumulatively:
 
-```{r PCA}
+```{r, PCA}
+data <- iris
 # Predict PCs
 pca.ir <- as.data.frame(predict(ir.pca, newdata=log.ir))
+etdf <- rbind(etdf,
+              cbind(transfo="iris_log",
+                     jentropies(iris[,1:4], log.ir)
+                     )
+)
+etdf <- rbind(etdf,
+              cbind(transfo="log_pca",
+                     jentropies(log.ir, pca.ir)
+                     )
+)
+for( i in (1:4)){
+    etdf <- rbind(etdf,
+                  cbind(transfo=paste0("iris_pca1_",i),
+                        jentropies(iris[,1:4], as.data.frame(pca.ir[,1:i]))
+                  )
+    )
+}
 
+#visualize the separate information of each of the pcas.
+etdf <- data.frame()
+```
+
+
+```{r, cumulative PCA}
 etdf <- data.frame()
 etdf <- rbind(etdf,
               cbind(transfo="iris_log",

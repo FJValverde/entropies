@@ -24,5 +24,160 @@ library(mlbench)   # ml benchmarkss
 #knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=6)
+fancy <- TRUE  # set this for nicer on-screen visualization
+fancy <- FALSE # Set this for either printing matter or...
+
+```
+
+## Datasets available
+
+```{r data-munging}
+# the inventory of databases you can access
+#library(datasets)
+dsNames <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
+className <- c("Class","Species", "Type", "Improved", "Class", "Class", "Cultivar")  # Name of class attribute
+classVar <- c(35, 5, 10, 5, 11, 61, 1)   # ordinal of the class attribute
+idNumber <- c(NaN, NaN, NaN, 1, 1, NaN, NaN) # Other attributes to dispose of: mainly identifiers.
+
+K <- c(2, 3, 7, 3, 2, 2, 3)  # No. of classes in the class variable
+# To select a dataset by name
+# Caveat: you have to ensure that the containing package has been attached
+evalDataset <- function(dsName){
+    dsName <- as.character(dsName)
+    switch(dsName, #TODO: improve this way of "invoking" the dataset.
+        "iris" =         {data(iris); iris},
+        "Ionosphere" =   {data(Ionosphere); Ionosphere},
+        #Ionosphere$V2 is useless, V1 is highly correlated with Class
+        "Glass" =        {data(Glass); Glass},
+        "Arthritis" =    {data(Arthritis); Arthritis},
+        "BreastCancer" = {data(BreastCancer); BreastCancer},
+        "Sonar" =        {data(Sonar); Sonar},
+        "Wine" =         {data(Wine); Wine}
+    ) #This value "FALLS THROUGH"
+}
+m <- sapply(dsNames, function(n){nrow(evalDataset(n))}) # no. of instances in the dataset
+n <- sapply(dsNames, function(n){ncol(evalDataset(n))}) - 1 - as.numeric(!is.nan(idNumber)) # no. of features in the dataset.
+datasets <- data.frame(name=dsNames, 
+                       className, 
+                       idNumber, 
+                       K=as.integer(K), 
+                       n=as.integer(n), 
+                       m, 
+                       stringsAsFactors=FALSE)
+# #To select the #of column of the classc
+# whichClass <- function(ds, className){which(colnames(evalDatasset(ds))==className)}
+# #whichNumVar <-  function(r){whichClass(evalDataset(r$name), r$className)}
+# cardinalClass <- function(ds, className){
+#     length(unique(evalDataset(ds)[,className]))
+# }
+# classVar <-  mapply(whichClass, datasets$name, datasets$className)
+# K <- mapply(cardinalClass, datasets$name, classVar)
+# library(dplyr)
+# datasets <- data.frame(name,className, classVar, K)
+datasets
+```
+
+Let's print this information to latex:
+
+```{r}
+library(xtable)
+ds4latexing <- datasets %>% dplyr::select(-className, -idNumber)
+row.names(ds4latexing) <- NULL
+names(ds4latexing) <- c("Dataset Name", "class card.", "num. features", "num. instances")
+thisLatex <- xtable(ds4latexing, 
+                    caption="Some datasets considered in this study",
+                    label="tab:datasets")
+align(thisLatex) <- xalign(thisLatex)
+thisLatex
+```
+
+# Data exploration
+
+## Obtaining the entropies
+
+Obtain the entropies and some other data for plotting from all datasets.
+
+<!-- # as per:  -->
+<!-- # http://stackoverflow.com/questions/5234117/how-to-drop-columns-by-name-in-a-data-frame -->
+<!-- # Don't EVER use subset in PROGRAMS! -->
+<!-- #ds <- subset(ds, subset=1:nrow(ds), select=dsRecord$className, drop=TRUE) -->
+
+```{r find-entropies}
+edf <- data.frame()
+dsName <- "Ionosphere"#Testing and debugging purposes.
+dsName <- "iris"
+dsName <- "Glass"
+#for(dsName in unique(datasets$name)){
+    dsRecord <-  filter(datasets, name == dsName)
+    ds <- evalDataset(dsName)
+    print(sprintf("Analyzing dataset with class label: %s", dsName))
+    Kdataset <- dplyr::select(ds, matches(dsRecord$className))
+    Xdataset <- dplyr::select(ds, -matches(dsRecord$className))
+    edf <- rbind(edf,
+                cbind(dsName,
+                    Transform="observation",
+                    Vars="ALL",
+                    jentropies(Kdataset,Xdataset)# entropies of observations
+                )
+    )
+#                     sentropies(ds, nbins=ceiling(nrow(ds)^(1/3))) %>%
+    #select those columns which are numeric
+    numericColumns <- sapply(Xdataset, is.numeric)
+    if (!any(numericColumns)) next #on categorical datasets no PCA, ICA, can be done
+    Tdataset <- Xdataset[,numericColumns]#Until  we know how to apply Box-Cox
+    # Tdataset <- log(Xdataset)#Box-Cox transformation
+    # edf <- rbind(edf,
+    #              cbind(dsName,
+    #                    transform="Box-Cox:log",
+    #                    jentropies(Xdataset,Tdataset)
+    #                    )
+    #              )
+    pca <- prcomp(Tdataset, center = TRUE, scale. = TRUE)
+    # print method
+    print(pca)
+    # plot method
+    plot(pca, type = "l")
+    PCAdataset <- as.data.frame(predict(pca, newdata=Tdataset)) #ICA data
+    # Observe the PCA data by themselves
+    for (i in 1:ncol(PCAdataset)){    
+        edf <- rbind(edf,
+                cbind(dsName,
+                    Transform="PCA", #PCA_1 is the lable of
+                    Vars=paste0(i),
+                    jentropies(Xdataset,dplyr::select(PCAdataset, i))# only i-th PCA
+                ),
+                cbind(dsName,
+                     Transform="PCAacc",
+                     Vars=paste(1,i,sep="_"),#PCA_1 is the lable of
+                    jentropies(Xdataset,dplyr::select(PCAdataset, (1:i)))# cum i-th PCA
+                )
+        )
+    }
+#}#for
+str(edf)
+# show the split entropies
+#filter(edf, type != "XY")
+#show all entropies for a data base
+print(filter(edf, dsName == "iris"))
+```
+
+```{r visualization in CMET}
+# show the split entropies
+vetdf <- filter(edf, type != "XY") %>% 
+    filter(grepl("PCA|PCAacc",Transform))
+fancy <- TRUE
+fancy <- FALSE
+transfo_cmet <- ggmetern(vetdf, fancy) +
+    geom_point(aes(color=Transform, shape=type), size=3) +
+    scale_shape_manual(values=c(4, 20, 1)) +
+    labs(color="transfo name", shape="Var type")# +
+    #geom_label(mapping=aes(as.character(Vars)))#TODO: check with ggtern's website how TODO
+transfo_cmet
+```
+
+Visualizing the PCA as a source of information:
+
+```{r}
+sedf <- 
 ```
 

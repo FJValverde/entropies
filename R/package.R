@@ -13,7 +13,7 @@ derivedNonSplitEntropies <- c("Uxy", "DeltaHxy", "MIxy2", "VIxy")
 multiEntropicCoords <-  c("DeltaH_Px", "M_Px", "VI_Px") #source multivariate aggregate coordinates
 # Strictly speaking VI_Px is not derived
 aggregateSmetCoords <- c("H_Ux", "DeltaH_Px", "M_Px", "VI_Px") #source multivariate aggregate coordinates
-dualAggregateSmetCoords <- c("H_Ux", "DeltaH_Px", "M_Px", "VI_Px") # SMET coords without C_P_X
+dualAggregateSmetCoords <- c("H_Ux", "DeltaH_Px", "D_Px", "VI_Px") # SMET coords without C_P_X
 
 #' A caracterization of the variables in a data.frame of derived non-split entropies.
 derivedSplitEntropies <- c("DeltaHx", "DeltaHy", "MIxyX", "MIxyY", "VIx", "VIy")

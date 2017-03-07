@@ -30,13 +30,6 @@ the split variables "DeltaH_Pxi", "DeltaH_Pxi","M_Pxi" in the dataframe passed a
 Only the plot and aesthetics are generated, the geometry is not decided. A further 
 column, including the name of the original variables may be used to annotate the plot.
 }
-\examples{
-data(UCBAdmissions)
-experiments <- entropicCoords(entropies(UCBAdmissions)) # Non-split data
-eT <- ggmetern(experiments) + geom_point(aes(VIxy,MIxy2,DeltaHxy, colour=Dept, shape=Dept))
-eT + ggtitle("UCB admissions by department. X=admittance status, Y=gender") # non-split entropy triangle
-
-}
 \seealso{
 \code{\link{ggtern}}, \code{\link{entropies}}, \code{\link{entropicCoordinates}}
 }
