@@ -99,43 +99,18 @@ thisLatex
 Obtain the entropies and some other data for plotting from all datasets.
 
 ```{r find-entropies, warning=FALSE}
-#source("../R/getSourceEntropies.R")
-edf <- getSourceEntropies(iris, className="Species")
-# Analyze both with Classes and without
-withClasses <- c(TRUE, FALSE)
-#  "name"       "H_Uxi"      "H_Pxi"      "DeltaH_Pxi" "VI_Pxi"     "M_Pxi" 
-# "withClass", "dsName", "isClass"
 edf <- data.frame()
 for(i in 1:nrow(datasets)){
     dsRecord <-  datasets[i, ] #filter(datasets, name == dsName)
     dsName <- dsRecord$name
-    ds <- evalDataset(dsName)
-    ds <- infotheo::discretize( # Controlled discretization of the database.
-        ds, 
-        nbins=max(ceiling(nrow(ds)^(1/2)), dsRecord$K)# At least the classes.
-    )
-    if (!is.nan(dsRecord$idNumber)) # ids as features: spureously correlated with class labels
-        ds <- ds[,-dsRecord$idNumber]
-    for(withClass in withClasses){
-        if (withClass){
-            print(sprintf("Analyzing dataset with class label: %s", dsName))
-        }else {
-            print(sprintf("Analyzing dataset without class label: %s", dsName))
-            # as per: 
-            # http://stackoverflow.com/questions/5234117/how-to-drop-columns-by-name-in-a-data-frame
-            # Don't EVER use subset in PROGRAMS!
-            #ds <- subset(ds, subset=1:nrow(ds), select=dsRecord$className, drop=TRUE)
-            ds <- ds[, !colnames(ds) == dsRecord$className] #fastest in bechnmark at bot. of url
-        }
-        edf <- rbind(edf,
-                     sentropies(ds) %>% 
-                         mutate(withClass = withClass,
-                                isClass = (as.character(dsRecord$className) ==
-                                                as.character(name)),
-                                dsName = dsName
-                         )
+    edf <- rbind(
+        edf,
+        getSourceEntropies(evalDataset(dsName), 
+            dsName, 
+            className = dsRecord$className,
+            withClass=TRUE, 
+            type="total")
         )
-    }
 }
 str(edf)
 ```
