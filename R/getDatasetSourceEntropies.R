@@ -13,7 +13,7 @@
 #' @import tibble
 #' @export
 #' @example edf <- getSourceEntropies(iris, className="Species", withClass=TRUE, type="dual")
-getSourceEntropies <- function(
+getDatasetSourceEntropies <- function(
     ds, #the dataset to be analysed
     dsName=NULL, #The database name in case it is provided.
     className="Class", #Name of class, a sensible default

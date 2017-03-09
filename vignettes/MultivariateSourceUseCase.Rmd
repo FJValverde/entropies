@@ -105,7 +105,7 @@ for(i in 1:nrow(datasets)){
     dsName <- dsRecord$name
     edf <- rbind(
         edf,
-        getSourceEntropies(evalDataset(dsName), 
+        getDatasetSourceEntropies(evalDataset(dsName), 
             dsName, 
             className = dsRecord$className,
             withClass=TRUE, 

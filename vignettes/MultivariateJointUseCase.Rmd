@@ -8,8 +8,9 @@ output: html_document
 # Environment construction
 
 ```{r, echo=FALSE, environment}
-library(dplyr)     # That (in)famous Mr. Wickham!
-library(tidyr)     # Tidying tall & wide dataframes
+library(tidyverse)
+#library(dplyr)     # That (in)famous Mr. Wickham!
+#library(tidyr)     # Tidying tall & wide dataframes
 #library(infotheo)  # The functionality provided by this has to be rerouted through entropies
 library(entropies) # This package
 library(ggtern)    # Ternary diagrams on ggplot
@@ -152,8 +153,9 @@ Visualize both the aggregate and the split entropies.
 fancy <- TRUE
 fancy <- FALSE
 #select some entropies to visualize
-vedf <- edf #filter(edf, type != "XY")
-cmet <- ggmetern(vedf, fancy) +
+cmet <- ggmetern(edf, 
+                 #filter(edf, type != "XY"),#alternative not to visualize the aggregate
+                 fancy) +
     geom_point(aes(color=transform, shape=type), size=3) +
     scale_shape_manual(values=c(4, 20, 1)) +
     labs(color="Dataset name", shape="Var type")
@@ -221,7 +223,7 @@ etdf <- data.frame()
 
 
 ```{r, cumulative PCA}
-etdf <- data.frame()
+etdf <- tibble()#data.frame()
 etdf <- rbind(etdf,
               cbind(transfo="iris_log",
                      jentropies(iris[,1:4], log.ir)
