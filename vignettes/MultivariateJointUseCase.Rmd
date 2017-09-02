@@ -8,7 +8,7 @@ output: html_document
 # Environment construction
 
 ```{r, echo=FALSE, environment}
-library(tidyverse)
+library(tidyverse)  # That (in)famous Mr. Wickham!
 #library(dplyr)     # That (in)famous Mr. Wickham!
 #library(tidyr)     # Tidying tall & wide dataframes
 #library(infotheo)  # The functionality provided by this has to be rerouted through entropies
@@ -25,7 +25,7 @@ fancy <- FALSE # Set this for either printing matter or...
 
 # Classification data analysis using the SCET
 
-## Datasets available
+## Datasets available for entropy analysis in this package
 
 ```{r data-munging}
 # the inventory of databases you can access
@@ -153,172 +153,15 @@ Visualize both the aggregate and the split entropies.
 fancy <- TRUE
 fancy <- FALSE
 #select some entropies to visualize
-cmet <- ggmetern(edf, 
+cmet <- ggmetern(edf %>% filter(type != "XY"), 
                  #filter(edf, type != "XY"),#alternative not to visualize the aggregate
                  fancy) +
     geom_point(aes(color=transform, shape=type), size=3) +
     scale_shape_manual(values=c(4, 20, 1)) +
     labs(color="Dataset name", shape="Var type")
 cmet + facet_wrap(~dsName, ncol=2)
-#ggsave(filename="aggregated_and_split_uniclass_CMET.jpeg")
-```
-
-# Transformation using centering and PCA
-
-This should probably go in a differetn vignette or example.
-
-```{r transformation}
-# from:
-# https://tgmstat.wordpress.com/2013/11/28/computing-and-visualizing-pca-in-r/
-data(iris)
-
-# log transform 
-log.ir <- log(iris[, 1:4])
-ir.species <- iris[, 5]#saving the class
-
-# apply PCA - scale. = TRUE is highly 
-# advisable, but default is FALSE. 
-ir.pca <- prcomp(log.ir,
-                 center = TRUE,
-                 scale. = TRUE) 
-
-# print method
-print(ir.pca)
-
-# plot method
-plot(ir.pca, type = "l")
-
-# summary method: describes the importance of the components.
-summary(ir.pca)
-
-```
-
-Next we see how the information from the original data is transferred to the principal components accumulatively:
-
-```{r, PCA}
-data <- iris
-# Predict PCs
-pca.ir <- as.data.frame(predict(ir.pca, newdata=log.ir))
-etdf <- rbind(etdf,
-              cbind(transfo="iris_log",
-                     jentropies(iris[,1:4], log.ir)
-                     )
-)
-etdf <- rbind(etdf,
-              cbind(transfo="log_pca",
-                     jentropies(log.ir, pca.ir)
-                     )
-)
-for( i in (1:4)){
-    etdf <- rbind(etdf,
-                  cbind(transfo=paste0("iris_pca1_",i),
-                        jentropies(iris[,1:4], as.data.frame(pca.ir[,1:i]))
-                  )
-    )
-}
-
-#visualize the separate information of each of the pcas.
-etdf <- data.frame()
-```
-
-
-```{r, cumulative PCA}
-etdf <- tibble()#data.frame()
-etdf <- rbind(etdf,
-              cbind(transfo="iris_log",
-                     jentropies(iris[,1:4], log.ir)
-                     )
-)
-etdf <- rbind(etdf,
-              cbind(transfo="log_pca",
-                     jentropies(log.ir, pca.ir)
-                     )
-)
-for( i in (1:4)){
-    etdf <- rbind(etdf,
-                  cbind(transfo=paste0("iris_pca1_",i),
-                        jentropies(iris[,1:4], as.data.frame(pca.ir[,1:i]))
-                  )
-    )
-}
-```
-
-```{r visualization in CMET}
-# show the split entropies
-vetdf <- filter(etdf, type != "XY")
-fancy <- TRUE
-fancy <- FALSE
-transfo_cmet <- ggmetern(vetdf, fancy) +
-    geom_point(aes(color=transfo, shape=type), size=3) +
-    scale_shape_manual(values=c(4, 20, 1)) +
-    labs(color="transfo name", shape="Var type")
-transfo_cmet
-
-```
-
-The observation of the gain of adopting the PCA has to be seen in the source triangle
-
-```{r}
-sedf <- data.frame()
-#sEnt <- sentropies(iris[,1:4])
-sedf <- rbind(sedf,
-              cbind(data="iris", transform="none", 
-                     sentropies(iris[,1:4], type="dual")
-                     )
-        )
-pca <- as.data.frame(pca.ir)
-for( i in (1:4)){
-    sedf <- rbind(sedf,
-                  cbind(data=paste0("iris_pca1_",i), transform="PCA",
-                        sentropies(dplyr::select(pca,1:i), type="dual")
-                  )
-    )
-}
-```
-
-```{r visualization in SMET PCA}
-# show the split entropies
-vsedf <- filter(sedf, name == "ALL")
-fancy <- TRUE
-fancy <- FALSE
-transfo_smet <- ggmetern(vsedf, fancy) +
-    geom_point(aes(color=data), size=3) +
-    scale_shape_manual(values=c(4, 20, 1)) +
-    labs(color="data name")
-transfo_smet
-```
-
-# Comparison with ICA
-
-```{r}
-library(ica)
-ica <- icaimax(
-    iris[,1:4], nc=4,
-    center=TRUE
-)
-ica.iris <- data.frame(ica$Y)
-#Now get the same approximations as before.
-for( i in (1:4)){
-    sedf <- rbind(sedf,
-                  cbind(data=paste0("iris_ica1_",i), transform="ICA", 
-                        sentropies(as.data.frame(ica.iris[,1:i]), type="dual")
-                  )
-    )
-}
-```
-
-Visualisation comparing transforms:
-
-```{r visualization in SMET ALL}
-# show the split entropies
-vsedf <- filter(sedf, name == "ALL")
-fancy <- TRUE
-fancy <- FALSE
-transfo_smet <- ggmetern(vsedf, fancy) +
-    geom_point(aes(color=data, shape=transform), size=3) +
-    scale_shape_manual(values=c(4, 20, 1)) +
-    labs(color="data name", shape="Transform type")
-transfo_smet
+#dev.off()#Necessary to do the textual plot.
+#ggsave(str_interp("entropyEndToEnd_${dsName}_epoch_${thisEpoch}.jpeg"), plot=e2ePlot)
 ```
 
 # Postscriptum

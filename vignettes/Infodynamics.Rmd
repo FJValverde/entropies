@@ -13,25 +13,41 @@ The premise is that if the information related to a random variable, the true cl
 
 # Environment construction
 
+## Knitting options
+
 ```{r setup, include=FALSE}
-library(dplyr)     # That infamous Mr. Wickham!
-library(tidyr)     # Tidying tall & wide dataframes
+#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=6)
+#knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+knitr::opts_chunk$set(warning=FALSE)# Should not appear in the knitted document
+```
+
+## Library loading
+
+```{r libraries, include=FALSE}
+library(tidyverse)  # Acceding to that infamous Mr. Wickham's requests!
+# library(dplyr)     # That infamous Mr. Wickham!
+# library(tidyr)     # Tidying tall & wide dataframes
 library(infotheo)  # The functionality provided by this has to be rerouted through entropies
 library(entropies) # This package
 library(ggtern)    # Excellent package for ternary diagrams in the gg tradition
 library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
-#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
-knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=6)
+```
+## Global parameter definitions
+
+
+```{r}
 fancy <- TRUE  # set this for nicer on-screen visualization
 fancy <- FALSE # Set this for either printing matter or...
-
 ```
+
+# Data preparation
 
 ## Datasets available
 
-```{r data-munging}
+```{r data-listing}
 # the inventory of databases you can access
 #library(datasets)
 dsNames <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
@@ -79,7 +95,7 @@ datasets
 
 Let's print this information to latex:
 
-```{r}
+```{r data-listing-latex}
 library(xtable)
 ds4latexing <- datasets %>% dplyr::select(-className, -idNumber)
 row.names(ds4latexing) <- NULL
@@ -113,13 +129,22 @@ dsName <- "Glass"
     print(sprintf("Analyzing dataset with class label: %s", dsName))
     Kdataset <- dplyr::select(ds, matches(dsRecord$className))
     Xdataset <- dplyr::select(ds, -matches(dsRecord$className))
-    edf <- rbind(edf,
-                cbind(dsName,
-                    Transform="observation",
-                    Vars="ALL",
-                    jentropies(Kdataset,Xdataset)# entropies of observations
-                )
-    )
+    # edf <- rbind(edf,
+    #             cbind(dsName,
+    #                 Transform="observation",
+    #                 Vars="ALL",
+    #                 jentropies(Kdataset,Xdataset)# entropies of observations
+    #             )
+    # )
+    edf <- rbind(
+        edf,
+        getDatasetSourceEntropies(evalDataset(dsName), 
+            dsName, 
+            className = dsRecord$className,
+            withClass=TRUE, 
+            type="total")
+        )
+
 #                     sentropies(ds, nbins=ceiling(nrow(ds)^(1/3))) %>%
     #select those columns which are numeric
     numericColumns <- sapply(Xdataset, is.numeric)

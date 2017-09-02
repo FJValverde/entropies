@@ -18,7 +18,7 @@ getDatasetSourceEntropies <- function(
     dsName=NULL, #The database name in case it is provided.
     className="Class", #Name of class, a sensible default
     idName=NULL, #Name of id, a sensible default
-    withClass=TRUE,#Whether correlation with 
+    withClass=TRUE,#Whether correlation with hte class is required
     type="total"#whether "total" or "dual"
 ){
     # Parameter analysis
@@ -30,7 +30,7 @@ getDatasetSourceEntropies <- function(
     #K <- length(unique(ds[,thisClass]))
     K <- nrow(unique(dplyr::select_(ds, thisClass)))
     # 1.2. Wipeout any possible identifiers
-    if (!is.null(idName))
+    if (!is.null(idName))l
         ds <- dplyr::select_(ds, -idName)
     # 1.3 Decide whether to analyze with the Class or not
     if (!withClass)

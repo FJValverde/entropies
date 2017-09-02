@@ -20,6 +20,7 @@
 #' @seealso \code{\link{ggtern}}, \code{\link{entropies}}, \code{\link{entropicCoordinates}}
 #' @export
 #' @import ggtern
+#' @import latex2exp
 # @examples
 # data(UCBAdmissions)
 # experiments <- entropicCoords(entropies(UCBAdmissions)) # Non-split data
@@ -57,10 +58,10 @@ ggmetern <- function(data, fancy=TRUE, ...) {
     } else if (hasCmetEntropicCoords((data))) {
         ep <- ggtern(data, aes(x=VI_P, y=M_P, z=DeltaH_P), vars) #+ geom_point(...)
         # Vertex labels for the channel multivariate entropy triangle
-        TlabExp <- "\\textit{M'}_{P_{XY}}"
+        TlabExp <- "\\textit{I'}_{P_{XY}}"#FVA 24/07/17: Changed text to reflect theoretical work.
         RlabExp <- "$\\Delta\\textit{H'}_{P_{XY}}$"
         LlabExp <-  "$\\textit{VI'}_{P_{XY}$"
-        titleExp <- "Channel entropies"
+        titleExp <- "Aggregate Channel Multivariate entropies"
     } else {
         stop("Non-appropiate data")
     }

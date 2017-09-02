@@ -17,7 +17,9 @@ jentropies <- function(X, Y, ...) UseMethod("jentropies")
 #' @return Another dataframe with the main entropy coordinates of every variable Xi
 #'   in the original conditioned on the datatables Y, which are now the rows of the returned data.frame.
 #' @export
-#' @import infotheo
+#' @importFrom infotheo discretize
+#' @importFrom infotheo condentropy
+#' @importFrom infotheo entropy
 #' @import dplyr
 jentropies.data.frame <- function(X, Y, ...){
     if (ncol(X) == 0 || nrow(X) == 0 ) 
@@ -26,12 +28,12 @@ jentropies.data.frame <- function(X, Y, ...){
         stop("Can only condition on non-empty data.frame Y! ")
     if (nrow(X) != nrow(Y) )
         stop("Can only condition on variable lists with the same number of instances!")
-    if (!all(sapply(X, is.factor))){
-        warning("Discretizing data before entropy calculation!")
+    if (!all(sapply(X, is.integer) || sapply(Y, is.factor))){
+        warning("Discretizing primary data before entropy calculation!")
         X <- infotheo::discretize(X, disc="equalwidth", ...) # infotheo::str(dfdiscretize generates ints, not factors.
     }
-    if (!all(sapply(Y, is.factor))){
-        warning("Discretizing conditioning data before entropy calculation!")
+    if (!all(sapply(Y, is.integer)  || sapply(Y, is.factor))){
+        warning("Discretizing secondary data before entropy calculation!")
         Y <- infotheo::discretize(Y, disc="equalwidth", ...) # infotheo::str(dfdiscretize generates ints, not factors.
     }
     # suppose the dataframe is categorical
@@ -118,8 +120,7 @@ jentropies.table <- function(Nxy, ...){
     #        stop("Cannot process tables with more than 3 dimensions or less than 2 dimensions.")
     if (dims[1] < 2 | dims[2] < 2)
         stop("jentropies are not defined for distributions with a singleton domain.")
-    # 1. Start processing: this is a candidate por sentropies_raw
-    #require(entropy)
+    # 1. Start processing: this is a candidate por jentropies_raw
     #unless otherwise specified, we use log2 logarithms
     # CAVEAT: use a more elegant kludge
     vars <- list(...);
@@ -127,38 +128,6 @@ jentropies.table <- function(Nxy, ...){
     if (is.null(vars$unit)) vars$unit <- "log2"
     if (length(dims)==2){ # N is a plain contingency on X and Y
         edf <- jentropies2d.table(Nxy, vars)
-        # #edf <- 
-        # Nx <- apply(Nxy, 1, sum) # to be transformed into a probability
-        # #N <- sum(Nx)
-        # #H_x <- sapply(Nx, function(n){- n/N * log2(n/N)})
-        # H_x <- entropy::entropy(Nx, unit="log2")
-        # #Hx <- do.call(entropy, c(list(y=Nx), vars)) #entropy(Nx,vars)
-        # Ny <- apply(Nxy, 2, sum)
-        # #H_y <- sum(sapply(Ny, function(n){- n/N * log2(n/N)}))
-        # H_y <- entropy::entropy(Ny, unit="log2")
-        # #H_xy <- sum(sum((Nxy/N)*log2((Nxy * N)/(Nx %*% t(Ny)))))
-        # #H_xy <- sum(sum(-(Nxy/N)*log2(Nxy/N)))
-        # H_xy <- entropy::entropy(Nxy, unit="log2")
-        # #Hy <- do.call(entropy, c(list(y=Ny), vars)) #entropy(Ny, vars)
-        # Ux <- log2(dims[1]) #entropy(rep(1/dims[1],dims[1]),unit="log2",...)
-        # Uy <- log2(dims[2]) #entropy(rep(1/dims[2],dims[2]),unit="log2",...)
-        # #Hxy <- do.call(entropy, c(list(y=Nxy), vars)) #entropy(Nxy, vars) 
-        # VI_P <- c(H_xy - H_y, H_xy - H_x)
-        # edf <- data.frame(
-        #     name = c("X", "Y"), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
-        #     H_P = c(H_x, H_y), #natstobits(c(infotheo::entropy(X), infotheo::entropy(Y))),
-        #     H_U = c(
-        #         Ux, Uy
-        #         #sum(sapply(X, function(v){log2(length(unique(v)))})),
-        #         #sum(sapply(Y, function(v){log2(length(unique(v)))}))
-        #     ),
-        #     stringsAsFactors = FALSE #Keep the original variable names as factors!
-        # ) %>% dplyr::mutate(
-        #     DeltaH_P = H_U - H_P, 
-        #     M_P = H_P - VI_P,
-        #     VI_P = VI_P #The ordering of the fields is important for exploratory purposes.s
-        # ) 
-        # #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
     } else {  # N is a dim > 2 multiway table: we analyze on the first two margins, but store the rest
         ctsColnames <- colnames(expand.grid(dimnames(Nxy)))
         if (length(dim(Nxy)) == 3){#a special case, e.g. Nxy <- datasets::UCBAdmissions
@@ -206,6 +175,7 @@ jentropies.table <- function(Nxy, ...){
 #' \code{\link[entropy]{entropy}}. Defaults to "log2".
 #' @export
 #' @import infotheo
+#' @importFrom entropy entropy
 #' @import dplyr
 jentropies2d.table<- function(Nxy, ...){
     Nx <- apply(Nxy, 1, sum) # to be transformed into a probability
@@ -227,11 +197,7 @@ jentropies2d.table<- function(Nxy, ...){
     edf <- data.frame(
         type = c("X", "Y"), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
         H_P = c(H_x, H_y), #natstobits(c(infotheo::entropy(X), infotheo::entropy(Y))),
-        H_U = c(
-            Ux, Uy
-            #sum(sapply(X, function(v){log2(length(unique(v)))})),
-            #sum(sapply(Y, function(v){log2(length(unique(v)))}))
-        ),
+        H_U = c(Ux, Uys),
         stringsAsFactors = FALSE #Keep the original variable names as factors!
     ) %>% dplyr::mutate(
         DeltaH_P = H_U - H_P, 

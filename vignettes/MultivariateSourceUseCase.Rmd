@@ -9,22 +9,27 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
 # Environment construction
 
+## Knitting options
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+knitr::opts_chunk$set(warning=FALSE)# Should not appear in the knitted document
+```
+
+## Library loading
+
 ```{r, echo=FALSE, warning=FALSE, environment}
-#library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
-#library(entropy)  # To work out the appropriate coordinates.
-library(dplyr)     # That infamous Mr. Wickham!
-library(tidyr)     # Tidying tall & wide dataframes
+library(tidyverse)  # Acceding to that infamous Mr. Wickham's requests!
 library(infotheo)  # The functionality provided by this has to be rerouted through entropies
 library(entropies) # This package
 library(ggtern)    # Ternary diagrams on ggplot
 library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
 library(candisc)   # Wine dataset
-#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
-knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
-knitr::opts_chunk$set(warning=FALSE)# Should not appear in the knitted document
 fancy <- TRUE  # set this for nicer on-screen visualization
 #fancy <- FALSE # Set this for either printing matter
 ```

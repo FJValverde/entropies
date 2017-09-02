@@ -1,0 +1,309 @@
+---
+title: "Transformation Analysis with the CMET"
+author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
+date: "8/30/2017"
+output: html_document
+---
+
+This script gives an example on how to use the Channel Multivariate Entropy Triangle framework to analyze Feature Transformations on a Database. We characterize a particular database using its Source Multivariate Entropy Triangle (upside-down triangle).
+
+Then we apply any number of transformations to its features (in this case PCA and ICA) and represent the accrued information loss incurred in the prescribed selection  order of features in the CMET (each transformation orders the obtained features in some way.)
+
+Finally, we consider the transformed features as data sources in their own right, whence we can compare all of them in the Source Multivariate Entropy Triangle (SMET).
+
+CAVEAT: this is NOT an investigation of whether PCA is ''better'' than ICA, whatever that might mean.
+
+## Environment construction
+
+```{r, message=F, warning=F, environment}
+library(tidyverse) # That (in)famous Mr. Wickham!;)
+library(entropies) # This package. Depends heavily on "entropy", "infotheory".
+library(ggtern)    # Ternary diagrams on ggplot
+library(vcd)       # Categorical benchmarks
+library(mlbench)   # ml benchmarkss
+library(candisc)   # Wine dataset
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+fancy <- TRUE  # set this for nicer on-screen visualization.
+fancy <- FALSE # Set this for either printing matter or more austere plots.
+getPlot <- TRUE
+getPlot <- FALSE
+if (getPlot)
+    knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+```
+
+## Datasets available for entropy analysis in this package
+
+```{r data-munging}
+# the inventory of databases you can access
+#library(datasets)
+dsNames <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
+className <- c("Class","Species", "Type", "Improved", "Class", "Class", "Cultivar")  # Name of class attribute
+classVar <- c(35, 5, 10, 5, 11, 61, 1)   # ordinal of the class attribute
+idNumber <- c(NaN, NaN, NaN, 1, 1, NaN, NaN) # Other attributes to dispose of: mainly identifiers.
+
+K <- c(2, 3, 7, 3, 2, 2, 3)  # No. of classes in the class variable
+# To select a dataset by name
+# Caveat: you have to ensure that the containing package has been attached
+evalDataset <- function(dsName){
+    dsName <- as.character(dsName)
+    switch(dsName, #TODO: improve this way of "invoking" the dataset.
+        "iris" =         {data(iris); iris},
+        "Ionosphere" =   {data(Ionosphere); Ionosphere},
+        "Glass" =        {data(Glass); Glass},
+        "Arthritis" =    {data(Arthritis); Arthritis},
+        "BreastCancer" = {data(BreastCancer); BreastCancer},
+        "Sonar" =        {data(Sonar); Sonar},
+        "Wine" =         {data(Wine); Wine}
+    ) #This value "FALLS THROUGH"
+}
+m <- sapply(dsNames, function(n){nrow(evalDataset(n))}) # no. of instances in the dataset
+n <- sapply(dsNames, function(n){ncol(evalDataset(n))}) - 1 - as.numeric(!is.nan(idNumber)) # no. of features in the dataset.
+datasets <- data.frame(name=dsNames, 
+                       className, 
+                       idNumber, 
+                       K=as.integer(K), 
+                       n=as.integer(n), 
+                       m, 
+                       stringsAsFactors=FALSE)
+# #To select the #of column of the classc
+# whichClass <- function(ds, className){which(colnames(evalDatasset(ds))==className)}
+# #whichNumVar <-  function(r){whichClass(evalDataset(r$name), r$className)}
+# cardinalClass <- function(ds, className){
+#     length(unique(evalDataset(ds)[,className]))
+# }
+# classVar <-  mapply(whichClass, datasets$name, datasets$className)
+# K <- mapply(cardinalClass, datasets$name, classVar)
+# library(dplyr)
+# datasets <- data.frame(name,className, classVar, K)
+datasets
+```
+
+# Base case characterization
+
+```{r initialization}
+# from:
+# https://tgmstat.wordpress.com/2013/11/28/computing-and-visualizing-pca-in-r/
+#data(iris)
+dsName <- "iris"#Supply the name of the database to be analyzed
+#dsName <- "BreastCancer"#Supply the name of the database to be analyzed#FACTORS
+#dsName <- "Wine"
+# dsName <- "Glass"#Cannot take logarithms for PCA: zeros returns -Inf
+# dsName <- "Arthritis"#It has non-numeric factors.
+dsRecord <-  filter(datasets, name == dsName)
+ds <- evalDataset(dsName)
+
+#id columns, if existent in dsRecord$idNumber
+# log transform of everything but the class and any id if existant. 
+if (!is.na(dsRecord$idNumber)){
+    ds <- ds[,-dsRecord$idNumber]
+}
+#class column
+ds.classNum <- which(names(ds)==dsRecord$className)
+#take away the class, but keep it just in case.
+class.ds <- ds[, ds.classNum]#saving the class. Warning A FACTOR!
+ds <- ds[,-ds.classNum]
+ncols <- dsRecord$n#Mnemonic shortcut: num of columns
+#Whether to process the database or its log.
+# if (any(sapply(ds, is.numeric))){
+#     acceptsLog <- TRUE
+# } else {
+#     acceptsLog <- FALSE
+#     warning("Database %dsRecord has non-numeric columns: it does not accept logs")
+# }
+dsDiscretized <- infotheo::discretize(ds)
+#### Work out the logarithmic part of ds.
+# if (acceptsLog){
+#     ds2log <-  dplyr::select_if(ds, is.numeric)
+# }
+# myLog(x) <-  if (is.numeric(x)){min(log(x))} else x#this is natural log
+# log.ds <- as.data.frame(lapply(ds, 
+#                                function(x) ))
+log.ds <- log(ds)#this has to be made conditional on the database
+log.dsDiscretized <- infotheo::discretize(log.ds)#try to get rid of annoying warnings each time entropy is called. 
+#Collect the information transformation from data to log data in entropy triangle data frames for sources and transformations
+etdf <- data.frame()
+#The following point of etdf shoul print as a point on a cross, being deterministic.
+sedf <- data.frame();
+etdf <- rbind(etdf,
+              cbind(data=paste0("1_",ncols), transform="log",
+                     jentropies(dsDiscretized, log.dsDiscretized)
+                     )
+)
+sedf <- rbind(sedf,
+              cbind(data=paste0("1_",ncols), transform="none", 
+                     sentropies(dsDiscretized[,1:ncols], type="none")
+                     ),
+              cbind(data=paste0("1_",ncols), transform="log", 
+                     sentropies(log.dsDiscretized[,1:ncols], type="log")
+                     )
+        )
+#Reorder the factors for the plots
+orderedLevels <-sapply((1:ncols), function(i) paste0("1_",i))
+etdf <- etdf %>% mutate(data=factor(data,levels=orderedLevels))
+sedf <- sedf %>% mutate(data=factor(data,levels=orderedLevels))
+# The colors for the different feature sets for the plots. 
+if (fancy){
+    orderingColors <- rev(terrain.colors(ncols+1))[1:ncols + 1]
+} else {
+    orderingColors <- rev(gray(0:ncols / ncols))[1:ncols + 1]
+    #orderingColors <- scale_colour_grey(end=0.9)#Not for discrete levels
+}
+# The shapes for the different types of transform
+#transformShapes <- c("log"=4, "PCA"=1, "ICA"=5)#no fill, void
+#transformShapes <- c("log"=4, "PCA"=20, "ICA"=18)#no fill, solid
+transformShapes <- c("log"=4, "PCA"=21, "ICA"=23)#no fill, solid
+typeShapes <- c("X" = 4, "Y" = 1, "ALL" = 10)
+```
+
+Next we obtain the PCA for the log-transformed data.
+
+```{r, PCA}
+# apply PCA - scale. = TRUE is highly 
+# advisable, but default is FALSE. 
+pca.model <- prcomp(log.ds, center = TRUE, scale. = TRUE) 
+# print method
+print(pca.model)
+# plot method
+plot(pca.model, type = "l")
+# summary method: describes the importance of the components.
+summary(pca.model)
+
+```
+
+Next we see how the information from the original data is transferred to the principal components accumulatively. Firts we work out the transformation entropies from retaining only the first n features.
+
+```{r}
+#  Why predict as opposed to just working out the entropy?
+# Because the model is just the set of matrices for carriying out the pca. We need to generate the data!
+pca.ds <- as.data.frame(predict(pca.model, newdata=log.ds))
+for( i in (1:ncols)){
+    etdf <- rbind(etdf,
+                  cbind(data=paste0("1_",i), transform="PCA",
+                        jentropies(log.dsDiscretized, as.data.frame(pca.ds[,1:i]))
+                  )
+    )
+}
+```
+
+Visualization in the CMET.
+
+```{r visCMET}
+transfo_cmet <- 
+    ggmetern(etdf %>% filter(type != "XY" & transform == "PCA"), fancy) +
+    geom_point(aes(color=data, shape=type), size=3) +
+    scale_shape_manual(values=typeShapes) +
+    labs(color="Feature set", shape="Entropy type")
+transfo_cmet
+if (getPlot){
+    dev.off()#Necessary to do the textual plot.
+    ggsave(stringr::str_interp("featureSel_CMET_PCA_${dsName}.jpeg"),
+           plot=transfo_cmet)
+}
+```
+
+The observation of the gain of adopting the PCA has to be seen in the source triangle
+
+```{r}
+#pca <- as.data.frame(ds.pca)
+for( i in (1:ncols)){
+    sedf <- rbind(sedf,
+                  cbind(data=paste0("1_",i), transform="PCA",
+                        sentropies(as.data.frame(pca.ds[,1:i]))
+                  )
+    )
+}
+```
+
+# Comparison with ICA
+
+## Exploring the ICA transformation
+
+```{r cmetICA}
+library(ica)
+ica <- icaimax(
+    ds[,1:ncols], nc=ncols,
+    center=TRUE
+)
+ica.ds <- data.frame(ica$Y)
+#TODO: do the same CMET plot as the previous one.
+for( i in (1:ncols)){
+    etdf <- rbind(etdf,
+                  cbind(data=paste0("1_",i), transform="ICA",
+                        jentropies(ds, as.data.frame(ica.ds[,1:i]))
+                  )
+    )
+}
+```
+
+First we visualize ICA on its own to parallel the previous visualization.
+
+```{r icaCMET}
+# show the split entropies
+transfo_cmet <- 
+    ggmetern(etdf %>% filter(type != "XY" & transform == "ICA"), fancy) +
+    geom_point(aes(color=data, shape=type), size=3) +
+    scale_shape_manual(values=c(4, 20, 1)) +
+    scale_color_manual(values=orderingColors) + 
+    labs(color="Feature set", shape="Type")
+transfo_cmet
+if (getPlot){
+    dev.off()#Necessary to do the textual plot.
+    ggsave(stringr::str_interp("featureSel_CMET_ICA_${dsName}.jpeg"), plot=transfo_cmet)
+}
+```
+
+Next, to compare, PCA, ICA and their absence we plot just the output entropy of the transformation:
+
+```{r pca_icaCMET}
+# show the split entropies
+#fancy <- !TRUE#TRUE is better for interactive use. !TRUE for illustrations.
+comparison_cmet <- ggmetern(etdf %>% filter(type == "Y"), fancy) +
+    geom_point(aes(color=data, shape=transform), size=2) +
+    scale_shape_manual(values=transformShapes) + 
+    scale_colour_manual(values=orderingColors) + 
+    labs(color="Feature set", shape="Transform type")
+comparison_cmet
+if (getPlot){
+    dev.off()#Necessary to do the textual plot.
+    ggsave(stringr::str_interp("featureSel_CMET_compare_PCA_ICA_${dsName}.jpeg"),
+           plot=comparison_cmet)
+}
+```
+
+## Exploring the ICA features as a data source
+```{r sourceICA}
+#Now get the same approximations as before for the sources:
+for( i in (1:ncols)){
+    sedf <- rbind(sedf,
+                  cbind(data=paste0("1_",i), transform="ICA", 
+                        sentropies(as.data.frame(ica.ds[,1:i]))
+                  )
+    )
+}
+#sedf <- sedf %>% mutate(data=factor(data,levels=orderedLevels))
+```
+
+Visualisation comparing transforms:
+
+```{r visualization in SMET ALL}
+# show the source aggregate entropies
+#fancy <- !TRUE#TRUE is better for interactive use. !TRUE for illustrations.
+transfo_smet <- 
+    ggmetern(filter(sedf, name == "ALL" & transform != "none"), fancy) +
+    geom_point(aes(color=data, shape=transform), size=3) +
+    scale_shape_manual(values=transformShapes) +
+    labs(color="Feature set", shape="Transform type")
+transfo_smet
+if (getPlot){
+    dev.off()#Necessary to do the textual plot.
+    ggsave(stringr::str_interp("featureSel_SMET_compare_PCA_ICA_${dsName}.jpeg"),
+           plot=transfo_smet)
+}
+```
+
+# Postscriptum
+
+```{r ps}
+sessionInfo()
+```
+
