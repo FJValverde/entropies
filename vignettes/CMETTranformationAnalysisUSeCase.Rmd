@@ -26,7 +26,7 @@ knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
 fancy <- TRUE  # set this for nicer on-screen visualization.
 fancy <- FALSE # Set this for either printing matter or more austere plots.
 getPlot <- TRUE
-getPlot <- FALSE
+#getPlot <- FALSE
 if (getPlot)
     knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 ```
@@ -78,7 +78,7 @@ datasets <- data.frame(name=dsNames,
 datasets
 ```
 
-# Base case characterization
+## Database choosing and visualization setup 
 
 ```{r initialization}
 # from:
@@ -120,6 +120,24 @@ dsDiscretized <- infotheo::discretize(ds)
 #                                function(x) ))
 log.ds <- log(ds)#this has to be made conditional on the database
 log.dsDiscretized <- infotheo::discretize(log.ds)#try to get rid of annoying warnings each time entropy is called. 
+# The colors for the different feature sets for the plots. 
+if (fancy){
+    orderingColors <- rev(terrain.colors(ncols+1))[1:ncols + 1]
+} else {
+    orderingColors <- rev(gray(0:ncols / ncols))[1:ncols + 1]
+    #orderingColors <- scale_colour_grey(end=0.9)#Not for discrete levels
+}
+# The shapes for the different types of transform
+#transformShapes <- c("log"=4, "PCA"=1, "ICA"=5)#no fill, void
+#transformShapes <- c("log"=4, "PCA"=20, "ICA"=18)#no fill, solid
+transformShapes <- c("log"=4, "PCA"=21, "ICA"=23)#no fill, solid
+sourceShapes <- c("none"=8, "log"=4, "PCA"=21, "ICA"=23)#no fill, solid
+typeShapes <- c("X" = 4, "Y" = 1, "ALL" = 10, "XY" = 20)
+```
+
+## Base case characterization
+
+```{r base case}
 #Collect the information transformation from data to log data in entropy triangle data frames for sources and transformations
 etdf <- data.frame()
 #The following point of etdf shoul print as a point on a cross, being deterministic.
@@ -137,24 +155,17 @@ sedf <- rbind(sedf,
                      sentropies(log.dsDiscretized[,1:ncols], type="log")
                      )
         )
-#Reorder the factors for the plots
+#Reorder the factors for the plots' legends
 orderedLevels <-sapply((1:ncols), function(i) paste0("1_",i))
 etdf <- etdf %>% mutate(data=factor(data,levels=orderedLevels))
 sedf <- sedf %>% mutate(data=factor(data,levels=orderedLevels))
-# The colors for the different feature sets for the plots. 
-if (fancy){
-    orderingColors <- rev(terrain.colors(ncols+1))[1:ncols + 1]
-} else {
-    orderingColors <- rev(gray(0:ncols / ncols))[1:ncols + 1]
-    #orderingColors <- scale_colour_grey(end=0.9)#Not for discrete levels
-}
-# The shapes for the different types of transform
-#transformShapes <- c("log"=4, "PCA"=1, "ICA"=5)#no fill, void
-#transformShapes <- c("log"=4, "PCA"=20, "ICA"=18)#no fill, solid
-transformShapes <- c("log"=4, "PCA"=21, "ICA"=23)#no fill, solid
-typeShapes <- c("X" = 4, "Y" = 1, "ALL" = 10)
 ```
 
+Plot the source contents of the database
+
+# Transformations
+
+## Exploring the PCA transformation
 Next we obtain the PCA for the log-transformed data.
 
 ```{r, PCA}
@@ -167,15 +178,15 @@ print(pca.model)
 plot(pca.model, type = "l")
 # summary method: describes the importance of the components.
 summary(pca.model)
-
+# Finally we obtained the transformed data, the Y to be analized
+pca.ds <- as.data.frame(predict(pca.model, newdata=log.ds))
+#  Why predict as opposed to just working out the entropy?
+# Because the pca.model is just the set of matrices for carriying out the pca. We need to generate the data!
 ```
 
-Next we see how the information from the original data is transferred to the principal components accumulatively. Firts we work out the transformation entropies from retaining only the first n features.
+Next we see how the information from the original data is transferred to the principal components accumulatively. Firts we work out the transformation entropies from retaining only the first n features and then we visualize it. 
 
-```{r}
-#  Why predict as opposed to just working out the entropy?
-# Because the model is just the set of matrices for carriying out the pca. We need to generate the data!
-pca.ds <- as.data.frame(predict(pca.model, newdata=log.ds))
+```{r PCA vis in CMET}
 for( i in (1:ncols)){
     etdf <- rbind(etdf,
                   cbind(data=paste0("1_",i), transform="PCA",
@@ -183,15 +194,12 @@ for( i in (1:ncols)){
                   )
     )
 }
-```
-
-Visualization in the CMET.
-
-```{r visCMET}
 transfo_cmet <- 
-    ggmetern(etdf %>% filter(type != "XY" & transform == "PCA"), fancy) +
+    ggmetern(etdf %>% filter(transform == "PCA"), fancy) +
+#    ggmetern(etdf %>% filter(type != "XY" & transform == "PCA"), fancy) +
     geom_point(aes(color=data, shape=type), size=3) +
     scale_shape_manual(values=typeShapes) +
+    scale_color_manual(values=orderingColors) + 
     labs(color="Feature set", shape="Entropy type")
 transfo_cmet
 if (getPlot){
@@ -213,8 +221,6 @@ for( i in (1:ncols)){
     )
 }
 ```
-
-# Comparison with ICA
 
 ## Exploring the ICA transformation
 
@@ -240,17 +246,40 @@ First we visualize ICA on its own to parallel the previous visualization.
 ```{r icaCMET}
 # show the split entropies
 transfo_cmet <- 
-    ggmetern(etdf %>% filter(type != "XY" & transform == "ICA"), fancy) +
+     ggmetern(etdf %>% filter(transform == "ICA"), fancy) +
+#    ggmetern(etdf %>% filter(type != "XY" & transform == "PCA"), fancy) +
     geom_point(aes(color=data, shape=type), size=3) +
-    scale_shape_manual(values=c(4, 20, 1)) +
+    scale_shape_manual(values=typeShapes) +
     scale_color_manual(values=orderingColors) + 
-    labs(color="Feature set", shape="Type")
+    labs(color="Feature set", shape="Entropy type")
+   # ggmetern(etdf %>% filter(type != "XY" & transform == "ICA"), fancy) +
+   #  geom_point(aes(color=data, shape=type), size=3) +
+   #  scale_shape_manual(values=trasnforType) +
+   #  scale_color_manual(values=orderingColors) + 
+   #  labs(color="Feature set", shape="Type")
 transfo_cmet
 if (getPlot){
     dev.off()#Necessary to do the textual plot.
     ggsave(stringr::str_interp("featureSel_CMET_ICA_${dsName}.jpeg"), plot=transfo_cmet)
 }
 ```
+
+## Exploring the ICA features as a data source
+
+```{r sourceICA}
+#Now get the same approximations as before for the sources:
+for( i in (1:ncols)){
+    sedf <- rbind(sedf,
+                  cbind(data=paste0("1_",i), transform="ICA", 
+                        sentropies(as.data.frame(ica.ds[,1:i]))
+                  )
+    )
+}
+```
+
+# Comparison betweem PCA and ICA on the dataset
+
+## Comparing the gains in information transmission
 
 Next, to compare, PCA, ICA and their absence we plot just the output entropy of the transformation:
 
@@ -270,18 +299,7 @@ if (getPlot){
 }
 ```
 
-## Exploring the ICA features as a data source
-```{r sourceICA}
-#Now get the same approximations as before for the sources:
-for( i in (1:ncols)){
-    sedf <- rbind(sedf,
-                  cbind(data=paste0("1_",i), transform="ICA", 
-                        sentropies(as.data.frame(ica.ds[,1:i]))
-                  )
-    )
-}
-#sedf <- sedf %>% mutate(data=factor(data,levels=orderedLevels))
-```
+
 
 Visualisation comparing transforms:
 
@@ -289,10 +307,11 @@ Visualisation comparing transforms:
 # show the source aggregate entropies
 #fancy <- !TRUE#TRUE is better for interactive use. !TRUE for illustrations.
 transfo_smet <- 
-    ggmetern(filter(sedf, name == "ALL" & transform != "none"), fancy) +
+    ggmetern(filter(sedf, name == "ALL" & transform != "log"), fancy) +
     geom_point(aes(color=data, shape=transform), size=3) +
-    scale_shape_manual(values=transformShapes) +
-    labs(color="Feature set", shape="Transform type")
+    scale_shape_manual(values=sourceShapes) +
+    scale_colour_manual(values=orderingColors) + 
+    labs(color="Feature set", shape="Source type")
 transfo_smet
 if (getPlot){
     dev.off()#Necessary to do the textual plot.
