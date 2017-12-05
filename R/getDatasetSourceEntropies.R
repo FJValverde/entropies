@@ -3,8 +3,8 @@
 #' 
 #' @param ds A database considered in the "datasets" data frame.
 #' @param dsName The name of the database being considered to be added in a column. 
-#' Defaults to "Class".
-#' @param idName An identifier field (to be excised from the database). Defaults to NULL.
+#' Defaults to "NULL".
+#' @param idNumber An identifier field (to be excised from the database). Defaults to NULL.
 #' @param withClass A logical whether to consider the class as part of the database
 #' or not. Defaults to not. 
 #' @param type Whether to use the total + dual total correlations (type="total") 
@@ -16,22 +16,22 @@
 getDatasetSourceEntropies <- function(
     ds, #the dataset to be analysed
     dsName=NULL, #The database name in case it is provided.
-    className="Class", #Name of class, a sensible default
-    idName=NULL, #Name of id, a sensible default
-    withClass=TRUE,#Whether correlation with hte class is required
+    className=c("Class"), #Name of class, a sensible default
+    idNumber=NULL, #Name of id, a sensible default
+    withClass=TRUE,#Whether correlation with the class is required
     type="total"#whether "total" or "dual"
 ){
     # Parameter analysis
-    theseNames <- names(ds)
-    thisClass <- which(className == theseNames)
+    theseNames <- names(ds)#list of features
+    thisClass <- which(className == theseNames)#partition into labels or not
     #print("The class is number:", thisClass)
     if (thisClass == 0)
         stop("Unknown column variable:",className)
     #K <- length(unique(ds[,thisClass]))
     K <- nrow(unique(dplyr::select_(ds, thisClass)))
     # 1.2. Wipeout any possible identifiers
-    if (!is.null(idName))l
-        ds <- dplyr::select_(ds, -idName)
+    if (is.numeric(idNumber) & !(is.nan(idNumber)))
+        ds <- dplyr::select_(ds, -idNumber)
     # 1.3 Decide whether to analyze with the Class or not
     if (!withClass)
         withClasses <- c(FALSE)

@@ -38,56 +38,11 @@ fancy <- TRUE  # set this for nicer on-screen visualization
 
 ## Datasets available
 
-The inventory of databases to be explored:
+The inventory of databases to be explored, and print this information to latex
 
 ```{r dataset processing}
-# the inventory of databases you can access
-#library(datasets)
-dsNames <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
-className <- c("Class","Species", "Type", "Improved", "Class", "Class", "Cultivar")  # Name of class attribute
-classVar <- c(35, 5, 10, 5, 11, 61, 1)   # ordinal of the class attribute
-idNumber <- c(NaN, NaN, NaN, 1, 1, NaN, NaN) # Other attributes to dispose of: mainly identifiers.
+datasets <- getDatasets()
 
-K <- c(2, 3, 7, 3, 2, 2, 3)  # No. of classes in the class variable
-# To select a dataset by name
-# Caveat: you have to ensure that the containing package has been attached
-evalDataset <- function(dsName){
-    dsName <- as.character(dsName)
-    switch(dsName, #TODO: improve this way of "invoking" the dataset.
-        "iris" =         {data(iris); iris},
-        "Ionosphere" =   {data(Ionosphere); Ionosphere},
-        "Glass" =        {data(Glass); Glass},
-        "Arthritis" =    {data(Arthritis); Arthritis},
-        "BreastCancer" = {data(BreastCancer); BreastCancer},
-        "Sonar" =        {data(Sonar); Sonar},
-        "Wine" =         {data(Wine); Wine}
-    ) #This value "FALLS THROUGH"
-}
-m <- sapply(dsNames, function(n){nrow(evalDataset(n))}) # no. of instances in the dataset
-n <- sapply(dsNames, function(n){ncol(evalDataset(n))}) - 1 - as.numeric(!is.nan(idNumber)) # no. of features in the dataset.
-datasets <- data.frame(name=dsNames, 
-                       className, 
-                       idNumber, 
-                       K=as.integer(K), 
-                       n=as.integer(n), 
-                       m, 
-                       stringsAsFactors=FALSE)
-# #To select the #of column of the classc
-# whichClass <- function(ds, className){which(colnames(evalDatasset(ds))==className)}
-# #whichNumVar <-  function(r){whichClass(evalDataset(r$name), r$className)}
-# cardinalClass <- function(ds, className){
-#     length(unique(evalDataset(ds)[,className]))
-# }
-# classVar <-  mapply(whichClass, datasets$name, datasets$className)
-# K <- mapply(cardinalClass, datasets$name, classVar)
-# library(dplyr)
-# datasets <- data.frame(name,className, classVar, K)
-datasets
-```
-
-Let's print this information to latex:
-
-```{r datasets to latex}
 library(xtable)
 ds4latexing <- datasets %>% select(-className, -idNumber)
 row.names(ds4latexing) <- NULL
@@ -113,6 +68,7 @@ for(i in 1:nrow(datasets)){
         getDatasetSourceEntropies(evalDataset(dsName), 
             dsName, 
             className = dsRecord$className,
+            idNumber= dsRecord$idNumber,
             withClass=TRUE, 
             type="total")
         )

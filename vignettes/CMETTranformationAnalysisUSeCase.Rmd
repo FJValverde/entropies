@@ -37,7 +37,9 @@ if (getPlot)
 # the inventory of databases you can access
 #library(datasets)
 dsNames <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
-className <- c("Class","Species", "Type", "Improved", "Class", "Class", "Cultivar")  # Name of class attribute
+className <- c(c("Class"),c("Species"), c("Type"), c("Improved"), 
+               c("Class"),c("Class"),c("Cultivar"))  # Name of class attribute
+attribute
 classVar <- c(35, 5, 10, 5, 11, 61, 1)   # ordinal of the class attribute
 idNumber <- c(NaN, NaN, NaN, 1, 1, NaN, NaN) # Other attributes to dispose of: mainly identifiers.
 
@@ -87,7 +89,7 @@ datasets
 dsName <- "iris"#Supply the name of the database to be analyzed
 #dsName <- "BreastCancer"#Supply the name of the database to be analyzed#FACTORS
 #dsName <- "Wine"
-# dsName <- "Glass"#Cannot take logarithms for PCA: zeros returns -Inf
+dsName <- "Glass"#Cannot take logarithms for PCA: zeros returns -Inf
 # dsName <- "Arthritis"#It has non-numeric factors.
 dsRecord <-  filter(datasets, name == dsName)
 ds <- evalDataset(dsName)
