@@ -110,7 +110,7 @@ sentropies.confusionMatrix <- function(ct, ...){
 sentropies.data.frame <- function(df, type="total", ...){
     if (ncol(df) == 0 || nrow(df) == 0)
         stop("Can only work with non-empty data.frames!")
-    if (!all(sapply(df, is.integer) || sapply(df, is.factor))){
+    if (!all(sapply(df, is.integer) | sapply(df, is.factor))){
         warning("Discretizing data before entropy calculation!")
         df <- infotheo::discretize(df, disc="equalwidth", ...) # infotheo::str(dfdiscretize generates ints, not factors.
     }

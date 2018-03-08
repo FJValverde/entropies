@@ -1,0 +1,390 @@
+---
+title: "Infodynamics of classification"
+author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
+date: "9 de mayo de 2017"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+# Introduction
+
+This vignette tries to demonstrate the use of Infodynamics for exploratory analysis of classification performance in Machine Learning. Infodynamics is an analogue of Thermodynamics for dealing with quantity of information instead of quantity of energy.
+
+The premise is that if the information related to a random variable, the true class, wants to be "transported" somewhere to the predicted class, then the entropic balances of the true and predicted classes have to satisfy certain requisites.  
+
+
+# Environment construction
+
+## Knitting options
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+knitr::opts_chunk$set(echo = TRUE)
+#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+knitr::opts_chunk$set(warning=FALSE)# Should not appear in the knitted document
+```
+
+## Library loading
+
+```{r libraries, include=FALSE}
+library(tidyverse)  # Acceding to that infamous Mr. Wickham's requests!
+# library(dplyr)     # That infamous Mr. Wickham!
+# library(tidyr)     # Tidying tall & wide dataframes
+library(infotheo)  # The functionality provided by this has to be rerouted through entropies
+library(ggtern)    # Excellent package for ternary diagrams in the gg tradition
+library(entropies) # This package
+library(caret)     # General framework for classification and regression
+library(e1071)     # Many facilities and classifiers
+library(vcd)       # Categorical benchmarks
+library(mlbench)   # ml benchmarkss
+library(randomForest) # random forest classifiers
+library(candisc)   # Wine dataset
+```
+## Global parameter definitions
+
+```{r}
+fancy <- TRUE  # set this for nicer on-screen visualization
+fancy <- FALSE 
+inDebugMode <- TRUE # general switch for debugging
+#inDebugMode <- FALSE
+writePlots <- TRUE # A switch to write the plots
+writePlots <- FALSE 
+```
+
+# Data preparation
+
+## Datasets available
+
+```{r explicit-datasets}
+datasets <- getDatasets()
+library(xtable)
+ds4latexing <- datasets %>% dplyr::select(-className, -idNumber)
+row.names(ds4latexing) <- NULL
+names(ds4latexing) <- c("Dataset Name", "class card.", "num. features", "num. instances")
+thisLatex <- xtable(ds4latexing, 
+                    caption="Some datasets considered in this study",
+                    label="tab:datasets")
+align(thisLatex) <- xalign(thisLatex)
+thisLatex
+```
+
+# Data exploration
+
+## Obtaining the entropies
+
+Obtain the entropies and some other data for plotting from all datasets.
+
+<!-- # as per:  -->
+<!-- # http://stackoverflow.com/questions/5234117/how-to-drop-columns-by-name-in-a-data-frame -->
+<!-- # Don't EVER use subset in PROGRAMS! -->
+<!-- #ds <- subset(ds, subset=1:nrow(ds), select=dsRecord$className, drop=TRUE) -->
+
+```{r find-entropies}
+#method = 'rf'
+# Naive transformation from factors to numbers in 0 to num.factors - 1
+factor.as.numeric <- function(f){
+    nums <- as.numeric(f)
+    return(nums - min(nums))
+}
+cmet_edf <- tibble()# Gathers the CMET entropies
+smet_edf <- tibble()# Gathers the SMET entropies
+dsNames <- unique(datasets$name)#debug
+dsNames <-  dsNames[1]#debug
+#dsNames <- dsNames[c(2,4)]#Select iris, Arthritis some of them for easier observation.
+#dsNames <- dsNames[c(3,5)]#Select Glass, BreastCancer some of them for easier observation.
+dsName <- dsNames[1]#Select Ionosphere
+#dsName <- dsNames[2] # iris
+#dsNames <- dsNames[3]
+#dsNames <- dsNames[4]
+#dsNames <- dsNames[5]
+for(dsName in dsNames){
+    dsRecord <-  filter(datasets, name == dsName)
+    ds <- evalDataset(dsName) %>% as_tibble()
+    if (is.numeric(dsRecord$idNumber) & !(is.nan(dsRecord$idNumber))){
+        ds <- dplyr::select_(ds, -dsRecord$idNumber)
+    }
+    nbins <- ceiling(dsRecord$m^(1/3))# This is the default!
+    #ncols <- min(10, ncol(ds))
+#    for(withClass in withClasses){
+#        if (withClass){
+            print(sprintf("Analyzing dataset with class label: %s", dsName))
+#        }else {
+#            print(sprintf("Analyzing dataset without class label: %s", dsName))
+            # as per: 
+            # http://stackoverflow.com/questions/5234117/how-to-drop-columns-by-name-in-a-data-frame
+            # Don't EVER use subset in PROGRAMS!
+            #ds <- subset(ds, subset=1:nrow(ds), select=dsRecord$className, drop=TRUE)
+#            ds <- ds[, !colnames(ds) == dsRecord$className] #fastest in bechnmark at bot. of url
+#        }
+        #Kdataset <- select(ds, which(names(ds) == dsRecord$className))
+        # 0. Select class labels and carry out stratified partitioning
+        Kdataset <- dplyr::select(ds, matches(dsRecord$className))
+        names(Kdataset) <- "Class" #This is very brittle
+        inTrain <- createDataPartition(
+            y = Kdataset$Class, ##outcome data are needed
+            p = .75,      ##The percentage of data in the training set
+            list = FALSE  ## The format of the results
+            )
+        smet_edf <- rbind(smet_edf, 
+                          cbind( dsName, group="labels", phase="training",
+                                 sentropies(Kdataset[inTrain,],type="dual")),
+                          cbind( dsName, group="labels", phase="testing",
+                                 sentropies(Kdataset[-inTrain,],type="dual")))
+        # 1. Select the observations and do some cleaning
+        Xdataset <- dplyr::select(ds, -matches(dsRecord$className))
+        Xdataset <- Xdataset %>%     
+            #transform factors to number
+            mutate_if(is.factor,factor.as.numeric) %>%
+            # Dispose of constant columns: they carry no information
+            select_if(function(v)(var(v) > 0)) %>% 
+            # Dispose of columns with NaN
+            select_if(function(v) !any(is.na(v)))
+        # Try to discretize before calculating entropies so as to avoid
+        # iterated discretizations in primitives. 
+        # Discretize to have a standard set to carry out entropies.
+        dXdataset <- infotheo::discretize(Xdataset, disc="equalwidth",nbins)
+        # CAVEAT: we also need it in numeric form for transformations!
+        smet_edf <- rbind(smet_edf, 
+                        cbind(dsName,group="observations", phase="training",
+                              sentropies(dXdataset[inTrain,],type="dual")),
+                        cbind(dsName,group="observations", phase="testing",
+                              sentropies(dXdataset[-inTrain,],type="dual")))
+        cmet_edf <- rbind(cmet_edf,
+                     cbind(dsName,
+                           transform="observation", phase="training",
+                           jentropies(Kdataset[inTrain,],dXdataset[inTrain,])),
+                     cbind(dsName,
+                           transform="observation", phase="testing",
+                           jentropies(Kdataset[-inTrain,],dXdataset[-inTrain,]))
+                     )
+        # numericColumns <- sapply(Xdataset, is.numeric)
+        # if (!any(numericColumns)) next#improve this for classifications
+        # #catColumns <- !numericColumns#categorical columns in X (not including the class)
+        # Tdataset <- Xdataset[,numericColumns]#Until  we know how to apply Box-Cox
+        #select those columns which are numeric
+        #Postcondition:
+        #all(sapply(Tdataset, is.numeric))
+        preTransform <- ""#no transformation
+        # Tdataset <- log(Xdataset)#Box-Cox transformation
+        # cmet_edf <- rbind(cmet_edf,
+        #              cbind(dsName,
+        #                    transform="Box-Cox:log",
+        #                    jentropies(Xdataset,Tdataset)
+        #                    )
+        #              )
+        pcaModel <- prcomp(Xdataset, center = TRUE, scale. = TRUE)
+        plot(pcaModel, type = "l")
+        Fvector <- as.tibble(predict(pcaModel, newdata=Xdataset))
+        dFvector <- infotheo::discretize(Fvector,disc="equalwidth")
+        #TODO: we should be printing how the variance accrues, etc
+        postTransform <- "PCA"
+        # Ydataset <- cbind(
+        #                 Xdataset[,!numericColumns],
+        #                 predict(pca, newdata=Tdataset)
+        # )
+        #### Do some sort of analysis on FVector and FVectorDiscretized
+        for(i in (1:(min(10, ncol(ds))))){
+            #first accrue the 
+            cmet_edf <- rbind(cmet_edf,
+                          cbind(dsName=paste0("1_",i), 
+                                transform="PCA",
+                                phase="training",
+                                jentropies(dXdataset[inTrain,],
+                                           as.tibble(dFvector[inTrain,1:i]))),
+                          cbind(dsName=paste0("1_",i), 
+                                transform="PCA",
+                                phase="testing",
+                                jentropies(dXdataset[-inTrain,],
+                                           as.tibble(dFvector[-inTrain,1:i])))
+                          )
+            smet_edf <- rbind(smet_edf,
+                    cbind(dsName = paste0("1_", i),
+                          group="features", phase="training",
+                          sentropies(as.tibble(dFvector[inTrain,1:i]),
+                                     type="dual")),
+                    cbind(dsName = paste0("1_", i),
+                          group="features", phase="testing",
+                          sentropies(as.tibble(dFvector[-inTrain,1:i]),
+                                     type="dual"))
+                    )
+        }#Go over all possible nums of cols.
+        # cmet_edf <- rbind(cmet_edf,
+        #              cbind(dsName, 
+        #                    transform=paste0(postTransform,":",preTransform),
+        #                    phase="training",
+        #                    jentropies(dXdataset[inTrain,], Fvector[inTrain,])
+        #                    ),
+        #              cbind(dsName, 
+        #                    transform=paste0(postTransform,":",preTransform),
+        #                    phase="testing",
+        #                    jentropies(dXdataset[-inTrain,], Fvector[-inTrain,])
+        #                    )
+        # )
+        # smet_edf <- rbind(smet_edf, 
+        #                 cbind(dsName,group="features", phase="training",
+        #                       sentropies(Fvector[inTrain,],type="dual")),
+        #                 cbind(dsName,group="features", phase="testing",
+        #                       sentropies(Fvector[-inTrain,],type="dual"))
+        #                 )
+        # inTrain <- createDataPartition(
+        #     y = newDataset$Class, ##outcome data are needed
+        #     p = .75,      ##The percentage of data in the training set
+        #     list = FALSE  ## The format of the results
+        #     )
+                    # Finally, classification with some technique
+        set.seed(107)
+        #dFvector <- as.tibble(infotheo::discretize(Fvector, disc="equalwidth"))
+        newDataset <- cbind(Kdataset[1],dFvector)
+        names(newDataset)[1] <- "Class"
+        ctrl <- trainControl(method = "repeatedcv",
+                             repeats = 3)
+        trainCM <- list() # Will keep the Conf Matrices of several classifiers
+        testCM <- list()
+        for( i in (1:(min(10, ncol(ds))))){
+            training <- newDataset[ inTrain, 1:(i+1)]
+            testing <- newDataset[ -inTrain, 1:(i+1)]
+            # if (inDebugMode){ # Seeing what the partition is
+            #     nrow(training)
+            #     nrow(testing)
+            # }
+            #estimating the model
+            print(sprintf("Estimating model with %d features for %s", 
+                          i, dsName))
+            rfModel <- train(Class ~ ., 
+                data = training,
+                method = "rf",
+                trControl = ctrl)
+            hatKdataset <- predict(rfModel, newdata = newDataset[ ,1:(i+1)]) %>% 
+                as.tibble()
+            #hatKdataset <- predict(rfModel, newdata = testing) %>% as.tibble()
+            #if (inDebugMode){#These are the end to end measures, but inverted
+            # data: is the PREDICTED data.
+            # the data are in trainCM[[i]]$table
+            trainCM[[i]] <- confusionMatrix(data = hatKdataset[inTrain,]$value, 
+                                       training$Class)
+            testCM[[i]] <- confusionMatrix(data = hatKdataset[-inTrain,]$value,
+                                      testing$Class)
+            #}
+            #Now do the ID analysis on the predicted data.
+            cmet_edf <- rbind(cmet_edf,
+                        cbind(dsName=paste0("1_",i), 
+                            transform="classify", phase="training",
+                            jentropies(dFvector[inTrain,],
+                                      hatKdataset[inTrain,])),
+                        cbind(dsName=paste0("1_",i),  
+                            transform="classify", phase="testing",
+                            jentropies(dFvector[-inTrain,],
+                                      hatKdataset[-inTrain,]))
+                        )
+            smet_edf <- rbind(smet_edf, 
+                        cbind(dsName=paste0("1_",i), 
+                              group="prediction", phase="training",
+                              sentropies(hatKdataset[inTrain,],type="dual")),
+                        cbind(dsName=paste0("1_",i), 
+                              group="prediction", phase="testing",
+                              sentropies(hatKdataset[-inTrain,],type="dual"))
+                        )
+        }# End going over all of the selected features
+}
+if (inDebugMode){
+    # show the split entropies
+    str(cmet_edf)
+    #show all entropies for a data base
+    print(filter(smet_edf, dsName == "Ionosphere"))
+    print(filter(cmet_edf, dsName == "Ionosphere"))
+}
+```
+
+Creating SMETS and CMETS for every possible database.
+
+```{r}
+thisPhase <- "testing"
+#dsname <- "Ionosphere"
+smets <- list()
+#for(dsname in dsNames){
+    setdf <- smet_edf %>%  
+        filter(phase == "testing") 
+    smet <- ggmetern(setdf, fancy) +
+        geom_point(aes(color=group,shape=group), size=5) #+
+        #scale_shape_manual(values=c(4, 20, 1)) +
+        #labs(color="grouping")# +
+#}
+if (writePlots){
+    #dev.off()#Necessary to do the textual plot.
+    ggsave(str_interp("ID_ICA_smet_${dsName}.jpeg"), 
+           plot=smet)
+} else
+    smet
+```
+
+```{r}
+cmets <- list()
+cetdf <- cmet_edf %>% 
+    filter(type != "XY" & phase==thisPhase) 
+cmet <- ggmetern(cetdf, fancy) +
+    geom_point(aes(shape=type,color=transform),size=5) +
+    scale_shape_manual(values=c(4, 20, 1)) #+
+#labs(color="transfo name", shape="Var type")# +
+if (writePlots){
+    #dev.off()#Necessary to do the textual plot.
+    ggsave(str_interp("ID_ICA_cmet_${dsName}.jpeg"), 
+           plot=cmet)
+} else
+    cmet
+```
+
+# Analysis of performance
+
+```{r}
+# The colors for the different feature sets for the plots. 
+mncols <- min(10,ncols)
+if (fancy){
+    orderingColors <- rev(terrain.colors(mncols+1))[1:mncols + 1]
+} else {
+    orderingColors <- rev(gray(0:mncols / mncols))[1:mncols + 1]
+    #orderingColors <- scale_colour_grey(end=0.9)#Not for discrete levels
+}
+# The shapes for the different types of transform
+#transformShapes <- c("log"=4, "PCA"=1, "ICA"=5)#no fill, void
+#transformShapes <- c("log"=4, "PCA"=20, "ICA"=18)#no fill, solid
+transformShapes <- c("log"=4, "PCA"=21, "ICA"=23)#no fill, solid
+sourceShapes <- c("none"=8, "log"=4, "PCA"=21, "ICA"=23)#no fill, solid
+typeShapes <- c("X" = 4, "Y" = 1, "ALL" = 10, "XY" = 20)
+
+e2e_cmet <-  tibble()# Gathers the end-to-end entropies
+for( i in (1:(min(10, ncol(ds))))){
+    e2e_cmet <- rbind(e2e_cmet,
+                      cbind(
+                          dsName=paste0("1_",i), 
+                          phase="training",
+                          jentropies(trainCM[[i]]$table)),
+                      cbind(
+                          dsName=paste0("1_",i), 
+                          phase="testing",
+                          jentropies(testCM[[i]]$table))
+                      )
+}
+e2ecmet <- ggmetern(e2e_cmet %>% filter(type=="XY"), fancy) +
+    geom_point(aes(shape=phase,color=dsName),size=5) +
+    scale_shape_manual(values=c(4, 20, 1)) +
+    scale_colour_manual(values=orderingColors)
+    #labs(color="transfo name", shape="Var type")# +
+if (writePlots){
+    #dev.off()#Necessary to do the textual plot.
+    ggsave(str_interp("ID_ICA_e2e_cmet_${dsName}.jpeg"), 
+           plot=e2ecmet)
+} else
+    e2ecmet
+```
+```
+
+
+
+# Postscriptum
+
+```{r ps}
+sessionInfo()
+```

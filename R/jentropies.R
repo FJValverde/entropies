@@ -22,17 +22,17 @@ jentropies <- function(X, Y, ...) UseMethod("jentropies")
 #' @importFrom infotheo entropy
 #' @import dplyr
 jentropies.data.frame <- function(X, Y, ...){
-    if (ncol(X) == 0 || nrow(X) == 0 ) 
+    if (ncol(X) == 0 | nrow(X) == 0 ) 
         stop("Can only work with non-empty data.frames X!")
-    if (ncol(Y) == 0 || nrow(Y) == 0 )
+    if (ncol(Y) == 0 | nrow(Y) == 0 )
         stop("Can only condition on non-empty data.frame Y! ")
     if (nrow(X) != nrow(Y) )
         stop("Can only condition on variable lists with the same number of instances!")
-    if (!all(sapply(X, is.integer) || sapply(Y, is.factor))){
+    if (!all(sapply(X, is.integer) | sapply(Y, is.factor))){
         warning("Discretizing primary data before entropy calculation!")
         X <- infotheo::discretize(X, disc="equalwidth", ...) # infotheo::str(dfdiscretize generates ints, not factors.
     }
-    if (!all(sapply(Y, is.integer)  || sapply(Y, is.factor))){
+    if (!all(sapply(Y, is.integer)  | sapply(Y, is.factor))){
         warning("Discretizing secondary data before entropy calculation!")
         Y <- infotheo::discretize(Y, disc="equalwidth", ...) # infotheo::str(dfdiscretize generates ints, not factors.
     }
@@ -197,7 +197,7 @@ jentropies2d.table<- function(Nxy, ...){
     edf <- data.frame(
         type = c("X", "Y"), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
         H_P = c(H_x, H_y), #natstobits(c(infotheo::entropy(X), infotheo::entropy(Y))),
-        H_U = c(Ux, Uys),
+        H_U = c(Ux, Uy),
         stringsAsFactors = FALSE #Keep the original variable names as factors!
     ) %>% dplyr::mutate(
         DeltaH_P = H_U - H_P, 

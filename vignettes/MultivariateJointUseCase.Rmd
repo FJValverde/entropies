@@ -2,7 +2,11 @@
 title: "Classification analysis using CMET"
 author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
 date: "Feb, 15th, 2016"
-output: html_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 # Environment construction
@@ -23,53 +27,12 @@ fancy <- TRUE  # set this for nicer on-screen visualization
 fancy <- FALSE # Set this for either printing matter or...
 ```
 
-# Classification data analysis using the SCET
+# Data preparation
 
 ## Datasets available for entropy analysis in this package
 
-```{r data-munging}
-# the inventory of databases you can access
-#library(datasets)
-dsNames <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
-className <- c("Class","Species", "Type", "Improved", "Class", "Class", "Cultivar")  # Name of class attribute
-classVar <- c(35, 5, 10, 5, 11, 61, 1)   # ordinal of the class attribute
-idNumber <- c(NaN, NaN, NaN, 1, 1, NaN, NaN) # Other attributes to dispose of: mainly identifiers.
-
-K <- c(2, 3, 7, 3, 2, 2, 3)  # No. of classes in the class variable
-# To select a dataset by name
-# Caveat: you have to ensure that the containing package has been attached
-evalDataset <- function(dsName){
-    dsName <- as.character(dsName)
-    switch(dsName, #TODO: improve this way of "invoking" the dataset.
-        "iris" =         {data(iris); iris},
-        "Ionosphere" =   {data(Ionosphere); Ionosphere},
-        "Glass" =        {data(Glass); Glass},
-        "Arthritis" =    {data(Arthritis); Arthritis},
-        "BreastCancer" = {data(BreastCancer); BreastCancer},
-        "Sonar" =        {data(Sonar); Sonar},
-        "Wine" =         {data(Wine); Wine}
-    ) #This value "FALLS THROUGH"
-}
-m <- sapply(dsNames, function(n){nrow(evalDataset(n))}) # no. of instances in the dataset
-n <- sapply(dsNames, function(n){ncol(evalDataset(n))}) - 1 - as.numeric(!is.nan(idNumber)) # no. of features in the dataset.
-datasets <- data.frame(name=dsNames, 
-                       className, 
-                       idNumber, 
-                       K=as.integer(K), 
-                       n=as.integer(n), 
-                       m, 
-                       stringsAsFactors=FALSE)
-# #To select the #of column of the classc
-# whichClass <- function(ds, className){which(colnames(evalDatasset(ds))==className)}
-# #whichNumVar <-  function(r){whichClass(evalDataset(r$name), r$className)}
-# cardinalClass <- function(ds, className){
-#     length(unique(evalDataset(ds)[,className]))
-# }
-# classVar <-  mapply(whichClass, datasets$name, datasets$className)
-# K <- mapply(cardinalClass, datasets$name, classVar)
-# library(dplyr)
-# datasets <- data.frame(name,className, classVar, K)
-datasets
+```{r dataset-preparation}
+datasets <- getDatasets()
 ```
 
 Let's print this information to latex:
@@ -147,11 +110,13 @@ str(edf)
 print(filter(edf, dsName == "iris"))
 ```
 
+# Visualization
+
 Visualize both the aggregate and the split entropies.
 
 ```{r, fig.width=12, fig.height=16}
 fancy <- TRUE
-fancy <- FALSE
+#fancy <- FALSE
 #select some entropies to visualize
 cmet <- ggmetern(edf %>% filter(type != "XY"), 
                  #filter(edf, type != "XY"),#alternative not to visualize the aggregate
