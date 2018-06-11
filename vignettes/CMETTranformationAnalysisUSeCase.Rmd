@@ -17,18 +17,13 @@ CAVEAT: this is NOT an investigation of whether PCA is ''better'' than ICA, what
 
 ```{r, message=F, warning=F, environment}
 library(tidyverse) # That (in)famous Mr. Wickham!;)
+library(RColorBrewer) # Facilities for palettes
 library(entropies) # This package. Depends heavily on "entropy", "infotheory".
 library(ggtern)    # Ternary diagrams on ggplot
 library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
 library(candisc)   # Wine dataset
 knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
-fancy <- TRUE  # set this for nicer on-screen visualization.
-fancy <- FALSE # Set this for either printing matter or more austere plots.
-getPlot <- TRUE
-getPlot <- FALSE
-if (getPlot)
-    knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 # Naive transformation from factors to numbers in 0 to num.factors - 1
 factor.as.numeric <- function(f){
     nums <- as.numeric(f)
@@ -41,20 +36,29 @@ factor.as.numeric <- function(f){
 ```{r data-munging}
 datasets <- getDatasets()
 datasets
+library(xtable)
+print.xtable(xtable(dplyr::select(datasets, name, K, n, m)))
 ```
 
 ## Database choosing and visualization setup 
 
 ```{r initialization}
+fancy <- TRUE  # set this for nicer on-screen visualization.
+#fancy <- FALSE # Set this for either printing matter or more austere plots.
+getPlot <- TRUE
+#getPlot <- FALSE
+if (getPlot)
+    knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 # from:
 # https://tgmstat.wordpress.com/2013/11/28/computing-and-visualizing-pca-in-r/
-#data(iris)
 dsName <- "Ionosphere"
-#dsName <- "iris"#Supply the name of the database to be analyzed
-#dsName <- "BreastCancer"#Supply the name of the database to be analyzed#FACTORS
-#dsName <- "Wine"
-#dsName <- "Glass"#Cannot take logarithms for PCA: zeros returns -Inf
+# dsName <- "iris"#Supply the name of the database to be analyzed
+# dsName <- "BreastCancer"#Supply the name of the database to be analyzed#FACTORS
+# dsName <- "Wine"
+# dsName <- "Glass"#Cannot take logarithms for PCA: zeros returns -Inf
 # dsName <- "Arthritis"#It has non-numeric factors.
+# dsName <- "Sonar"
+# Choose: "iris", "BreastCancer" or "Glass"
 dsRecord <-  filter(datasets, name == dsName)
 ds <- evalDataset(dsName) 
 
@@ -71,10 +75,10 @@ ds <- ds[,-ds.classNum]
 ds <- ds %>%     
     #transform factors to number
     mutate_if(is.factor,factor.as.numeric) %>%
-    # Dispose of constant columns: they carry no information
-    select_if(function(v)(var(v) > 0)) %>% 
     # Dispose of columns with NaN
-    select_if(function(v) !any(is.na(v)))
+    select_if(function(v) !any(is.na(v))) %>% 
+    # Dispose of constant columns: they carry no information
+    select_if(function(v)(var(v) > 0))
 ncols <- ncol(ds)#Mnemonic shortcut: num of columns
 #Whether to process the database or its log.
 # if (any(sapply(ds, is.numeric))){
@@ -97,17 +101,40 @@ if (dsName != "Ionosphere"){
 }
 # The colors for the different feature sets for the plots. 
 if (fancy){
-    orderingColors <- rev(terrain.colors(ncols+1))[1:ncols + 1]
+    #orderingColors <- rev(terrain.colors(ncols+1))[1:ncols + 1]#too similar
+    #orderingColors <- rev(terrain.colors(ncols+1))[1:ncols + 1]
+    #orderingColors <- rev(topo.colors(ncols+1))[1:ncols + 1]#too flashy
+    #orderingColors <- rev(cm.colors(ncols+1))[1:ncols + 1]#too washed
+    #orderingColors <- rev(heat.colors(ncols+1))[1:ncols + 1]
+    orderingPalette <- "BuPu"
 } else {
-    orderingColors <- rev(gray(0:ncols / ncols))[1:ncols + 1]
+    #orderingColors <- rev(gray(0:ncols / ncols))[1:ncols + 1]
     #orderingColors <- scale_colour_grey(end=0.9)#Not for discrete levels
+    orderingPalette <- "Blues"
 }
+# We discard the lightest shade because it is too akin to white,the background.
+# REcipe from: https://stackoverflow.com/questions/29466239/how-to-set-the-color-range-of-scale-colour-brewer-in-ggplot2-palette-selecte
+# library(RColorBrewer)
+# my_orange = brewer.pal(n = 9, "Oranges")[3:9] #there are 9, I exluded the two lighter hues
+#orderingColors <-  brewer.pal(n = ncols + 2, orderingPalette)[1:ncols + 2]#Does not provide enough
+# But since Brewer color values are only up to 9, we need another mechanims to interpolate
+# https://stackoverflow.com/questions/16922988/interpolating-a-sequential-brewer-palette-as-a-legend-for-ggplot2
+myColorsFun <- colorRampPalette(brewer.pal(9,orderingPalette))
+orderingColors <- myColorsFun(ncols+2)[1:ncols + 2]
+#if (debug){
+    #pie(rep(1,n), col=rainbow(n))
+    pie(rep(1,ncols),col=orderingColors)
+#}
 # The shapes for the different types of transform
 #transformShapes <- c("log"=4, "PCA"=1, "ICA"=5)#no fill, void
 #transformShapes <- c("log"=4, "PCA"=20, "ICA"=18)#no fill, solid
 transformShapes <- c("log"=4, "PCA"=21, "ICA"=23)#no fill, solid
 sourceShapes <- c("none"=8, "log"=4, "PCA"=21, "ICA"=23)#no fill, solid
 typeShapes <- c("X" = 4, "Y" = 1, "ALL" = 10, "XY" = 20)
+#X for the x and circle for Y
+typeShapes <- c("X" = 4, "Y" = 6, "ALL" = 10, "XY" = 20)
+#X for the x and nabla for Y
+#typeShapes <- c("X" = "x", "Y" = "y", "ALL" = "A", "XY" = "o")
 ```
 
 ## Base case characterization
@@ -181,8 +208,10 @@ transfo_cmet <-
 #    ggmetern(etdf %>% filter(type != "XY" & transform == "PCA"), fancy) +
     geom_point(aes(color=data, shape=type), size=3) +
     scale_shape_manual(values=typeShapes) +
+    #scale_color_brewer(palette=orderingPalette) +
     scale_color_manual(values=orderingColors) + 
-    labs(color="Feature set", shape="Entropy type")
+    labs(color="Feature set", shape="Entropy type") +
+    theme(legend.key=element_blank())
 transfo_cmet
 if (getPlot){
     dev.off()#Necessary to do the textual plot.
@@ -207,15 +236,22 @@ for( i in (1:ncols)){
 ## Exploring the ICA transformation
 
 ```{r cmetICA}
-library(ica)
-ica <- icaimax(
-    ds[,1:ncols], nc=ncols,
-    center=TRUE
-)
-dsIca <- data.frame(ica$Y)
-dsIcaDiscretized <- infotheo::discretize(dsIca, disc="equalwidth")
-#TODO: do the same CMET plot as the previous one.
-for( i in (1:ncols)){
+#library(ica)#ICA has to be found for each value of the 
+library(fastICA)
+set.seed(25)#for reproducibilit
+for(i in (1:ncols)){
+    # ica <- icaimax(
+    #     ds[,1:ncols], nc=i,
+    #     center=TRUE
+    # )
+    
+    ica <- fastICA(X=ds[,1:ncols], i, 
+            alg.typ="parallel", fun="logcosh", alpha=1,
+            method="C", row.norm= FALSE, maxit=200, tol=0.0001, 
+            verbose=FALSE
+    )
+    dsIca <- data.frame(ica$S)#Matrix of source signal estimates (S=Y%*%R) as per ?icaimax
+    dsIcaDiscretized <- infotheo::discretize(dsIca, disc="equalwidth")
     etdf <- rbind(etdf,
                   cbind(data=paste0("1_",i), transform="ICA",
                         jentropies(dsDiscretized,
@@ -234,8 +270,11 @@ transfo_cmet <-
 #    ggmetern(etdf %>% filter(type != "XY" & transform == "PCA"), fancy) +
     geom_point(aes(color=data, shape=type), size=3) +
     scale_shape_manual(values=typeShapes) +
+    #scale_color_brewer(palette=orderingPalette) +
+    #scale_fill_brewer(palette=orderingPalette) + #Shapes are non-fillable. 
     scale_color_manual(values=orderingColors) + 
-    labs(color="Feature set", shape="Entropy type")
+    labs(color="Feature set", shape="Entropy type") +
+    theme(legend.key=element_blank())
    # ggmetern(etdf %>% filter(type != "XY" & transform == "ICA"), fancy) +
    #  geom_point(aes(color=data, shape=type), size=3) +
    #  scale_shape_manual(values=trasnforType) +
@@ -271,10 +310,14 @@ Next, to compare, PCA, ICA and their absence we plot just the output entropy of 
 # show the split entropies
 #fancy <- !TRUE#TRUE is better for interactive use. !TRUE for illustrations.
 comparison_cmet <- ggmetern(etdf %>% filter(type == "Y"), fancy) +
-    geom_point(aes(color=data, shape=transform), size=2) +
+    geom_point(aes(fill=data, shape=transform), size=3, alpha=.8) +
     scale_shape_manual(values=transformShapes) + 
-    scale_colour_manual(values=orderingColors) + 
-    labs(color="Feature set", shape="Transform type")
+    #scale_fill_brewer(palette=orderingPalette) +
+    #scale_color_brewer(palette=orderingPalette) +
+    scale_fill_manual(values=orderingColors) + 
+    labs(fill="Feature set", shape="Transform type", panel.background="white") +
+    guides(fill=guide_legend(override.aes=list(shape=22))) + #show a shape than can be filled!
+    theme(legend.key=element_blank())
 comparison_cmet
 if (getPlot){
     dev.off()#Necessary to do the textual plot.
@@ -292,10 +335,14 @@ Visualisation comparing transforms:
 #fancy <- !TRUE#TRUE is better for interactive use. !TRUE for illustrations.
 transfo_smet <- 
     ggmetern(filter(sedf, name == "ALL" & transform != "log"), fancy) +
-    geom_point(aes(color=data, shape=transform), size=3) +
+    geom_point(aes(fill=data, shape=transform), size=3) +
     scale_shape_manual(values=sourceShapes) +
-    scale_colour_manual(values=orderingColors) + 
-    labs(color="Feature set", shape="Source type")
+    scale_fill_manual(values=orderingColors) + 
+    #scale_fill_brewer(palette=orderingPalette, guide=guide_legend()) +
+    #scale_colour_brewer(palette=orderingPalette) +
+    #labs(fill="Feature set", shape="Source type")
+    guides(fill=guide_legend(override.aes=list(shape=22))) + #show a shape than can be filled!
+    theme(legend.key=element_blank())
 transfo_smet
 if (getPlot){
     dev.off()#Necessary to do the textual plot.

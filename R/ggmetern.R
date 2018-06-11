@@ -68,7 +68,9 @@ ggmetern <- function(data, fancy=TRUE, ...) {
     ep <- ep + geom_mask() #<<<<< Puts the mask below any layers to follow, charm by N. Hamilton
     if (fancy){ # A theme for interactive visualization & exploration
         ep <- ep + ggtern::theme_rgbw() + 
-            ggtern::theme_custom(col.T="forestgreen",col.L="red",col.R="orange")
+            ggtern::theme_custom(tern.plot.background="white",
+                                 tern.panel.background="white",
+                                 col.T="forestgreen",col.L="red",col.R="orange")
     }else{# A basic plot and theme for publishing
         ep <- ep + ggtern::theme_bw()
     }
