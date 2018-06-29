@@ -2,16 +2,18 @@
 title: "Transformation Analysis with the CMET"
 author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
 date: "8/30/2017"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
-This script gives an example on how to use the Channel Multivariate Entropy Triangle framework to analyze Feature Transformations on a Database. We characterize a particular database using its Source Multivariate Entropy Triangle (upside-down triangle).
+This script gives an example on how to use the Channel Multivariate Entropy Triangle framework to analyze Feature Transformations on a Database. 
 
-Then we apply any number of transformations to its features (in this case PCA and ICA) and represent the accrued information loss incurred in the prescribed selection  order of features in the CMET (each transformation orders the obtained features in some way.)
+We apply any number of transformations to its features (in this case PCA and ICA) and represent the accrued information loss incurred in the prescribed selection  order of features in the CMET (each transformation orders the obtained features in some way.)
 
-Finally, we consider the transformed features as data sources in their own right, whence we can compare all of them in the Source Multivariate Entropy Triangle (SMET).
+Finally, we consider the transformed features as data sources in their own right, whence we can compare all of them in the Source Multivariate Entropy Triangle (SMET, upside-down triangle).
 
-CAVEAT: this is NOT an investigation of whether PCA is ''better'' than ICA, whatever that might mean.
+Take into consideration that this is NOT an investigation of whether PCA is ''better'' than ICA, whatever that might mean.
 
 ## Environment construction
 
@@ -23,12 +25,22 @@ library(ggtern)    # Ternary diagrams on ggplot
 library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
 library(candisc)   # Wine dataset
-knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
 # Naive transformation from factors to numbers in 0 to num.factors - 1
 factor.as.numeric <- function(f){
     nums <- as.numeric(f)
     return(nums - min(nums))
 }
+```
+Some top level switches and options gathered in one place. 
+```{r switches}
+debugLevel <- 0 # Debug level 0-non-existent, 1-minimal, the greater the more verbose.
+fancy <- TRUE  # set this for nicer on-screen visualization.
+#fancy <- FALSE # Set this for either printing matter or more austere plots.
+getPlot <- TRUE # Flag to obtain plots for publication. 
+getPlot <- FALSE #Comment to get .jpeg files rather than plots of ets.
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+if (getPlot)
+    knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 ```
 
 ## Datasets available for entropy analysis in this package
@@ -36,29 +48,26 @@ factor.as.numeric <- function(f){
 ```{r data-munging}
 datasets <- getDatasets()
 datasets
-library(xtable)
-print.xtable(xtable(dplyr::select(datasets, name, K, n, m)))
+if (getPlot){# For papers, it helps to have the table in latex.
+    library(xtable)
+    print.xtable(xtable(dplyr::select(datasets, name, K, n, m)))
+}
 ```
 
 ## Database choosing and visualization setup 
 
-```{r initialization}
-fancy <- TRUE  # set this for nicer on-screen visualization.
-#fancy <- FALSE # Set this for either printing matter or more austere plots.
-getPlot <- TRUE
-#getPlot <- FALSE
-if (getPlot)
-    knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
-# from:
-# https://tgmstat.wordpress.com/2013/11/28/computing-and-visualizing-pca-in-r/
-dsName <- "Ionosphere"
-# dsName <- "iris"#Supply the name of the database to be analyzed
+I suggest something like this if you are developing some algorithm and testing on a number of different databases. 
+
+```{r data-initialization}
+# Uncomment the name of the database to be analyzed
+# dsName <- "Ionosphere"
+dsName <- "iris"
 # dsName <- "BreastCancer"#Supply the name of the database to be analyzed#FACTORS
 # dsName <- "Wine"
 # dsName <- "Glass"#Cannot take logarithms for PCA: zeros returns -Inf
 # dsName <- "Arthritis"#It has non-numeric factors.
 # dsName <- "Sonar"
-# Choose: "iris", "BreastCancer" or "Glass"
+# Suggestions: choose: "iris", "BreastCancer" or "Glass" to replicate Entropy 2018 paper.
 dsRecord <-  filter(datasets, name == dsName)
 ds <- evalDataset(dsName) 
 
@@ -80,34 +89,26 @@ ds <- ds %>%
     # Dispose of constant columns: they carry no information
     select_if(function(v)(var(v) > 0))
 ncols <- ncol(ds)#Mnemonic shortcut: num of columns
-#Whether to process the database or its log.
-# if (any(sapply(ds, is.numeric))){
-#     acceptsLog <- TRUE
-# } else {
-#     acceptsLog <- FALSE
-#     warning("Database %dsRecord has non-numeric columns: it does not accept logs")
-# }
 dsDiscretized <- infotheo::discretize(ds, disc="equalwidth")
-#### Work out the logarithmic part of ds.
-# if (acceptsLog){
-#     ds2log <-  dplyr::select_if(ds, is.numeric)
-# }
-# myLog(x) <-  if (is.numeric(x)){min(log(x))} else x#this is natural log
-# log.ds <- as.data.frame(lapply(ds, 
-#                                function(x) ))
 if (dsName != "Ionosphere"){
     log.ds <- log(ds)#this has to be made conditional on the database
-    log.dsDiscretized <- infotheo::discretize(log.ds)#try to get rid of annoying warnings each time entropy is called. 
+    log.dsDiscretized <- infotheo::discretize(log.ds)
+    #TODO: try to get rid of annoying warnings each time entropy is called. 
 }
+```
+
+We next choose glyphs, colors, etc. for visualizing with the CMET and SMET.
+
+```{r vis-initialization}
 # The colors for the different feature sets for the plots. 
-if (fancy){
+if (fancy){#Different color schemes you may try:
     #orderingColors <- rev(terrain.colors(ncols+1))[1:ncols + 1]#too similar
     #orderingColors <- rev(terrain.colors(ncols+1))[1:ncols + 1]
     #orderingColors <- rev(topo.colors(ncols+1))[1:ncols + 1]#too flashy
-    #orderingColors <- rev(cm.colors(ncols+1))[1:ncols + 1]#too washed
+    #orderingColors <- rev(cm.colors(ncols+1))[1:ncols + 1]#too washed out
     #orderingColors <- rev(heat.colors(ncols+1))[1:ncols + 1]
     orderingPalette <- "BuPu"
-} else {
+} else {#These are supposed to be classical.
     #orderingColors <- rev(gray(0:ncols / ncols))[1:ncols + 1]
     #orderingColors <- scale_colour_grey(end=0.9)#Not for discrete levels
     orderingPalette <- "Blues"
@@ -121,20 +122,15 @@ if (fancy){
 # https://stackoverflow.com/questions/16922988/interpolating-a-sequential-brewer-palette-as-a-legend-for-ggplot2
 myColorsFun <- colorRampPalette(brewer.pal(9,orderingPalette))
 orderingColors <- myColorsFun(ncols+2)[1:ncols + 2]
-#if (debug){
-    #pie(rep(1,n), col=rainbow(n))
+if (debugLevel > 0){#When debugging, have a peek at the colors.
     pie(rep(1,ncols),col=orderingColors)
-#}
+}
 # The shapes for the different types of transform
-#transformShapes <- c("log"=4, "PCA"=1, "ICA"=5)#no fill, void
-#transformShapes <- c("log"=4, "PCA"=20, "ICA"=18)#no fill, solid
 transformShapes <- c("log"=4, "PCA"=21, "ICA"=23)#no fill, solid
+# The shapes to represent the components of observations
 sourceShapes <- c("none"=8, "log"=4, "PCA"=21, "ICA"=23)#no fill, solid
-typeShapes <- c("X" = 4, "Y" = 1, "ALL" = 10, "XY" = 20)
-#X for the x and circle for Y
+#Classical for channel ETs: X for the x and circle for Y
 typeShapes <- c("X" = 4, "Y" = 6, "ALL" = 10, "XY" = 20)
-#X for the x and nabla for Y
-#typeShapes <- c("X" = "x", "Y" = "y", "ALL" = "A", "XY" = "o")
 ```
 
 ## Base case characterization
@@ -173,6 +169,8 @@ Plot the source contents of the database
 Next we obtain the PCA for the log-transformed data.
 
 ```{r, PCA}
+# Idea for script from:
+# https://tgmstat.wordpress.com/2013/11/28/computing-and-visualizing-pca-in-r/
 # apply PCA - scale. = TRUE is highly 
 # advisable, but default is FALSE. 
 #pca.model <- prcomp(log.ds, center = TRUE, scale. = TRUE) 
@@ -185,18 +183,17 @@ plot(pca.model, type = "l")
 summary(pca.model)
 # Finally we obtained the transformed data, the Y to be analized
 dsPca <- as.data.frame(predict(pca.model, newdata= ds))
-#  Why predict as opposed to just working out the entropy?
+# Why predict as opposed to just working out the entropy?
 # Because the pca.model is just the set of matrices for carriying out the pca. We need to generate the data!
 dsPcaDiscretized <- infotheo::discretize(dsPca, disc="equalwidth")
 ```
 
-Next we see how the information from the original data is transferred to the principal components accumulatively. Firts we work out the transformation entropies from retaining only the first n features and then we visualize it. 
+Next we see how the information from the original data is transferred to the principal components cumulatively. Firts we work out the transformation entropies from retaining only the first n features and then we visualize it. 
 
 ```{r PCA vis in CMET}
 for( i in (1:ncols)){
     etdf <- rbind(etdf,
                   cbind(data=paste0("1_",i), transform="PCA",
-#                        jentropies(log.dsDiscretized,
                         jentropies(dsDiscretized,
                                    as.tibble(dsPcaDiscretized[ ,1:i]))
                   )
@@ -205,10 +202,8 @@ for( i in (1:ncols)){
 etdf <- etdf %>% mutate(data=factor(data,levels=orderedLevels))
 transfo_cmet <- 
     ggmetern(etdf %>% filter(transform == "PCA"), fancy) +
-#    ggmetern(etdf %>% filter(type != "XY" & transform == "PCA"), fancy) +
     geom_point(aes(color=data, shape=type), size=3) +
     scale_shape_manual(values=typeShapes) +
-    #scale_color_brewer(palette=orderingPalette) +
     scale_color_manual(values=orderingColors) + 
     labs(color="Feature set", shape="Entropy type") +
     theme(legend.key=element_blank())
@@ -220,18 +215,7 @@ if (getPlot){
 }
 ```
 
-The observation of the gain of adopting the PCA has to be seen in the source triangle
-
-```{r}
-#pca <- as.data.frame(ds.pca)
-for( i in (1:ncols)){
-    sedf <- rbind(sedf,
-                  cbind(data=paste0("1_",i), transform="PCA",
-                        sentropies(as.data.frame(dsPcaDiscretized[,1:i]))
-                  )
-    )
-}
-```
+The observation of the gain of adopting the PCA has to be seen in the source triangle (see below).
 
 ## Exploring the ICA transformation
 
@@ -287,19 +271,6 @@ if (getPlot){
 }
 ```
 
-## Exploring the ICA features as a data source
-
-```{r sourceICA}
-#Now get the same approximations as before for the sources:
-for( i in (1:ncols)){
-    sedf <- rbind(sedf,
-                  cbind(data=paste0("1_",i), transform="ICA", 
-                        sentropies(as.data.frame(dsIcaDiscretized[,1:i]))
-                  )
-    )
-}
-```
-
 # Comparison betweem PCA and ICA on the dataset
 
 ## Comparing the gains in information transmission
@@ -326,21 +297,45 @@ if (getPlot){
 }
 ```
 
+In the case of iris, we see that choosing only the first component in ICA or PCA carries much more information on the input *per feature* than taking the whole database. This is also true for choosing up to 2 or 3 components, but not for 4 components. 
 
+## Comparing the entropy content of the sources
 
-Visualisation comparing transforms:
+### Exploring the PCA features as a data source
+
+```{r}
+for( i in (1:ncols)){
+    sedf <- rbind(sedf,
+                  cbind(data=paste0("1_",i), transform="PCA",
+                        sentropies(as.data.frame(dsPcaDiscretized[,1:i]))
+                  )
+    )
+}
+```
+
+### Exploring the ICA features as a data source
+
+```{r sourceICA}
+#Now get the same approximations as before for the sources:
+for( i in (1:ncols)){
+    sedf <- rbind(sedf,
+                  cbind(data=paste0("1_",i), transform="ICA", 
+                        sentropies(as.data.frame(dsIcaDiscretized[,1:i]))
+                  )
+    )
+}
+```
+
+### Visualisation using the SMET (q.v.).
+
+In this plot we compare the different subsets of features as entropy sources. 
 
 ```{r visualization in SMET ALL}
-# show the source aggregate entropies
-#fancy <- !TRUE#TRUE is better for interactive use. !TRUE for illustrations.
 transfo_smet <- 
     ggmetern(filter(sedf, name == "ALL" & transform != "log"), fancy) +
     geom_point(aes(fill=data, shape=transform), size=3) +
     scale_shape_manual(values=sourceShapes) +
     scale_fill_manual(values=orderingColors) + 
-    #scale_fill_brewer(palette=orderingPalette, guide=guide_legend()) +
-    #scale_colour_brewer(palette=orderingPalette) +
-    #labs(fill="Feature set", shape="Source type")
     guides(fill=guide_legend(override.aes=list(shape=22))) + #show a shape than can be filled!
     theme(legend.key=element_blank())
 transfo_smet
@@ -350,6 +345,11 @@ if (getPlot){
            plot=transfo_smet)
 }
 ```
+
+In the case of iris we see that the reason to choose 1, 2, or 3 features is because the carry less redundancy. However, they sample the input space slightly less uniformly than the original database. 
+
+
+Try this script with Glass or Arthritis for completely different behaviours. 
 
 # Postscriptum
 

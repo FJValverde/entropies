@@ -1,0 +1,98 @@
+---
+title: "Analysis of Confusion Matrices"
+author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
+date: "6/21/2018"
+output: html_document
+---
+This script shows how to read a Channel Binary Entropy Triangle (CBET) using different confusion matrices from (Valverde-Albacete & Peláez-Moreno, 2010).
+
+
+### Environment construction
+```{r setup, include=FALSE}
+library(tidyverse) # That (in)famous Mr. Wickham!;)
+#library(ggtern)    # Ternary diagrams on ggplot
+library(entropies) # This package. Depends heavily on "ggtern", entropy", "infotheory".
+```
+
+Some top level switches and options gathered in one place. 
+```{r switches}
+debugLevel <- 0 # Debug level 0-non-existent, 1-minimal, the greater the more verbose.
+fancy <- TRUE  # set this for nicer on-screen visualization.
+#fancy <- FALSE # Set this for either printing matter or more austere plots.
+getPlot <- TRUE # Flag to obtain plots for publication. 
+getPlot <- FALSE #Comment to get .jpeg files rather than plots of ets.
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+if (getPlot)
+    knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+```
+
+### Data
+
+```{r, data}
+mats <- list(
+    a = c(15, 0, 0, 0, 15, 0, 5, 5, 20),
+    b = c(16, 2, 1, 2, 16, 1, 2, 2, 18),
+    c = c(1,0,1,0,1,1,4,4,48),
+    d = c(15,0,0,0,18,0,0,0,27),
+    e = c(1,0,0,0,2,0,0,0,57),
+    f = c(0,0,0,0,0,0,5,5,50)
+)
+as.atable <- function(m){matrix(m, nrow=3,ncol=3)}
+cm <- lapply(mats,as.atable)
+cmNames <- names(mats)
+```
+
+### Entropies
+
+```{r, entropies}
+etdf <- data.frame()
+for (i in 1:length(cmNames)) {
+    etdf <- rbind(etdf,
+                  cbind(name=cmNames[[i]], jentropies(as.table(cm[[i]])))
+    )
+}
+```
+
+# Visualizing entropies in the CBET
+
+```{r, visualization}
+confusion_cbet <- 
+    ggmetern(etdf %>% filter(type == "XY"), fancy) +
+    geom_point(aes(shape=name), size=3, color="blue") +
+    labs(shape="Confusion Matrix") +
+    theme(legend.key=element_blank())
+confusion_cbet
+if (getPlot){
+    dev.off()#Necessary to do the textual plot.
+    ggsave(stringr::str_interp("confusion_matrices_CBET_PRL10_in_R.jpeg"),
+           plot=confusion_cbet)
+}
+```
+
+The analysis of the classifiers generating the matrices is the following:
+1. That generating a is an excellent classifier, transferring a lot of information 
+
+# Visualizing Entropies in the split CBET
+
+```{r, split visualization}
+confusion_split_cbet <- 
+    ggmetern(etdf, fancy) %+% 
+    geom_point(aes(shape=type), 
+               size=3, 
+               color="blue") +
+    scale_shape_manual(values=c("X"=4, "Y"=1, "XY"=20)) +
+    labs(shape="Split Confusion Matrix") +
+    theme(legend.key=element_blank())
+confusion_split_cbet <-  
+    confusion_split_cbet + 
+    geom_text(data=etdf %>% filter(type == "XY"), aes(label=name), 
+              color="blue",size=4, vjust=2, hjust=1)
+confusion_split_cbet
+if (getPlot){
+    dev.off()#Necessary to do the textual plot.
+    ggsave(stringr::str_interp("confusion_matrices_split_CBET_PRL10_in_R.jpeg"),
+           plot=confusion_split_cbet)
+}
+
+```
+

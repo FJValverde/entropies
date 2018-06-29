@@ -58,7 +58,7 @@ ggmetern <- function(data, fancy=TRUE, ...) {
     } else if (hasCmetEntropicCoords((data))) {
         ep <- ggtern(data, aes(x=VI_P, y=M_P, z=DeltaH_P), vars) #+ geom_point(...)
         # Vertex labels for the channel multivariate entropy triangle
-        TlabExp <- "\\textit{I'}_{P_{XY}}"#FVA 24/07/17: Changed text to reflect theoretical work.
+        TlabExp <- "$2\\cdot\\textit{I'}_{P_{XY}}$"#FVA 24/07/17: Changed text to reflect theoretical work.
         RlabExp <- "$\\Delta\\textit{H'}_{P_{XY}}$"
         LlabExp <-  "$\\textit{VI'}_{P_{XY}$"
         titleExp <- "Aggregate Channel Multivariate entropies"

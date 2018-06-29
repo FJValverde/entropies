@@ -26,11 +26,12 @@ evaluate <- function(data, ...) UseMethod("evaluate")
 #' @export
 evaluate.confusionMatrix <- function(cm, ...){
     #require(caret) # for class "confusionMatrix" # Do NOT use require in packages!
-    if (class(cm) != "confusionMatrix")
-        stop("evaluate.confusionMatrix: not a confusion matrix")
+    # if (class(cm) != "confusionMatrix")
+    #     stop("evaluate.confusionMatrix: not a confusion matrix")
     #vars <- list(...) # in case we have to split
     #cmEntropies <- entropies(cm, vars)
-    cmEntropicCoords <- entropicCoords(entropies(cm), ...)
+    #FVA: obsolete cmEntropicCoords <- entropicCoords(entropies(cm), ...)
+    cmEntropicCoordds <- jentropies2d.table(cm, ...)
     cmPerplexities <- perplexities(cmEntropicCoords)
     return(cbind(data.frame(as.list(cm$overall)),
                  cmEntropicCoords, 
