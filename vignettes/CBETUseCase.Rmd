@@ -1,44 +1,65 @@
 ---
-title: "Simple Use Case for the Entropy Triangle with ggtern"
+title: "Simple Use Case for the CBET on classification"
 author: "Francisco J. Valverde-Albacete"
 date: "Nov, 28th,  2015"
 output: html_document
 ---
 
 # Environment construction
-```{r}
+```{r, message=F, warning=F, environment}
+library(tidyverse)
+library(vcd)       # Categorical benchmarks
+library(mlbench)   # ml benchmarkss
+library(candisc)   # Wine dataset
 library(caret)    # To build the classifiers.
 library(mlbench)  # Many databases for ML tasks
 # library(entropy)  # To work out the appropriate coordinates.
 #library(ggtern)
 library(entropies) # Processing and visualizing joint entropies
-debugLevel <- 0 # Debug level 0-non-existent, 1-minimal
-fancy <- TRUE # Whether to draw fancy triangles.
-```
-
-# Datasets available
-
-The inventory of databases to be explored:
-
-```{r}
-# the inventory of databases you can access
-#library(datasets)
-name <- c("Ionosphere", "iris", "Glass") # 
-classVar <- c(35, 5, 10)   # ordinal of the class attribute
-className <- c("Class","Species", "Type")  # Name of class attribute
-K <- c(2, 3, 7)  # No. of classes
-datasets <- data.frame(name,classVar,className,K)
-
-# To select a dataset by name
-evalDataset <- function(dsName){
-    dsName <- as.character(dsName)
-    switch(dsName,
-        "iris" = {data(iris); iris},
-        "Ionosphere" = {data(Ionosphere); Ionosphere},
-        "Glass"={data(Glass); Glass})
+# Naive transformation from factors to numbers in 0 to num.factors - 1
+factor.as.numeric <- function(f){
+    nums <- as.numeric(f)
+    return(nums - min(nums))
 }
-datasets
+#debugLevel <- 0 # Debug level 0-non-existent, 1-minimal
+#fancy <- TRUE # Whether to draw fancy triangles.
 ```
+
+## Datasets available for entropy analysis in this package
+
+```{r data-munging}
+datasets <- getDatasets()
+datasets
+if (getPlot){# For papers, it helps to have the table in latex.
+    library(xtable)
+    print.xtable(xtable(dplyr::select(datasets, name, K, n, m)))
+}
+```
+
+<!-- # Datasets available -->
+
+<!-- The inventory of databases to be explored: -->
+
+
+<!-- ```{r} -->
+<!-- # the inventory of databases you can access -->
+<!-- #library(datasets) -->
+<!-- name <- c("Ionosphere", "iris", "Glass") #  -->
+<!-- classVar <- c(35, 5, 10)   # ordinal of the class attribute -->
+<!-- className <- c("Class","Species", "Type")  # Name of class attribute -->
+<!-- K <- c(2, 3, 7)  # No. of classes -->
+<!-- datasets <- data.frame(name,classVar,className,K) -->
+
+<!-- # To select a dataset by name -->
+<!-- evalDataset <- function(dsName){ -->
+<!--     dsName <- as.character(dsName) -->
+<!--     switch(dsName, -->
+<!--         "iris" = {data(iris); iris}, -->
+<!--         "Ionosphere" = {data(Ionosphere); Ionosphere}, -->
+<!--         "Glass"={data(Glass); Glass}) -->
+<!-- } -->
+<!-- datasets -->
+<!-- ``` -->
 
 # Create the data
 
@@ -46,18 +67,50 @@ The data must be created from (multiclass) classifiers and then transformed into
 
 We'll use the Fisher Iris data throughout, and a stratified partitioning of the database.
 
-```{r}
-dsRow <- datasets[1, ] # Ionosphere
-# dsRow <- datasets[2, ] # iris
-# dsRow <- datasets[3, ] #Glass
-dsName <- dsRow$name
-dataset <- evalDataset(dsName)
-dsRow
-summary(dataset)
+```{r data-initialization}
+# Uncomment the name of the database to be analyzed
+dsName <- "Ionosphere"
+# dsName <- "iris"
+# dsName <- "BreastCancer"#Supply the name of the database to be analyzed#FACTORS
+# dsName <- "Wine"
+# dsName <- "Glass"#Cannot take logarithms for PCA: zeros returns -Inf
+# dsName <- "Arthritis"#It has non-numeric factors.
+# dsName <- "Sonar"
+# Suggestions: choose: "iris", "BreastCancer" or "Glass" to replicate Entropy 2018 paper.
+dsRecord <-  filter(datasets, name == dsName)
+ds <- evalDataset(dsName) 
 
-# Basic data from the set for classification
-X <- as.matrix(dataset[,-dsRow$classVar])
-Y <- dataset[, dsRow$classVar]
+#id columns, if existent in dsRecord$idNumber
+# log transform of everything but the class and any id if existant. 
+if (!is.na(dsRecord$idNumber)){
+    ds <- ds[,-dsRecord$idNumber]
+}
+#class column
+ds.classNum <- which(names(ds)==dsRecord$className)
+#take away the class, but keep it just in case.
+class.ds <- ds[, ds.classNum]#saving the class. Warning A FACTOR!
+ds <- ds[,-ds.classNum]
+ds <- ds %>%     
+    #transform factors to number
+    mutate_if(is.factor,factor.as.numeric) %>%
+    # Dispose of columns with NaN
+    select_if(function(v) !any(is.na(v))) %>% 
+    # Dispose of constant columns: they carry no information
+    select_if(function(v)(var(v) > 0))
+ncols <- ncol(ds)#Mnemonic shortcut: num of columns
+dsDiscretized <- infotheo::discretize(ds, disc="equalwidth")
+if (dsName != "Ionosphere"){
+    log.ds <- log(ds)#this has to be made conditional on the database
+    log.dsDiscretized <- infotheo::discretize(log.ds)
+    #TODO: try to get rid of annoying warnings each time entropy is called. 
+}
+```
+
+Basic data from the set for classification
+
+```{r}
+X <- as.matrix(ds) #as.matrix(dataset[,-dsRow$className])
+Y <- class.ds #dataset[, dsRow$classVar]
 # Eploring the label set
 classes <- unique(Y)
 numC <- length(classes)
@@ -67,10 +120,10 @@ summary(Y)
 
 # A simple classifier evaluation
 
+First we use basic data partitioning for the evaluation. 
+
 ```{r}
-#library(caret)
 set.seed(2117)
-#Basic data partitioning
 inTrain <- createDataPartition(y=Y,
                                p=0.80, # Tries to do stratified sampling
                                list=FALSE)
