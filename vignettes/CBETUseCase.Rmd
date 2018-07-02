@@ -7,7 +7,7 @@ output: html_document
 
 # Environment construction
 ```{r, message=F, warning=F, environment}
-library(tidyverse)
+library(tidyverse) # That (in)famous Mr. Wickham!
 library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
 library(candisc)   # Wine dataset
@@ -23,6 +23,17 @@ factor.as.numeric <- function(f){
 }
 #debugLevel <- 0 # Debug level 0-non-existent, 1-minimal
 #fancy <- TRUE # Whether to draw fancy triangles.
+```
+Some top level switches and options gathered in one place. 
+```{r switches}
+debugLevel <- 0 # Debug level 0-non-existent, 1-minimal, the greater the more verbose.
+fancy <- TRUE  # set this for nicer on-screen visualization.
+#fancy <- FALSE # Set this for either printing matter or more austere plots.
+getPlot <- TRUE # Flag to obtain plots for publication. 
+getPlot <- FALSE #Comment to get .jpeg files rather than plots of ets.
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+if (getPlot)
+    knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 ```
 
 ## Datasets available for entropy analysis in this package
@@ -70,7 +81,7 @@ We'll use the Fisher Iris data throughout, and a stratified partitioning of the 
 ```{r data-initialization}
 # Uncomment the name of the database to be analyzed
 dsName <- "Ionosphere"
-# dsName <- "iris"
+dsName <- "iris"
 # dsName <- "BreastCancer"#Supply the name of the database to be analyzed#FACTORS
 # dsName <- "Wine"
 # dsName <- "Glass"#Cannot take logarithms for PCA: zeros returns -Inf
@@ -109,8 +120,8 @@ if (dsName != "Ionosphere"){
 Basic data from the set for classification
 
 ```{r}
-X <- as.matrix(ds) #as.matrix(dataset[,-dsRow$className])
-Y <- class.ds #dataset[, dsRow$classVar]
+X <- as.matrix(ds)
+Y <- class.ds
 # Eploring the label set
 classes <- unique(Y)
 numC <- length(classes)
@@ -162,19 +173,19 @@ experiments <- rbind(cbind(trCoords, Phase="train", method="knn"),
 #                   aes(VIxy,MIxy2,DeltaHxy,colour=Phase, shape=Phase),
 #                   size=3) +
 #     scale_colour_brewer(palette="Set1")
-gp <- ggmetern(data=experiments, fancy) +
-    geom_point(aes(colour=Phase), size=1)  +
+gp <- ggmetern(data=experiments %>% filter(type=="XY"), fancy) +
+    geom_point(aes(colour=Phase, shape=method), size=1)  +
     scale_colour_brewer(palette="Set1")
 gp
 ```
 
-Note that there is a suspicious behaviour in the plot in that the classifier achieves a better information transfer (correlated with accuracy) in test than in training. 
+Note that, at least for *iris*, there is a suspicious behaviour in the plot in that the classifier achieves a better information transfer (correlated with accuracy) in test than in training. 
 
 This is part of the "evaluation paradox" for classifications: since the test must have a higher variance, there will be instances of train-test partitions where the performance on the test will be higher that on the train.
 
 # A better picture with n-fold validation
 
-To confirm this intuition and get all the value for our coin in the entropy trinagle, 
+To confirm this intuition and get all the value for our coin in the entropy triangle, 
 in the following, we use n-fold validation to visualize several experiments and their mean performance. 
 
 First we create the folds: the number of folds is a parameter of this script.
@@ -193,7 +204,7 @@ summary(Y)
 Run the experiments
 
 ```{r n-fold validation, warning=FALSE}
-models <- c("knn") #c("knn", "logreg") # c("logreg") 
+models <- c("knn") #c("knn", "logreg") 
 results <- data.frame()
 for (i in 1:numFolds){
     for (m in models){
@@ -217,68 +228,86 @@ for (i in 1:numFolds){
         print(testCM$table)
         # 5. Gather results for analysis
         results <- rbind(results, 
-                         cbind(jentropies(trainCM$table), Fold=i,method=m, Phase="train"),
-                         cbind(jentropies(testCM$table), Fold=i, method=m, Phase="test")
+                         evaluate(trainCM$table) %>% mutate(Fold=i,method=m, Phase="train",
+                               Acc=trainCM$overall[1]),
+                         evaluate(testCM$table) %>% mutate(Fold=i,method=m, Phase="test",
+                               Acc=testCM$overall[1])
         )
         print(sprintf("Fold %d, method %s Train accuracy = %f\t Test accuracy= %f", 
                       i, m, trainCM$overall[1],testCM$overall[1])
         )
     }
 }
+results <- cbind(dSet=dsName,results)
 ```
 
-Now try to plot these results: disaggregate and aggregate...
+We show the plot for the result on a per-plot basis. 
 
-```{r}
-# eT <- ggentropytern(results) + 
-#     geom_point(aes(VIxy,MIxy2,DeltaHxy, colour=Phase, shape=method)) +
-#     #geom_confidence(color="blue",linetype=1) +
-#     scale_colour_manual(values=c("black","red")) # Don't trust the training, that is the red
-eT <- ggmetern(data=results, fancy) + 
-    geom_point(aes(colour=Phase, shape=method), size=3)  +
-    scale_colour_manual(values=c("black","red")) # Don't trust the training, that is the red
+```{r basic n-fold plot}
+eT <- ggmetern(data=results %>% filter(type=="XY"), fancy) + 
+    geom_point(aes(colour=Phase, shape=method), size=2)  +
+    scale_colour_manual(values=c("blue","red")) # Don't trust the training, that is the red
 eT
-#find mean and variance for train and test for: Accuracy, EMA, 
-meanAccuracy <- aggregate(results$Accuracy, by= list(Phase=results$Phase), mean)
-sdAccuracy <- aggregate(results$Accuracy, by= list(Phase=results$Phase), sd)
-meanEMA <- aggregate(results$EMA, by= list(Phase=results$Phase), mean)
-sdEMA <- aggregate(results$EMA, by= list(Phase=results$Phase), sd)
-#try to plot on eT the mean results for testing and training:
-byMethod <- results$method
-byPhase <- results$Phase
-meanResults <- results %>% 
-    select(-one_of("Fold", "k", "m", "kx", "my", "muxy", "kx_y", "ky_x", 
-                   "McnemarPValue", "method", "Phase")
-           )
-meanResults <- aggregate(meanResults, by=list(Phase=byPhase, method=byMethod), mean)
-meanResults
-eT + geom_point(data=meanResults, 
-                aes(VIxy,MIxy2,DeltaHxy, colour=Phase, shape=method), 
-                size=4)
+#We also need to plot  their centers!
 ```
+
+Clearly, some test results are better than training results. But what about centrality and dispersion?
+
+```{r mean of results}
+results %>% filter(type=="XY") %>%
+    group_by(type, method, Phase) %>%
+    summarise(meanAcc=mean(Acc), sdAcc=sd(Acc), meanEMA = mean(EMA), sdEMA = sd(EMA))
+```
+
+This agrees with the theory that insists on the variance of the testing instances being higher. 
 
 # Visualization with the split triangle
 
 To use the split triangle to advantage we have to use an unbalanced dataset, e.g. Glass from mlbench.
 
 ```{r}
-library(mlbench)
-dsRow <- datasets[3, ]
-dsName <- dsRow$name
-dataset <- evalDataset(dsName)
-dsRow
-summary(dataset)
+#library(mlbench)
+dsName <- "Glass"
+dsRecord <-  filter(datasets, name == dsName)
+ds <- evalDataset(dsName) 
 
-# Basic data from the set for classification
-X <- as.matrix(dataset[,-dsRow$classVar])
-Y <- dataset[, dsRow$classVar]
-# Eploring the label set
+#id columns, if existent in dsRecord$idNumber
+# log transform of everything but the class and any id if existant. 
+if (!is.na(dsRecord$idNumber)){
+    ds <- ds[,-dsRecord$idNumber]
+}
+#class column
+ds.classNum <- which(names(ds)==dsRecord$className)
+#take away the class, but keep it just in case.
+class.ds <- ds[, ds.classNum]#saving the class. Warning A FACTOR!
+ds <- ds[,-ds.classNum]
+ds <- ds %>%     
+    #transform factors to number
+    mutate_if(is.factor,factor.as.numeric) %>%
+    # Dispose of columns with NaN
+    select_if(function(v) !any(is.na(v))) %>% 
+    # Dispose of constant columns: they carry no information
+    select_if(function(v)(var(v) > 0))
+ncols <- ncol(ds)#Mnemonic shortcut: num of columns
+dsDiscretized <- infotheo::discretize(ds, disc="equalwidth")
+if (dsName != "Ionosphere"){
+    log.ds <- log(ds)#this has to be made conditional on the database
+    log.dsDiscretized <- infotheo::discretize(log.ds)
+    #TODO: try to get rid of annoying warnings each time entropy is called. 
+}
+```
+
+Basic data from the set for classification
+
+```{r}
+X <- as.matrix(ds)
+Y <- class.ds
+# Exploring the label set
 classes <- unique(Y)
 numC <- length(classes)
 print(sprintf("There are %d classes with distribution: ", numC))
 summary(Y)
 ```
-
 
 First we create the folds: the number of folds is a parameter of this script.
 
@@ -297,7 +326,7 @@ Run the experiments
 
 ```{r n-fold validation-2}
 models <- c("knn") # c("knn", "logreg") 
-results <- data.frame()
+#results <- data.frame()
 for (i in 1:numFolds){
     # 1. select training and testX data and classes
     trainObs <- unlist(folds[-i])
@@ -319,22 +348,61 @@ for (i in 1:numFolds){
         testCM <- confusionMatrix(testYhat, testY)
         print(testCM$table)
         # 5. Gather results for analysis
-        results <- rbind(results, 
-                         cbind(evaluate(trainCM, split=TRUE), 
-                               Fold=i, method=m, Phase="train"
-                               ),
-                         cbind(evaluate(testCM, split=TRUE), 
-                               Fold=i, method=m, Phase="test"
-                               )
-                        )
+         results <- rbind(results, 
+                         evaluate(trainCM$table) %>% mutate(Fold=i,method=m, Phase="train",
+                               Acc=trainCM$overall[1]),
+                         evaluate(testCM$table) %>% mutate(Fold=i,method=m, Phase="test",
+                               Acc=testCM$overall[1])
+         )
+        # results <- rbind(results,                         
+                        # cbind(evaluate(trainCM, split=TRUE), 
+                        #        Fold=i, method=m, Phase="train"
+                        #        ),
+                        #  cbind(evaluate(testCM, split=TRUE), 
+                        #        Fold=i, method=m, Phase="test"
+                        #        )
+                        # )
         print(sprintf("Fold %d, method %s Train accuracy = %f\t Test accuracy= %f", 
                       i, m, trainCM$overall[1],testCM$overall[1])
         )
     }
 }
+results <- cbind(dSet=dsName,results)
 ```
 
+First we plot these results in aggregate form
+```{r basic n-fold plot}
+eTGlass <- ggmetern(data=results %>% filter(type=="XY",dSet==dsName), fancy) + 
+    geom_point(aes(colour=Phase, shape=method), size=2)  +
+    scale_colour_manual(values=c("blue","red")) # Don't trust the training, that is the red
+eTGlass
+#We also need to plot  their centers!
+```
+```{r compositional centers, warning=FALSE}
+library(compositions)# Statistics work differently on compositional data
+trainComposition <- 
+    mean(acomp(results %>% filter(dSet==dsName, type=="XY",Phase=="train"),c(5,6,7)))
+testComposition <- 
+    mean(acomp(results %>% filter(dSet==dsName, type=="XY",Phase=="test"),c(5,6,7)))
+meanResults <- cbind(dSet=dsName,
+                     rbind(
+                         data.frame( Phase="train", as.list(trainComposition)),
+                         data.frame( Phase="test", as.list(testComposition))
+                     )
+)
+# And now we add it with a different glyph but the same colors.
+eTGlassMean <- eTGlass %+% geom_point(data=meanResults, aes(colour=Phase), shape=4, size=4)
+eTGlassMean
+```
+
+
 Now try to plot these results in split coordinates: disaggregate and aggregate...
+```{r}
+eTGlassSplit <- ggmetern(data=results %>% filter(type!="XY",dSet==dsName), fancy) + 
+    geom_point(aes(colour=Phase, shape=method), size=2)  +
+    scale_colour_manual(values=c("blue","red")) # Don't trust the training, that is the red
+eTGlassSplit
+```
 
 ```{r}
 # eT <- ggentropytern(results) + 
@@ -379,4 +447,3 @@ meT
 ```{r}
 sessionInfo()
 ```
-

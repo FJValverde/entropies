@@ -135,11 +135,12 @@ typeShapes <- c("X" = 4, "Y" = 6, "ALL" = 10, "XY" = 20)
 
 ## Base case characterization
 
+First we collect the information transformation from data to log data in entropy triangle data frames for sources and transformations.
+
 ```{r base case}
-#Collect the information transformation from data to log data in entropy triangle data frames for sources and transformations
 etdf <- data.frame()
-#The following point of etdf shoul print as a point on a cross, being deterministic.
 sedf <- data.frame()
+#The following point of etdf shoul print as a point on a cross, being deterministic.
 if (dsName != "Ionosphere"){
     etdf <- rbind(etdf,
                   cbind(data=paste0("1_",ncols), transform="log",
@@ -160,8 +161,6 @@ sedf <- rbind(sedf,
 orderedLevels <-sapply((1:ncols), function(i) paste0("1_",i))
 sedf <- sedf %>% mutate(data=factor(data,levels=orderedLevels))
 ```
-
-Plot the source contents of the database
 
 # Transformations
 
@@ -300,6 +299,8 @@ if (getPlot){
 In the case of iris, we see that choosing only the first component in ICA or PCA carries much more information on the input *per feature* than taking the whole database. This is also true for choosing up to 2 or 3 components, but not for 4 components. 
 
 ## Comparing the entropy content of the sources
+
+We next plot the source contents of the databases made with and witout the re-parameterization, both for PCA and ICA.  
 
 ### Exploring the PCA features as a data source
 

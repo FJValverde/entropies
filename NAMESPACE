@@ -2,6 +2,7 @@
 
 S3method(condentropies,data.frame)
 S3method(evaluate,confusionMatrix)
+S3method(evaluate,data.frame)
 S3method(evaluate,table)
 S3method(jentropies,data.frame)
 S3method(jentropies,table)

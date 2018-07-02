@@ -18,22 +18,27 @@ perplexities <- function(data, ...) UseMethod("perplexities")
 #' @importFrom dplyr mutate
 #' @importFrom dplyr transmute
 perplexities.data.frame<- function(data, ...){
-#    if (!all(simpleEntropies %in% colnames(data))){
-    if (!hasSimpleEntropies(data)){
-        stop("Missing fields in entropy data to work out performance indicators.")
-    }
-    return(data %>%
-               mutate(MIxy = Hx + Hy - Hxy) %>% 
-               transmute(
-                   k=2^Ux, 
-                   m=2^Uy, 
-                   kx = 2^Hx, 
-                   my = 2^Hy,
-                   muxy=2^MIxy, 
-                   kx_y = kx/muxy, 
-                   ky_x=my/muxy
+    if(hasCmetEntropicCoords(data)){
+        return(
+            data %>% ##filter(type!="XY") %>% 
+                mutate(k = 2^H_U, kx = 2^H_P, muxy= 2^M_P, kx_y = kx/muxy)
+        )
+    } else if (hasSimpleEntropies(data)){
+        warning("This entropic coordinates are obsolete.")
+        return(data %>%
+                   mutate(MIxy = Hx + Hy - Hxy) %>% 
+                   transmute(
+                       k=2^Ux, 
+                       m=2^Uy, 
+                       kx = 2^Hx, 
+                       my = 2^Hy,
+                       muxy=2^MIxy, 
+                       kx_y = kx/muxy, 
+                       ky_x=my/muxy
                    )
-           )
+        )
+    } else
+        stop("Missing fields in entropy data to work out performance indicators.")
 }
 
 #' A function to obtain the perplexities of 2- and 3-way tables
@@ -46,7 +51,7 @@ perplexities.data.frame<- function(data, ...){
 #' @export
 perplexities.table <- function(data, ...){
     #data <- as.table(data) #Is this needed when it has been dispatched already?
-    return(perplexities(entropies(data, ...), ...))
+    return(perplexities(jentropies(data, ...), ...))
 }
 
 
@@ -59,7 +64,7 @@ perplexities.table <- function(data, ...){
 perplexities.confusionMatrix <- function(data, ...){
     #require(caret) # For the confusionMatrix class. 
     #e <- entropies(data) # Work out the entropies and from there, work out the perplexities
-    return(perplexities(entropies(data, ...), ...))
+    return(perplexities(jentropies(data, ...), ...))
 }
 
 

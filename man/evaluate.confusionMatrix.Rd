@@ -19,9 +19,8 @@ The concatenation of the entropies (whether split or not), the
 \description{
 The criteria evaluated at present are:
 \itemize{
-\item  entropic quantities, as issued from \code{entropies} and \code{entropicCoords}
-\item  accuracies and kappa (and their intervals), e.g. as issued from 
-\code{\link[caret]{confusionMatrix}}.
+\item  entropic quantities, as issued from \code{jentropies}
 \item perplexities, as issued from \code{\link{perplexities}}
+\item Expected Modified Accuracy (EMA) and Normalized Information Transfer (NIT) rate
 }
 }

@@ -2,7 +2,8 @@
 % Please edit documentation in R/evaluate.R
 \name{evaluate}
 \alias{evaluate}
-\title{A function to evaluate confusion matrices, and contingency tables}
+\title{A function to evaluate confusion matrices, and contingency tables. Provides also the EMA 
+and NIT over that provided by perplexities.}
 \usage{
 evaluate(data, ...)
 }
@@ -15,5 +16,6 @@ At least, the concatenation of the entropies (whether split or not), the \code{E
  and \code{NIT} rate as explained in \cite{val:pel:14a}.
 }
 \description{
-A function to evaluate confusion matrices, and contingency tables
+A function to evaluate confusion matrices, and contingency tables. Provides also the EMA 
+and NIT over that provided by perplexities.
 }
