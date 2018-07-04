@@ -18,5 +18,9 @@ Description: Uses the ggtern, entropy and packages to plot ternary entropy
 License: GPL-3
 RoxygenNote: 6.0.1
 Suggests: knitr,
-    rmarkdown
+    rmarkdown,
+    candisc,
+    datasets,
+    mlbench,
+    vcd
 VignetteBuilder: knitr
