@@ -40,6 +40,7 @@ mats <- list(
 as.atable <- function(m){matrix(m, nrow=3,ncol=3)}
 cm <- lapply(mats,as.atable)
 cmNames <- names(mats)
+cm
 ```
 
 ### Entropies
@@ -96,3 +97,8 @@ if (getPlot){
 
 ```
 
+# Session information
+
+```{r}
+sessionInfo()
+```
