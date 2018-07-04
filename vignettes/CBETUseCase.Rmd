@@ -1,7 +1,7 @@
 ---
 title: "Simple Use Case for the CBET on classification"
 author: "Francisco J. Valverde-Albacete"
-date: "Nov, 28th,  2015"
+date: "Nov, 28th,  2015, modified Jul, 4th, 2018"
 output: html_document
 ---
 

@@ -1,0 +1,209 @@
+---
+title: "Analysis of the performance of one classifier (caret::knn) on several datasets with the CBET"
+author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
+date: "July, 4th, 2018"
+output: html_document
+---
+
+This script investigates the use of the CBET to assess the performance of a  *knn* classifier on several datasets. 
+
+
+# Environment construction
+
+```{r, message=F, warning=F, environment}
+library(tidyverse) # That (in)famous Mr. Wickham!
+library(caret)    # To build the classifiers.
+library(mlbench)  # Many databases for ML tasks
+library(vcd)       # Categorical benchmarks
+library(candisc)   # Wine dataset
+library(entropies) # Processing and visualizing entropies
+```
+
+Some top level switches and options gathered in one place. 
+
+```{r switches}
+debugLevel <- 0 # Debug level 0-non-existent, 1-minimal, the greater the more verbose.
+fancy <- TRUE  # set this for nicer on-screen visualization.
+#fancy <- FALSE # Set this for either printing matter or more austere plots.
+getPlot <- TRUE # Flag to obtain plots for publication. 
+getPlot <- FALSE #Comment to get .jpeg files rather than plots of ets.
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+if (getPlot)
+    knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+```
+
+Some choices for visualization parameters.
+```{r}
+# Naive transformation from factors to numbers in 0 to num.factors - 1
+factor.as.numeric <- function(f){
+    nums <- as.numeric(f)
+    return(nums - min(nums))
+}
+splitShapesForTypes <- c("X"=4, "Y"=1, "XY"=20) #To draw split diagrams
+```
+
+## Datasets available for entropy analysis in this package
+
+```{r data-munging}
+datasets <- getDatasets()
+datasets
+if (getPlot){# For papers, it helps to have the table in latex.
+    library(xtable)
+    print.xtable(xtable(dplyr::select(datasets, name, K, n, m)))
+}
+```
+
+
+# Explore several datasets with the same classifier technology
+
+This is a typical use case when we try to develop a new kind of classifier: we test it on a battery of datasets and try to infer some regularities of behaviour. 
+
+The processing is similar to that in vignette CBETUseCase.Rmd.
+
+## Create the data
+
+The data must be created from (multiclass) classifiers and then transformed into a data frame with the entropic measures.
+
+
+```{r}
+#library(mlbench)
+dsNames <- c("Arthritis", "iris", "Glass")
+results <- data.frame()
+for (dsName in dsNames){
+    #dsName <- "Glass"
+    dsRecord <-  filter(datasets, name == dsName)
+    ds <- evalDataset(dsName) 
+    
+    #id columns, if existent in dsRecord$idNumber
+    if (!is.na(dsRecord$idNumber)){
+        ds <- ds[,-dsRecord$idNumber]
+    }
+    #class column
+    ds.classNum <- which(names(ds)==dsRecord$className)
+    #take away the class, but keep it just in case.
+    class.ds <- ds[, ds.classNum]#saving the class. Warning A FACTOR!
+    ds <- ds[,-ds.classNum]
+    ds <- ds %>%     
+        #transform factors to number
+        mutate_if(is.factor,factor.as.numeric) %>%
+        # Dispose of columns with NaN
+        select_if(function(v) !any(is.na(v))) %>% 
+        # Dispose of constant columns: they carry no information
+        select_if(function(v)(var(v) > 0))
+    ncols <- ncol(ds)#Mnemonic shortcut: num of columns
+    dsDiscretized <- infotheo::discretize(ds, disc="equalwidth")
+    if (dsName != "Ionosphere"){
+        log.ds <- log(ds)#this has to be made conditional on the database
+        log.dsDiscretized <- infotheo::discretize(log.ds)
+        #TODO: try to get rid of annoying warnings each time entropy is called. 
+    }
+    
+    #Basic data from the set for classification
+    X <- as.matrix(ds)
+    Y <- class.ds
+    # Exploring the label set
+    classes <- unique(Y)
+    numC <- length(classes)
+    print(sprintf("There are %d classes with distribution: ", numC))
+    summary(Y)
+    
+    #First we create the folds: the number of folds is a parameter of this script.
+    numFolds <- 5
+    set.seed(1717) # For reproducibility
+    folds <- createFolds(Y, numFolds)
+    print("Check that the sampling was stratified...")
+    for(i in 1:numFolds){
+        print(summary(Y[folds[[i]]]))
+    }
+    summary(Y)
+    
+    #Run the experiments
+    models <- c("knn") # c("knn", "logreg") 
+    lresults <- data.frame()#local results to dataset dsName
+    for (i in 1:numFolds){
+        # 1. select training and testX data and classes
+        trainObs <- unlist(folds[-i])
+        testObs <- folds[[i]]
+        trainX <- X[trainObs, ]; trainY <- Y[trainObs]
+        testX <- X[testObs, ]; testY <- Y[testObs]
+        for (m in models){
+            # 2. Fit the model with the 
+            model <- train(x=trainX, y=trainY, 
+                           method=m,
+                           tuneLength = 15,
+                           preProcess = c("center", "scale"))
+            # 3. Estimate the labels for the train set: confusion matrix, entropies, etc.
+            trainYhat <- predict(model, trainX)
+            trainCM <- confusionMatrix(trainYhat, trainY)
+            print(trainCM$table)
+            # 4. Estimate the labels for the test set
+            testYhat <- predict(model, testX)
+            testCM <- confusionMatrix(testYhat, testY)
+            print(testCM$table)
+            # 5. Gather results for analysis
+            lresults <- rbind(lresults, 
+                              jentropies(trainCM$table) %>% mutate(Fold=i,method=m, Phase="train",
+                                                                 Acc=trainCM$overall[1]),
+                              jentropies(testCM$table) %>% mutate(Fold=i,method=m, Phase="test",
+                                                                Acc=testCM$overall[1])
+            )
+            print(sprintf("Fold %d, method %s Train accuracy = %f\t Test accuracy= %f", 
+                          i, m, trainCM$overall[1],testCM$overall[1])
+            )
+        }
+    }
+    results <- rbind(results,cbind(dSet=dsName,lresults))
+}#end of big for(dsName in dsNames)
+```
+
+## Assessment of classifier several datasets
+
+First we plot these results in aggregate form, including different glyphs for different datasets.
+
+```{r basic n-fold plot}
+eT <- ggmetern(data=results %>% filter(type=="XY"), fancy) + 
+    geom_point(aes(colour=Phase, shape=dSet), size=2)  +
+    labs(shape="Dataset") + 
+    scale_colour_manual(values=c("blue","red")) # Don't trust the training, that is the red
+eT
+```
+But we also need to plot  their centers! First we work out the compositional means.
+
+```{r glass compositional centers, warning=FALSE}
+library(compositions)# Statistics work differently on compositional data
+# trainCompositions <- data.frame()
+# testCompositions <- data.frame()
+meanCompositions <- data.frame()
+aggResults <- results %>% filter(type=="XY")
+for(dsNam in dsNames){
+    for(ph in unique(aggResults$Phase)){
+        meanCompositions <- rbind(meanCompositions,
+                                 cbind(dSet=dsNam, Phase=ph,
+                                       data.frame(as.list(mean(
+        acomp(filter(aggResults , dSet==dsNam, Phase==ph), parts=c("DeltaH_P", "M_P", "VI_P"))
+        )
+        ))))
+    }
+}
+meanCompositions
+# And now we add it with a different glyph but the same colors.
+eTMean <- eT %+% geom_point(data=meanCompositions, aes(colour=Phase), shape=4, size=4)
+eTMean
+```
+
+
+Now try to plot these results in split coordinates: disaggregate and aggregate...
+```{r}
+eTSplit <- ggmetern(data=results %>% filter(type!="XY"), fancy) + 
+    geom_point(aes(colour=Phase, shape=dSet), size=2)  +
+    labs(shape="Dataset") + 
+    scale_colour_manual(values=c("blue","red")) # Don't trust the training, that is the red
+eTSplit
+```
+
+
+# Session information
+
+```{r}
+sessionInfo()
+```
