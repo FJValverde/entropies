@@ -10,11 +10,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-This vignette explores how does uncertainty of classification results manifest itself in the CMET.
+This vignette explores how does uncertainty of classification results manifest itself in the CBET.
 
 # Environment construction
 
-```{r environment, echo=FALSE, results="hide"}
+```{r message=F, warning=F, environment, echo=FALSE, results="hide"}
 library(dplyr)     # That infamous Mr. Wickham's! ;)
 library(tidyr)     # Tidying tall & wide dataframes. Infamous too! ;)
 #library(infotheo)  # The functionality provided by this has to be rerouted through entropies
@@ -175,11 +175,10 @@ In an attempt at define confidence intervals for the results of the classifier o
 
 First we print the results of each fold for reference in later plots:
 ```{r base plot}
-#fancy <- TRUE
 fancy <- FALSE
-smet <-  ggmetern(edf %>% filter(name == "XY"), fancy) + 
-    geom_point(mapping=aes(colour=Dataset), #color="red", 
-               size=1) +     facet_wrap(~Dataset)
+smet <-  ggmetern(edf %>% filter(type == "XY"), fancy) + 
+    geom_point(mapping=aes(colour=Dataset), size=1) +     
+    facet_wrap(~Dataset)
 smet 
 ```
 
@@ -218,36 +217,11 @@ edf2 <- edf %>% dplyr::filter(Dataset=="iris") %>%
 #    dplyr::mutate(DeltaH_P=M_P2, M_P2=VI_P2, VI_P=DeltaH_P2)
     dplyr::mutate(Dummy=DeltaH_P) %>% 
     dplyr::mutate(DeltaH_P=M_P, M_P=VI_P, VI_P=Dummy)
-smet02 <-  ggmetern(edf2 %>% filter(name == "XY"), fancy) + 
+smet02 <-  ggmetern(edf2 %>% filter(type == "XY"), fancy) + 
     geom_point(mapping=aes(colour=Dataset), #color="red", 
                size=1) +     facet_wrap(~Dataset)
 smet02 + geom_confidence_tern()
 ```
-
-<!-- # # From the caret book -->
-
-<!-- ```{r} -->
-<!-- # data importing -->
-<!-- library(mlbench) -->
-<!-- data(Sonar) -->
-<!-- str(Sonar[, 1:10]) -->
-<!-- # data splitting -->
-<!-- library(caret) -->
-<!-- set.seed(998) -->
-<!-- inTraining <- createDataPartition(Sonar$Class, p = .75, list = FALSE) -->
-<!-- training <- Sonar[ inTraining,] -->
-<!-- testing  <- Sonar[-inTraining,] -->
-<!-- ``` -->
-
-<!-- ## With cross validation -->
-
-<!-- ```{r} -->
-<!-- set.seed(119) -->
-<!-- k <- 10 # num. of folds -->
-<!-- dataClass <- Sonar$Class # Different for each database! -->
-<!-- folds <- createFolds(dataClass, k,) -->
-<!-- #generate a list of confusion matrices by going over the rest of the folds -->
-<!-- ``` -->
 
 # Postscriptum
 

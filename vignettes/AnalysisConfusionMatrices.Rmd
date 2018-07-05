@@ -1,8 +1,12 @@
 ---
 title: "Analysis of Confusion Matrices"
 author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
-date: "6/21/2018"
+date: "June, 21st, 2018"
 output: html_document
+vignette: > 
+  %\VignetteIndexEntry{A first guide to use the CBET for confusion matrix evaluation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 This script shows how to read a Channel Binary Entropy Triangle (CBET) using different confusion matrices from (Valverde-Albacete & Peláez-Moreno, 2010).
 
