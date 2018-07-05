@@ -14,7 +14,7 @@ This vignettes tries to present instances of features that have specific stochas
 
 # Environment construction
 
-```{r environment, echo=FALSE, results="hide"}
+```{r , message=F, warning=F, environment}
 #library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
 #library(entropy)  # To work out the appropriate coordinates.
 library(dplyr)     # That infamous Mr. Wickham!
@@ -45,11 +45,11 @@ m <-
 )
 d <- data.frame(
     name = m[,1],
-    DeltaH_Px=as.numeric(m[,2]),
-    M_Px=as.numeric(m[,3]),
-    VI_Px=as.numeric(m[,4]),
+    DeltaH_Pxi=as.numeric(m[,2]),
+    M_Pxi=as.numeric(m[,3]),
+    VI_Pxi=as.numeric(m[,4]),
     point = m[,5]
-) %>% mutate(extreme = DeltaH_Px == 1.0 | M_Px == 1.0 | VI_Px == 1.0)
+) %>% mutate(extreme = DeltaH_Pxi == 1.0 | M_Pxi == 1.0 | VI_Pxi == 1.0)
 #multiSplitEntropies  <-  splitESmetCoords <-  c("name", "DeltaH_Pxi", "M_Pxi", "VI_Pxi") 
 #names(d) <-  c(multiSplitEntropies, "point", "extremePoint")
 ```
@@ -65,56 +65,20 @@ conceptual <- ggmetern(filter(d, extreme), fancy=FALSE) +
     #labs(shape="Feature type") + #guides(color=FALSE) #scale_color_manual(guide=FALSE)
     #guides(fill=FALSE,shape=FALSE) #scale_color_manual(guide=FALSE)
 
-conceptual # just prints the extreme points.
 #Now place the non-extreme points: be careful to rename them
 nonExtremes <- filter(d, !extreme) %>%
     #rename(Delta=DeltaH_Pxi, M=M_Pxi, VI=VI_Pxi) %>%
     select(-point, -extreme)
-
-conceptual + geom_point(data=nonExtremes, aes(shape=name), size=3)
-
-# #conceptual +  geom_text(x=0.05, y=0.05, label="HELLO")
-# x_coords <- d[4:6, "DeltaH_Pxi"]
-# y_coords <- d[4:6, "M_Pxi"]
-# labs <- d[4:6, "name"]
-# conceptual + geom_text(x=x_coords, y=y_coords, label=labs)
-# 
-# 
-# conceptual +  geom_text(x=c(0.2), label="HELLO")
-# conceptual + annotate(geom="text", x=0.05, y=0.05, label="XYZ", color="red")
-
 #the points in the middle of the angles and dise
 conceptual <- conceptual + 
-    geom_point(data=filter(d, !extreme), aes(shape=name), size=3) +
+    geom_point(data=nonExtremes, aes(shape=name), size=3) +
     #scale_shape_manual(values=rep(22,3), guide=FALSE) + 
     scale_shape_manual(values=rep(c(21,22,23),2)) + #, guide=FALSE) + 
-    #scale_colour_manual(values=c("red", "blue", "orange")) +
+    scale_colour_manual(values=c("red", "blue", "orange")) +
     #guides(shape=guide_legend()) + #,fill=guide_colorbar()) + 
     labs(shape="Source type")
     #guides(shape=FALSE) +
     
-    #labs(shape="Source type") +
-    #geom_text(aes(label=point, hjust="inward", vjust="inward"))
-    #geom_text(aes(label=point, hjust="inward", angle=45)) # Does NOT work!
-    #annotate("segment", x=1950, xend=1980, )
-    # geom_point(aes(shape = name), size=3) + 
-    # scale_shape_manual(values=c(21, 22, 24)) +
-    # #tern_limits(T=1.2, L=1.2, R=1.2) + # This afffect the contour DON'T USE IT!
-    # scale_T_continuous(expand=c(0.1, 0.1)) +
-    # scale_L_continuous(expand=c(0.1, 0.1)) +
-    # scale_R_continuous(expand=c(0.1, 0.1)) +
-    # theme_bw() +
-    # theme_rotate(degrees=-60) + 
-    # theme(
-    #     #tern.axis.col.T="black",
-    #     #tern.panel.background = element_rect(colour="white"), 
-    #     tern.axis.line = element_line(colour="black"),
-    #     tern.axis.ticks.minor = element_line(colour="black"),
-    #     #tern.axis.ticks.length.minor = unit(5, units="points"),
-    #     tern.panel.grid.major = element_line(colour="grey", linetype=3), #too coarse
-    #     tern.axis.text.show = TRUE,
-    #     tern.axis.arrow.show = TRUE
-    #     )
 conceptual
 ggsave(filename="annotated_SMET_triangle.jpeg", plot=conceptual)
 ```

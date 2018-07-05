@@ -3,6 +3,10 @@ title: "Analysis of the performance of one classifier (caret::knn) on several da
 author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
 date: "July, 4th, 2018"
 output: html_document
+vignette: > 
+  %\VignetteIndexEntry{A first guide to use the CBET for confusion matrix evaluation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 This script investigates the use of the CBET to assess the performance of a  *knn* classifier on several datasets. 

@@ -30,40 +30,40 @@
 # splitExperiments <- entropicCoords(entropies(UCBAdmissions), split=TRUE) # Non-split data
 # splitET <- ggentropytern(splitExperiments)
 # splitET # split entropy triangle
-ggmetern <- function(data, fancy=TRUE, ...) {
+ggmetern <- function(ed, fancy=TRUE, ...) {
     vars <- list(...)
-    if (hasSplitSmetCoords(data)) {
+    if (hasSplitSmetCoords(ed)) {
         # Create the plot
-        ep <- ggtern::ggtern(data, aes(x=VI_Pxi, y=M_Pxi, z=DeltaH_Pxi), vars) #+
+        ep <- ggtern::ggtern(ed, aes(x=VI_Pxi, y=M_Pxi, z=DeltaH_Pxi), vars) #+
         # Node labels for the split triangle
         TlabExp <- "$\\textit{M'}_{P_{X_i}}$"
         RlabExp <- "$\\Delta\\textit{H'}_{P_{X_i}}$"
         LlabExp <-  "$\\textit{H'}_{P_{X_i|X_i^c}}$"
         titleExp <- "Source Multivariate split entropies"
-    # Otherwise, check that it has multivariate source data, then plot
-    } else if (hasAggregateSmetCoords(data)){
-        ep <- ggtern(data, aes(x=VI_Px, y=M_Px, z=DeltaH_Px), vars) #+ geom_point(...)
+    # Otherwise, check that it has multivariate source entropic data, then plot
+    } else if (hasAggregateSmetCoords(ed)){
+        ep <- ggtern(ed, aes(x=VI_Px, y=M_Px, z=DeltaH_Px), vars) #+ geom_point(...)
         # vertex labels for the non-split multivariate source triangle with total correlation
         TlabExp <- "$\\textit{M'}_{P_X}"
         RlabExp <- "$\\Delta\\textit{H'}_{\\Pi_{X}}"#\\overline X does not work!
         LlabExp <-  "$\\textit{VI'}_{P_{X}}"
         titleExp <- "Aggregate Source Multivariate  entropies"
-    } else if (hasDualAggregateSmetCoords(data)){
-        ep <- ggtern(data, aes(x=VI_Px, y=D_Px, z=DeltaH_Px), vars) #+ geom_point(...)
+    } else if (hasDualAggregateSmetCoords(ed)){
+        ep <- ggtern(ed, aes(x=VI_Px, y=D_Px, z=DeltaH_Px), vars) #+ geom_point(...)
         # vertex labels for the non-split multivariate source triangle
         TlabExp <- "$\\textit{D'}_{P_X}"
         RlabExp <- "$\\Delta\\textit{H'}_{P_X}"#\\overline X does not work!
         LlabExp <-  "$\\textit{VI'}_{P_{X}}"
         titleExp <- "Dual Aggregate Source Multivariate entropies"
-    } else if (hasCmetEntropicCoords((data))) {
-        ep <- ggtern(data, aes(x=VI_P, y=M_P, z=DeltaH_P), vars) #+ geom_point(...)
+    } else if (hasCmetEntropicCoords((ed))) {
+        ep <- ggtern(ed, aes(x=VI_P, y=M_P, z=DeltaH_P), vars) #+ geom_point(...)
         # Vertex labels for the channel multivariate entropy triangle
         TlabExp <- "$2\\cdot\\textit{I'}_{P_{XY}}$"#FVA 24/07/17: Changed text to reflect theoretical work.
         RlabExp <- "$\\Delta\\textit{H'}_{P_{XY}}$"
         LlabExp <-  "$\\textit{VI'}_{P_{XY}$"
         titleExp <- "Aggregate Channel Multivariate entropies"
     } else {
-        stop("Non-appropiate data")
+        stop("Non-appropiate ed")
     }
     ep <- ep + geom_mask() #<<<<< Puts the mask below any layers to follow, charm by N. Hamilton
     if (fancy){ # A theme for interactive visualization & exploration
@@ -85,9 +85,9 @@ ggmetern <- function(data, fancy=TRUE, ...) {
         ggtern::Llab(LlabExp) #+
         #ggtitle(titleExp) #otherwise this would be too intrusive here!
         #ggtern::theme_showarrows() + # This theme HERE overrides later adjustments
-    if (hasSplitSmetCoords(data) || 
-        hasAggregateSmetCoords(data) || 
-        hasDualAggregateSmetCoords(data)){#Source Entropy Diagrams are upside down!
+    if (hasSplitSmetCoords(ed) || 
+        hasAggregateSmetCoords(ed) || 
+        hasDualAggregateSmetCoords(ed)){#Source Entropy Diagrams are upside down!
         ep <- ep + theme_rotate(degrees=-60)
     }
     ep <- ep + ggtern::theme_showarrows() # last thing to do.

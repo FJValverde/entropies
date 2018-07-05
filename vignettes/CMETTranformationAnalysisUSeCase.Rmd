@@ -5,6 +5,10 @@ date: "8/30/2017"
 output:
   pdf_document: default
   html_document: default
+vignette: > 
+  %\VignetteIndexEntry{A first guide to use the CBET for confusion matrix evaluation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 This script gives an example on how to use the Channel Multivariate Entropy Triangle framework to analyze Feature Transformations on a Database. 

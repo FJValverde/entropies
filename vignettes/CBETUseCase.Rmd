@@ -3,6 +3,10 @@ title: "Simple Use Case for the CBET on classification"
 author: "Francisco J. Valverde-Albacete"
 date: "Nov, 28th,  2015, modified Jul, 4th, 2018"
 output: html_document
+vignette: > 
+  %\VignetteIndexEntry{A first guide to use the CBET for confusion matrix evaluation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 This vignette aims at presenting the features of the Channel Binary Entropy Triangle (CBET) for the evaluation of supervised classification in an incremental manner. 
