@@ -1,0 +1,125 @@
+---
+title: "Comparing Discretizations"
+author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
+date: "9/7/2018"
+output: html_document
+---
+
+This almost-vignette tries to demonstrate the differences in source entropy calculation by using several distinct methods of discretization of any of a number of databases.
+
+Eventually, what we prove is that "equalfreq" discretization is not appropriate at all for entropy calculations, as expected. 
+
+# Environment construction
+
+## Knitting options
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+knitr::opts_chunk$set(warning=FALSE)# Should not appear in the knitted document
+```
+
+## Library loading
+
+```{r, echo=FALSE, warning=FALSE, environment}
+library(tidyverse)  # Acceding to that infamous Mr. Wickham's requests!
+library(infotheo)  # The functionality provided by this has to be rerouted through entropies
+library(entropies) # This package. Needs "entropy" and "caret" too.
+library(ggtern)    # Ternary diagrams on ggplot
+library(vcd)       # Categorical benchmarks
+library(mlbench)   # ml benchmarkss
+library(candisc)   # Wine dataset
+fancy <- TRUE  # set this for nicer on-screen visualization
+#fancy <- FALSE # Set this for either printing matter
+```
+
+## Dataset metainformation loading and preparing
+
+```{r dataset processing}
+datasets <- getDatasets() #%>% filter(name=="iris")
+
+#Types of discretizations explored: look meaning in infotheo:discretize
+discs <- c("equalwidth", "equalfreq","globalequalwidth")
+```
+
+## Obtaining the entropies
+
+Obtain the entropies and some other data for plotting from discretizations
+
+```{r find-entropies, warning=FALSE}
+edf <- data.frame()
+for(i in 1:nrow(datasets)) {
+    dsRecord <-  datasets[i,] #filter(datasets, name == dsName)
+    dsName <- dsRecord$name
+    ds <- evalDataset(dsName)
+    for (discType in discs) {
+        disc.ds <- infotheo::discretize(ds, disc=discType)
+        edf <- rbind(
+            edf,
+            cbind( disc = discType,
+                   getDatasetSourceEntropies(disc.ds,
+                                             dsName,
+                                             disc=discType,
+                                             className = dsRecord$className,
+                                             idNumber = dsRecord$idNumber,
+                                             withClass = TRUE,
+                                             type = "total",
+                                             method = "emp"#Method to work out entropies, from infotheo::entropy
+                   )
+            )
+        )
+    }
+}
+str(edf)
+```
+
+## Plotting the multisplit data
+
+Now let's plot on a per-database basis the results of the three discretizations. 
+
+We choose some of the interesting datasets from the diagram above to investigate:
+
+```{r, database specific discretization}
+#TODO: make a grid of these plots to be able to see anything different. 
+# thisDsName <- "Ionosphere" # CAVEAT! Not enough different glyphs!!!
+thisDsName <- "iris" # first run this value, then say, "Glass"
+# thisDsName <- "Glass"# Try this for setting a gradient for features
+# thisDsName <- "Arthritis"
+# thisDsName <- "BreastCancer"
+# thisDsName <- "Sonar"
+# thisDsName <- "Wine"
+# negatively subsetting recipe from Stack Overflow
+thisEdf <- edf %>% 
+    filter(dsName == thisDsName & name != "ALL") %>% 
+    select(-starts_with("isClass"))
+# Create different geometries for different feature set cardinalities:
+# First consider the features in the dataset without the class variable
+thisEt <-  ggmetern(filter(thisEdf, withClass == TRUE),  fancy) 
+if ((nrow(thisEdf) - 1)/2 > 14){#too many points to be represented with glpsh
+    thisEt <- thisEt + #geom_density_tern(aes(fill=..level..)) +
+        stat_density_tern(geom='polygon',
+                        aes(fill=..level..),
+                        colour='grey50') + 
+        scale_fill_gradient(low='green',high='red')  +
+        geom_point(aes(shape=disc), size=2) +
+        scale_shape_manual(values=c(21, 22, 24))  + 
+        labs(fill="Feature", shape="Discretizations")
+}else {
+    thisEt <- thisEt + 
+        geom_point(aes(shape=name,color=disc), size=3) +
+        scale_shape_manual(values=1:14) + 
+        labs(shape="Feature",color="Discretization type") #+
+}
+thisEt + 
+    ggtitle("Source Multivariate Entropies per Feature and discretization")
+ggsave(filename=sprintf("%s_discretizationss_W_class.jpeg", thisDsName))
+```
+We may conclude, as expected, that, for our purposes, equal frequency binning is not adequate, since it loses information of the uncertainty in the distribution domain. 
+
+For estimating entropies and plotting them in the SMET, equal width binning should be preferred, pending a more thorough evaluation of "globalequalwidth" discretization. 
+
+# Postscriptum
+
+```{r ps}
+sessionInfo()
+```
