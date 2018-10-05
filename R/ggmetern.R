@@ -10,7 +10,7 @@
 #'   Note that no geometry is imposed on the plot.
 #' @details Only the plot and aesthetics are generated, the geometry is not decided. A further 
 #' column, including the name of the original variables may be used to annotate the plot. 
-#' @param experiments A dataframe with the data to be plotted, typically obtained with \code{entropicCordinates}.
+#' @param ed A dataframe with the entropy data to be plotted, typically obtained with \code{\link{infotheo::entropy}}.
 #' To plot the *split entropy triangle* this dataframe must have  at least the following variables \code{c("DeltaHx", "DeltaHx","MIxyX","MIxyY", "VIx", "VIy")}.
 #' To plot the *entropy triangle* this dataframe must have  either of the two configurations. 
 # # @param split A toggle whether we want to use the split entropy diagram. Defaults to FALSE
@@ -19,7 +19,8 @@
 #' @return A plot object in the ggplot2 class of plots ready to be plotted.
 #' @seealso \code{\link{ggtern}}, \code{\link{entropies}}, \code{\link{entropicCoordinates}}
 #' @export
-#' @import ggtern
+# @import ggtern 
+#' @importFrom ggtern ggtern theme theme_bw theme_rgbw theme_custom theme_latex Tlab Rlab Llab theme_showarrows theme_rotate
 #' @import latex2exp
 # @examples
 # data(UCBAdmissions)

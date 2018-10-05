@@ -16,6 +16,7 @@ This vignette aims at presenting the features of the Channel Binary Entropy Tria
 ```{r, message=F, warning=F, environment}
 library(tidyverse) # That (in)famous Mr. Wickham!
 library(caret)    # To build the classifiers.
+library(e1071)
 library(mlbench)  # Many databases for ML tasks
 library(vcd)       # Categorical benchmarks
 library(candisc)   # Wine dataset
@@ -155,7 +156,7 @@ experiments <- rbind(cbind(trCoords, Phase="train", method="knn"),
                      )
 experiments <- cbind(dSet=dsName, experiments)
 # The basic plot for the entropy triangle training and testX in different colours and glyphs
-gp <- ggmetern(data=experiments %>% filter(type=="XY"), fancy) +
+gp <- ggmetern(ed=experiments %>% filter(type=="XY"), fancy) +
     geom_point(aes(colour=Phase, shape=dSet), size=1)  +
     labs(shape="Dataset") + 
     scale_colour_brewer(palette="Set1")
@@ -234,7 +235,7 @@ results <- cbind(dSet=dsName,results)#Watch it! This is only possible at last!
 We show the plot for the result on a per-plot basis. 
 
 ```{r detailed n-fold CBET}
-eT <- ggmetern(data=results %>% filter(type=="XY"), fancy) + 
+eT <- ggmetern(ed=results %>% filter(type=="XY"), fancy) + 
     geom_point(aes(colour=Phase, shape=dSet), size=2)  +
     labs(shape="Dataset") + 
     scale_colour_manual(values=c("blue","red")) # Don't trust the training, that is the red
@@ -261,7 +262,7 @@ To use the split triangle to advantage we have to use an unbalanced dataset, e.g
 First we look at the entropies of the different folds. 
 
 ```{r split triangle on one dataset}
-eTsplit <- ggmetern(data=results %>% filter(type!="XY"), fancy) + 
+eTsplit <- ggmetern(ed=results %>% filter(type!="XY"), fancy) + 
     geom_point(aes(colour=Phase, shape=type), size=2)  +
     labs(shape="Split Entropies") + 
     scale_shape_manual(values=splitShapesForTypes) +
@@ -288,9 +289,13 @@ for(dsNam in unique(results$dSet)){
                 rbind(meanCompositions,
                       cbind(dSet=dsNam, Phase=ph, type=eType,
                             data.frame(as.list(
-                                mean(acomp(results %>% 
-                                               filter(dSet==dsNam, Phase==ph, type==eType) %>%
-                                               select(one_of(c("DeltaH_P", "M_P", "VI_P"))))
+                                mean(acomp(
+                                    results %>% 
+                                    filter(dSet==dsNam, 
+                                           Phase==ph, 
+                                           type==eType) %>%
+                                    select(one_of(
+                                        c("DeltaH_P", "M_P", "VI_P"))))
                                      )))
                             )
                       )

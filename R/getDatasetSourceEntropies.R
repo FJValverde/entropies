@@ -19,35 +19,40 @@ getDatasetSourceEntropies <- function(
     className=c("Class"), #Name of class, a sensible default
     idNumber=NULL, #Name of id, a sensible default
     withClass=TRUE,#Whether correlation with the class is required
-    type="total"#whether "total" or "dual"
+    type="total",#whether "total" or "dual" correlation requested
+    ...
 ){
-    # Parameter analysis
+    # 1. Parameter analysis
+    # 1.1. Find the number of unique classes
     theseNames <- names(ds)#list of features
     thisClass <- which(className == theseNames)#partition into labels or not
     #print("The class is number:", thisClass)
     if (thisClass == 0)
         stop("Unknown column variable:",className)
-    #K <- length(unique(ds[,thisClass]))
-    K <- nrow(unique(dplyr::select_(ds, thisClass)))
-    # 1.2. Wipeout any possible identifiers
+    K <- nrow(unique(dplyr::select_(ds, thisClass)))# Obtain the actual number of classes
+    # 1.2. Wipeout any possible identifiers (They have artificial info about the class)
     if (is.numeric(idNumber) & !(is.nan(idNumber)))
         ds <- dplyr::select_(ds, -idNumber)
-    # 1.3 Decide whether to analyze with the Class or not
-    if (!withClass)
-        withClasses <- c(FALSE)
-    else
+    # 1.3 Record whether to analyze with the Class or not
+    if (withClass)
         withClasses <- c(TRUE,FALSE)
-    # Data analysis
-    ds <- infotheo::discretize( # Controlled discretization of the database.
-        ds, 
-        nbins=max(ceiling(nrow(ds)^(1/2)), K)# At least the classes.
-    )
+    else
+        withClasses <- c(FALSE)
+    # 1.4 Discretization. Should not be attempted on an already discrete database!
+    if (!all(sapply(ds, is.integer) | sapply(ds, is.factor))){
+        warning("Discretizing data before entropy calculation!")
+        ds <- infotheo::discretize( # Controlled discretization of the database.
+                                    ds, 
+                                    nbins=max(ceiling(nrow(ds)^(1/2)), K)# At least the classes.
+                                )
+    }
+    # 2. Data analysis
     edf <- tibble()#TODO: decide whether working with tibbles is advantageous.
     for(withClass in withClasses){# we profit from the fact what we go over TRUE first
         if (!withClass)
             ds <- dplyr::select(ds, -thisClass)
         edf <- rbind(edf,
-                     sentropies(ds, type) %>% 
+                     sentropies(ds, type,...) %>% 
                          mutate(withClass,
                                 isClass = (className == as.character(name))
                          )

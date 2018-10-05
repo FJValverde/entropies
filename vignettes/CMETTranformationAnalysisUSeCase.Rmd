@@ -6,7 +6,7 @@ output:
   pdf_document: default
   html_document: default
 vignette: > 
-  %\VignetteIndexEntry{A first guide to use the CBET for confusion matrix evaluation}
+  %\VignetteIndexEntry{A guide to use the CMET for the analysis of data transformation as applied to PCA and ICA}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -147,12 +147,14 @@ sedf <- data.frame()
 #The following point of etdf shoul print as a point on a cross, being deterministic.
 if (dsName != "Ionosphere"){
     etdf <- rbind(etdf,
-                  cbind(data=paste0("1_",ncols), transform="log",
+                  cbind(data=paste0("1_",ncols), 
+                        transform="log",
                         jentropies(dsDiscretized, log.dsDiscretized)
                   )
     )
-    sedf <- rbind(sedf,cbind(data=paste0("1_",ncols), transform="log", 
-                             sentropies(log.dsDiscretized[,1:ncols], type="log")
+    sedf <- rbind(sedf,cbind(data=paste0("1_",ncols),
+                             transform="log", 
+                             sentropies(log.dsDiscretized[,1:ncols])
                              )
                   )
 }

@@ -19,7 +19,7 @@ sentropies <- function(data, ...) UseMethod("sentropies")
 #' 
 #' Given a contingency matrix, provide one row of entropy coordinates. 
 #' NOTE: the reference variable has to index the ROWS of the table, while the predicted
-#' variable indexes the columns, unlike, e.g. \code{\link[caret]{contingencyTable}}
+#' variable indexes the columns, unlike, e.g. \code{\link[caret]{confusionMatrix}}
 #' @param Nxy An n-contingency matrix where n > 2
 #' @param unit The logarithm to be used in working out the sentropies as per 
 #' \code{entropy}. Defaults to "log2".
@@ -41,28 +41,28 @@ sentropies.table <- function(Nxy, ...){
     #require(entropy)
     #unless otherwise specified, we use log2 logarithms
     # CAVEAT: use a more elegant kludge
-    vars <- list(...);
-    if (is.null(vars$unit))#force entropy in bits unles otherwise selected
-        vars$unit <- "log2"
+    theseVars <- list(...);
+    if (is.null(theseVars$unit))#force entropy in bits unles otherwise selected
+        theseVars$unit <- "log2"
     if (length(dims)==2){ # N is a plain contingency on X and Y
         Nx <- apply(Nxy, 1, sum); 
-        Hx <- do.call(entropy::entropy, c(list(y=Nx), vars)) #entropy(Nx,vars)
+        Hx <- do.call(entropy::entropy, c(list(y=Nx), theseVars)) #entropy(Nx,theseVars)
         Ny <- apply(Nxy, 2, sum); 
-        Hy <- do.call(entropy::entropy, c(list(y=Ny), vars)) #entropy(Ny, vars)
+        Hy <- do.call(entropy::entropy, c(list(y=Ny), theseVars)) #entropy(Ny, theseVars)
         Ux <- log2(dims[1]) #entropy(rep(1/dims[1],dims[1]),unit="log2",...)
         Uy <- log2(dims[2]) #entropy(rep(1/dims[2],dims[2]),unit="log2",...)
-        Hxy <- do.call(entropy, c(list(y=Nxy), vars)) #entropy(Nxy, vars) 
+        Hxy <- do.call(entropy, c(list(y=Nxy), theseVars)) #entropy(Nxy, theseVars) 
         df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
     } else {  # N is a multiway table: we analyze on the first two margins, but store the second
         Nx <- margin.table(Nxy, c(1,3:length(dims)))
-        Hx <- apply(Nx, c(2:length(dim(Nx))), function(x) {do.call(entropy, c(list(y=x), vars)) })
+        Hx <- apply(Nx, c(2:length(dim(Nx))), function(x) {do.call(entropy::entropy, c(list(y=x), theseVars)) })
         #Ux <- apply(Nx, 2, function(x) { log2(length(x))})
         Ux <- apply(Nx, c(2:length(dim(Nx))), function(x) { log2(dims[1])})
         Ny <- margin.table(Nxy, c(2,3:length(dims)))
-        Hy <- apply(Ny, c(2:length(dim(Ny))), function(x) {do.call(entropy, c(list(y=x), vars)) })
+        Hy <- apply(Ny, c(2:length(dim(Ny))), function(x) {do.call(entropy::entropy, c(list(y=x), theseVars)) })
         #Uy <- apply(Ny, 2, function(x) { log2(length(x))})
         Uy <- apply(Ny, c(2:length(dim(Nx))), function(x) { log2(dims[1])})
-        Hxy <- apply(Nxy, 3:length(dims), function(x) {do.call(entropy, c(list(y=x), vars))})
+        Hxy <- apply(Nxy, 3:length(dims), function(x) {do.call(entropy::entropy, c(list(y=x), theseVars))})
         #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
         THx <- as.data.frame.table(as.table(Hx), responseName = "Hx")
         TUx <- as.data.frame.table(as.table(Ux), responseName = "Ux")
@@ -112,30 +112,37 @@ sentropies.data.frame <- function(df, type="total", ...){
         stop("Can only work with non-empty data.frames!")
     if (!all(sapply(df, is.integer) | sapply(df, is.factor))){
         warning("Discretizing data before entropy calculation!")
-        df <- infotheo::discretize(df, disc="equalwidth", ...) # infotheo::str(dfdiscretize generates ints, not factors.
+        # The following takes the parameter 'disc' from infotheo::discretize
+        df <- infotheo::discretize(df, ...) # infotheo::str(dfdiscretize generates ints, not factors.
     }
     # suppose the dataframe is categorical
     switch(type, #TODO: improve this way of "invoking" the dataset.
         "dual" =        {TOTAL <- FALSE},
         {TOTAL <- TRUE} #catch-all for total processing
     ) #This value "FALLS THROUGH"
-    vars <- list(...);
-    # if (!is.null(vars$type) && vars$type == "dual"){# Source decomposition with TOTAL C_P_X and D_P_X
+    theseVars <- list(...);
+    # if (!is.null(theseVars$type) && theseVars$type == "dual"){# Source decomposition with TOTAL C_P_X and D_P_X
     #     TOTAL <- FALSE
     # }# else {#Source decomposition with ONLY D_P_X, to align it with the CMEBE
     # #    TOTAL <- FALSE
     # #}
+    # WARNING: Manipulating the ellipsis is tricky. The following KLUDGE is to 
+    # include by itself a parameter 'method' in the list of vars. 
+    newVars <- list()
+    if ((length(newVars) == 0) | !is.null(theseVars$method)){#Kludge. THis should actually be passed from top.
+        newVars$method <- "emp"
+    }
     H_Uxi <- unlist(lapply(df, function(v){log2(length(unique(v)))}))
-    H_Pxi <- unlist(lapply(df, function(v){natstobits(entropy(v))}))
+    #H_Pxi <- unlist(lapply(df, function(v){natstobits(infotheo::entropy(v,theseVars))}))
+    H_Pxi <- unlist(lapply(df, 
+                           function(v){natstobits(infotheo::entropy(v,newVars))}))
     if (ncol(df) == 1){
         warning("Single variable: providing only entropy")
         VI_Pxi <- H_Pxi # All of the entropy is non-redundant
     } else {
         VI_Pxi <- vector("numeric", ncol(df))
         for(i in 1:ncol(df)){
-            VI_Pxi[i] <- natstobits(condentropy(df[,i], df[,-i],...)
-                #condentropy(dplyr::select(df,i), dplyr::select(df,-i), vars)
-                )
+            VI_Pxi[i] <- natstobits(condentropy(df[,i], df[,-i],newVars))
         }
     }
     if(TOTAL){#return the TOTAl decomposition and aggregates
@@ -149,13 +156,19 @@ sentropies.data.frame <- function(df, type="total", ...){
             H_Uxi = H_Uxi,
             H_Pxi = H_Pxi,
             stringsAsFactors = FALSE #Keep the original variable names as factors!
-        ) %>% dplyr::mutate(DeltaH_Pxi = H_Uxi - H_Pxi, M_Pxi = H_Pxi - VI_Pxi, VI_Pxi)
+        ) %>% dplyr::mutate(
+            DeltaH_Pxi = H_Uxi - H_Pxi, 
+            M_Pxi = H_Pxi - VI_Pxi, 
+            VI_Pxi)
         edf <- rbind(edf,cbind(name="ALL", as.data.frame(lapply(edf[,2:6], sum))))
     } else {#return only an aggregate with the DUAL total correlation D_Px
-        H_Px <-  natstobits(entropy(df)) #a single number!
+        H_Px <-  natstobits(entropy(df,theseVars)) #a single number!
         VI_Px <-  sum(VI_Pxi)
         edf <- data.frame(name="ALL", H_Ux = sum(H_Uxi), H_Px) %>% 
-            dplyr::mutate(DeltaH_Px = H_Ux - H_Px, D_Px = H_Px - VI_Px, VI_Px)
+            dplyr::mutate(
+                DeltaH_Px = H_Ux - H_Px, 
+                D_Px = H_Px - VI_Px, 
+                VI_Px)
     }
     return(edf)
 }

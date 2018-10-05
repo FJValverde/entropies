@@ -165,7 +165,7 @@ for (dsName in dsNames){
 First we plot these results in aggregate form, including different glyphs for different datasets.
 
 ```{r basic n-fold plot}
-eT <- ggmetern(data=results %>% filter(type=="XY"), fancy) + 
+eT <- ggmetern(ed=results %>% filter(type=="XY"), fancy) + 
     geom_point(aes(colour=Phase, shape=dSet), size=2)  +
     labs(shape="Dataset") + 
     scale_colour_manual(values=c("blue","red")) # Don't trust the training, that is the red
@@ -198,7 +198,7 @@ eTMean
 
 Now try to plot these results in split coordinates: disaggregate and aggregate...
 ```{r}
-eTSplit <- ggmetern(data=results %>% filter(type!="XY"), fancy) + 
+eTSplit <- ggmetern(ed=results %>% filter(type!="XY"), fancy) + 
     geom_point(aes(colour=Phase, shape=dSet), size=2)  +
     labs(shape="Dataset") + 
     scale_colour_manual(values=c("blue","red")) # Don't trust the training, that is the red

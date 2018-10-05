@@ -12,7 +12,7 @@
 #' @examples x <- 1:5 #An unbalanced distribution. 
 #' @examples rsults <- sRenyiEntroopy(x,c()) #Return the "5" summary spectrum
 #' @examples 2^(-results$entropies) #This is the equivalent probability function.
-sRenyiEntropy <- function(x,orders=c()){
+sRenyiEntropy <- function(x,orders=c(),base=2){
     w <- x/sum(x)
     wp.means <- function(p){#p cannot be funny: -Inf, 0, or Inf
         return((weighted.mean(x=x^p,w))^(1/p))
@@ -35,7 +35,12 @@ sRenyiEntropy <- function(x,orders=c()){
                    pentropies,
                    max(x))
     orders <- c(-Inf, norders, 0, porders, Inf)
-    return(list(
-        entropies=-log2(entropies),
-        orders=orders))
+    if (base==2)
+        return(list(
+            entropies=-log2(entropies),
+            orders=orders))
+    else#base != 2
+        return(list(
+            entropies=-log2(entropies)/log2(base),
+            orders=orders))
 }

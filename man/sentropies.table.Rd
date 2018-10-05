@@ -15,5 +15,5 @@
 \description{
 Given a contingency matrix, provide one row of entropy coordinates. 
 NOTE: the reference variable has to index the ROWS of the table, while the predicted
-variable indexes the columns, unlike, e.g. \code{\link[caret]{contingencyTable}}
+variable indexes the columns, unlike, e.g. \code{\link[caret]{confusionMatrix}}
 }

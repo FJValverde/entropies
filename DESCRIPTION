@@ -16,7 +16,7 @@ Extends:
 Description: Uses the ggtern, entropy and packages to plot ternary entropy
     diagrams whether in the split form or not, whether for multivariate or not. 
 License: GPL-3
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 Suggests: knitr,
     rmarkdown,
     candisc,

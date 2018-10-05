@@ -7,5 +7,7 @@
 \method{sentropies}{confusionMatrix}(ct, ...)
 }
 \description{
-Entropy decomposition of a confusion table from caret
+Given a contingency matrix, provide one row of entropy coordinates. 
+NOTE: the reference variable has to index the ROWS of the table, while the predicted
+variable indexes the columns, unlike, e.g. \code{\link[caret]{confusionMatrix}}
 }
