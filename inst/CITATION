@@ -1,8 +1,0 @@
-citHeader("To cite the entropies package in publications use:")
-citFooter("As entropies is still evolving, you may want to cite its version number. Find it with 'help(package=entropies)'.")
-#
-# Our own recipe to do this
-#
-library(bibtex)
-bibs <- read.bib("inst/REFERENCES.bib")
-#bibs#these are bibentry q.v. 

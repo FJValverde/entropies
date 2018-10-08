@@ -4,7 +4,7 @@ author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
 date: "July, 4th, 2018"
 output: html_document
 vignette: > 
-  %\VignetteIndexEntry{A first guide to use the CBET for confusion matrix evaluation}
+  %\VignetteIndexEntry{A first guide to use the CBET for evaluation a classifier on different datasets}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -171,10 +171,14 @@ eT <- ggmetern(ed=results %>% filter(type=="XY"), fancy) +
     scale_colour_manual(values=c("blue","red")) # Don't trust the training, that is the red
 eT
 ```
+
 But we also need to plot  their centers! First we work out the compositional means.
 
-```{r glass compositional centers, warning=FALSE}
+```{r compositions, echo=FALSE}
 library(compositions)# Statistics work differently on compositional data
+```
+
+```{r glass compositional centers, warning=FALSE}
 # trainCompositions <- data.frame()
 # testCompositions <- data.frame()
 meanCompositions <- data.frame()
@@ -195,6 +199,13 @@ eTMean <- eT %+% geom_point(data=meanCompositions, aes(colour=Phase), shape=4, s
 eTMean
 ```
 
+The crosses gives a more realistic view of what performance we might expect from this classifier technology. The picture shows a kind of bias-variance compromise.  
+
+* The classifier technology for iris on training gave a more optimistic view than for testing, but still quite good. This is a low  bias-high variance kind of behaviour suggesting we are overtraining. However, the balancedness of the data does not allow for specialization and somewhat compensates for the overkill complexity of the classifier in this dataset. 
+
+* The approximation of the classifier for Arthritis is consistently bad on training and testing: very little mutual information is transmitted. This suggests a high bias-low variance situation where the complexity of the database has not been captured by the classifier technology. 
+
+* Finally, the classifier technology for Glass seems to be well balanced between bias and variance, entailing the classifier technology is well-trained with these data. However, a rather poor mutual information suggest the task is far from solved, and perhaps another type of classifier would be a better match for this tasks complexity. 
 
 Now try to plot these results in split coordinates: disaggregate and aggregate...
 ```{r}
@@ -205,6 +216,22 @@ eTSplit <- ggmetern(ed=results %>% filter(type!="XY"), fancy) +
 eTSplit
 ```
 
+We can see that:
+
+* The classifiers for iris are quite good, transmitting almost as much information as they have available, while not specializing. 
+
+* But those for Arthritis are really bad in terms of the mutual information they transfer and in the difference between the modeling of the input and output (difference in divergence from uniformity).
+
+* Those for Glass are in an intermediate state in terms of proportion of mutual information transmitted and specialization. 
+
+# Postscriptum
+
+More information about the evaluation of classifiers with the Channel Binary Entropy Triangle can be found in 
+
+```{r echo=FALSE}
+library(bibtex)
+print(citation("entropies")['val:pel:14a'], style="text")
+```
 
 # Session information
 

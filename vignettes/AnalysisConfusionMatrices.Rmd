@@ -2,14 +2,15 @@
 title: "Analysis of Confusion Matrices"
 author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
 date: "June, 21st, 2018"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 vignette: > 
   %\VignetteIndexEntry{A first guide to use the CBET for confusion matrix evaluation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-This script shows how to read a Channel Binary Entropy Triangle (CBET) using different confusion matrices from (Valverde-Albacete & Peláez-Moreno, 2010).
-
+This script shows how to read a Channel Binary Entropy Triangle (CBET) using different confusion matrices. 
 
 ### Environment construction
 ```{r setup, include=FALSE}
@@ -105,6 +106,7 @@ confusion_split_cbet <-
               color="blue",size=4, vjust=2, hjust=1)
 confusion_split_cbet
 ```
+
 Some points are worth noticing:
 
 * If the cardinality of the input and output classes is the same, the three points---X entropy, Y entropy and aggregate---lie on an imaginary line from the X entropy to the Y entropy that cannot exceed the triangle boundaries. 
@@ -119,6 +121,14 @@ if (getPlot){
     ggsave(stringr::str_interp("confusion_matrices_split_CBET_PRL10_in_R.jpeg"),
            plot=confusion_split_cbet)
 }
+```
+# Postscriptum
+
+More information about the evaluation of classifiers with the Channel Binary Entropy Triangle can be found in 
+
+```{r echo=FALSE}
+library(bibtex)
+print(citation("entropies")['val:pel:14a'], style="text")
 ```
 
 # Session information

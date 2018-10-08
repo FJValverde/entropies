@@ -4,7 +4,7 @@ author: "Francisco J. Valverde-Albacete"
 date: "Nov, 28th,  2015, modified Jul, 4th, 2018"
 output: html_document
 vignette: > 
-  %\VignetteIndexEntry{A first guide to use the CBET for confusion matrix evaluation}
+  %\VignetteIndexEntry{A first guide to use the CBET in classification evaluation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -314,6 +314,15 @@ eTsplit + geom_point(data=meanCompositions, aes(colour=Phase, shape=type), size=
 This shows that there is very little mutual information transfer. It was made worse by the classifier specializing, that is, increasing $\Delta H_{P_{XY}}$ at the expense of mutual information. 
 
 All in all, `r  models` is a very bad classifier for `r dsName`. 
+
+# Postscriptum
+
+More information about the evaluation of classifiers with the Channel Binary Entropy Triangle can be found in 
+
+```{r echo=FALSE}
+library(bibtex)
+print(citation("entropies")['val:pel:14a'], style="text")
+```
 
 # Session information
 

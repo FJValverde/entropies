@@ -11,7 +11,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-This script gives an example on how to use the Channel Multivariate Entropy Triangle framework to analyze Feature Transformations on a Database. 
+This script gives an example on how to use the Channel Multivariate Entropy Triangle (CMET) to analyze Feature Transformations on a dataset.
 
 We apply any number of transformations to its features (in this case PCA and ICA) and represent the accrued information loss incurred in the prescribed selection  order of features in the CMET (each transformation orders the obtained features in some way.)
 
@@ -360,7 +360,16 @@ Try this script with Glass or Arthritis for completely different behaviours.
 
 # Postscriptum
 
-```{r ps}
+More information about the evaluation of feature transformations with the Channel Multivariate Entropy Triangle can be found in 
+
+```{r ps, echo=FALSE}
+library(bibtex)
+print(citation("entropies")['val:pel:18c'], style="text")
+```
+
+# Session information
+
+```{r}
 sessionInfo()
 ```
 
