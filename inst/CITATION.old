@@ -1,0 +1,20 @@
+citHeader("To cite the entropies package in publications use:")
+citFooter("As entropies is still evolving, you may want to cite its version number. Find it with 'help(package=entropies)'.")
+#
+# First entry
+#
+citEntry(entry = "Article",
+    author=personList(as.person(F.J. Valverde-Albacete), 
+        as.person(C. Pelaez-Moreno)),
+    title="Two information-theoretic tools to assess the performance of multi-class classifiers",
+    journal="Pattern Recognition Letters", 
+    year = 2010, volume=31, number=12, pages="1665--1671",
+    url= "https://www.sciencedirect.com/science/article/pii/S0167865510001662",
+    textVersion=paste(
+        "Valverde-Albacete, F.J. and Pel\'aez-Moreno, C. (2010)", 
+        "Two information-theoretic tools to assess the performance of multi-class classifiers", 
+        "Pat Recog Let 31:1665--1671"))
+# An attempt to automatize thiss
+
+
+         

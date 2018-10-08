@@ -20,7 +20,7 @@
 #' @seealso \code{\link{ggtern}}, \code{\link{entropies}}, \code{\link{entropicCoordinates}}
 #' @export
 # @import ggtern 
-#' @importFrom ggtern ggtern theme theme_bw theme_rgbw theme_custom theme_latex Tlab Rlab Llab theme_showarrows theme_rotate
+#' @importFrom ggtern ggtern theme theme_bw theme_rgbw theme_custom theme_latex Tlab Rlab Llab theme_showarrows theme_rotate geom_mask
 #' @import latex2exp
 # @examples
 # data(UCBAdmissions)
