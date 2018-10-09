@@ -12,10 +12,7 @@ vignette: >
 # Environment construction
 
 ```{r, echo=FALSE, environment}
-library(tidyverse)  # That (in)famous Mr. Wickham!
-#library(dplyr)     # That (in)famous Mr. Wickham!
-#library(tidyr)     # Tidying tall & wide dataframes
-#library(infotheo)  # The functionality provided by this has to be rerouted through entropies
+library(tidyverse)  # That famous Mr. Wickham!
 library(entropies) # This package
 library(ggtern)    # Ternary diagrams on ggplot
 library(vcd)       # Categorical benchmarks
@@ -127,6 +124,15 @@ cmet <- ggmetern(edf %>% filter(type != "XY"),
 cmet + facet_wrap(~dsName, ncol=2)
 #dev.off()#Necessary to do the textual plot.
 #ggsave(str_interp("entropyEndToEnd_${dsName}_epoch_${thisEpoch}.jpeg"), plot=e2ePlot)
+```
+
+# Postscriptum
+
+More information about the evaluation of classifiers with the Channel Multivariate Entropy Triangle can be found in 
+
+```{r echo=FALSE}
+library(bibtex)
+print(citation("entropies")['val:pel:18c'], style="text")
 ```
 
 # Postscriptum

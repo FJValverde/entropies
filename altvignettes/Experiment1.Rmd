@@ -12,7 +12,6 @@ vignette: >
 
 This vignette uses the SMET to explore the limits of randomness in generating multivariate distributions. 
 
-
 # Environment construction
 
 ```{r environment, echo=FALSE, results="hide"}
@@ -30,35 +29,44 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=6)
 ```
 
+# Generating distributions
 
-# Exploring the redundancy in 
+Some top level switches and options gathered in one place. 
+
+```{r constants}
+set.seed(29)#For reproducibility purposes
+tol <-  1e-5# A tolerance
+# Number of features in each random distribution
+nInstances <- c(10, 50, 100, 500, 1000, 5000, 10000) 
+#nInstances <- c(10, 50) 
+```
+
+Next we generate the distributions and analyze their entropies.
 
 ```{r}
-nInstances <- c(10, 50, 100, 500, 1000, 5000, 10000) # vector instances
-#nRandom <- 5     # Add a number of balanced, random features
-# Add the random balanced vectors
-#rRandom <- 1:nRandom
-set.seed(29)
 edf <- data.frame() # to accumulate the entropic measures as we increase.
-tol <-  1e-5
 for(m in nInstances){#generate random features: 
     medf <- data.frame() # to accumulate the entropic measures as we increase.
     dsRandom <- data.frame() # to accumulate the distributions per m
     n <-  1
     dsRandom <- as.data.frame(x=as.factor(rbinom(m, 1, 0.5)))
     names(dsRandom) <-  NULL
-    medf <-  rbind(medf, sentropies(dsRandom) %>% filter(name == "ALL") %>% mutate(m, n))
+    medf <-  rbind(medf, sentropies(dsRandom) %>% 
+                       filter(name == "ALL") %>% 
+                       mutate(m, n))
     repeat{
         n <- n + 1
         dsRandom <- cbind(dsRandom, as.factor(rbinom(m, 1, 0.5)))
-        medf <-  rbind(medf, sentropies(dsRandom) %>% filter(name == "ALL") %>% mutate(m, n))
+        medf <-  rbind(medf, sentropies(dsRandom) %>% 
+                           filter(name == "ALL") %>% 
+                           mutate(m, n))
         if (medf[n, ]$VI_Pxi < tol | n == 200)
             break
     }
     edf <- rbind(edf, medf)
 }
-edf <-  filter(edf, name == "ALL") %>% mutate(m=as.numeric(m), n=as.numeric(n))
-##########################################################################################
+edf <-  filter(edf, name == "ALL") %>% 
+            mutate(m=as.numeric(m), n=as.numeric(n))
 ```
 
 
@@ -79,3 +87,17 @@ ggmetern(filter(edf, m==100), fancy=FALSE) + geom_point(aes(shape=as.factor(m), 
     scale_shape_manual(values=19:(19+7))
 ```
 
+# Postscriptum
+
+More information about the evaluation of classifiers with the Channel Binary Entropy Triangle can be found in 
+
+```{r echo=FALSE}
+library(bibtex)
+print(citation("entropies")['val:pel:14a'], style="text")
+```
+
+# Session information
+
+```{r}
+sessionInfo()
+```

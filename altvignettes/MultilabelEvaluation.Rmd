@@ -1,0 +1,209 @@
+---
+title: "Multilabelling Evaluation with the CMET"
+author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
+date: "5/15/2017"
+output: html_document
+---
+
+# Introduction
+
+This vignette esplores the capabilities of the Channel Multivariate Entropy Triangle (CMET) to explore the results of multilabel classification.
+
+This vignette follows the scheme to carry out multilabel evaluation proposed by 
+
+https://mlr-org.github.io/mlr-tutorial/devel/html/multilabel/index.html
+
+# Environment construction
+
+## Knitting options
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=6)
+#knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+knitr::opts_chunk$set(warning=FALSE)# Should not appear in the knitted document
+```
+
+## Library loading
+
+```{r libraries, include=FALSE}
+library(mlr)
+library(tidyverse)  # Acceding to that infamous Mr. Wickham's requests!
+# library(dplyr)     # That infamous Mr. Wickham!
+# library(tidyr)     # Tidying tall & wide dataframes
+library(infotheo)  # The functionality provided by this has to be rerouted through entropies
+library(entropies) # This package
+library(ggtern)    # Excellent package for ternary diagrams in the gg tradition
+library(vcd)       # Categorical benchmarks
+library(mlbench)   # ml benchmarkss
+```
+
+# Multilabel Classification
+
+## Data preparation
+
+```{r data}
+yeast = getTaskData(yeast.task)
+labels = colnames(yeast)[1:14]
+yeast.task = makeMultilabelTask(id = "multi", data = yeast, target = labels)
+yeast.task
+```
+
+### Source exploration with the SMET
+
+```{r source_exploration}
+sedf <- frame()
+labels <- yeast[,1:14]
+sedf <- rbind(
+        sedf,
+        cbind(dsName = "yeast", sentropies(labels))
+        # getDatasetSourceEntropies(yeast.task, 
+        #     #dsName, 
+        #     #className = dsRecord$className,
+        #     #withClass=TRUE, 
+        #     type="total")
+        )
+sedf
+```
+We visualize the real labels with the Source Multivariate Entropy Triangle (SMET)
+
+```{r SMET_vis}
+smet <-  ggmetern(sedf, fancy) + 
+    geom_point(mapping=aes(colour=name), size=3)+
+    scale_shape_manual(values=1:ncol(labels)) #+
+    #labs(shape="Dataset")
+if (fancy){
+    smet <- smet + ggtitle("Source Multivariate Entropy for labels")
+}
+smet
+#ggsave("disgregated_labels_label.jpeg", plot=smet)
+
+```
+
+## Classifier training
+
+### Adaptation methods
+
+```{r adaptation}
+# lrn.rfsrc = makeLearner("multilabel.randomForestSRC", predict.type="response")
+# lrn.rfsrc
+lrn.rFerns = makeLearner("multilabel.rFerns")
+lrn.rFerns
+```
+
+### Problem transformation methods
+
+```{r transformation}
+lrn.br = makeLearner("classif.rpart", predict.type = "prob")
+lrn.br = makeMultilabelBinaryRelevanceWrapper(lrn.br)
+lrn.br
+lrn.br2 = makeMultilabelBinaryRelevanceWrapper("classif.rpart")
+lrn.br2
+
+```
+
+### Training
+
+```{r training}
+mod = train(lrn.br, yeast.task)
+mod = train(lrn.br, yeast.task, subset = 1:1500, weights = rep(1/1500, 1500))
+mod
+
+mod2 = train(lrn.rFerns, yeast.task, subset = 1:100)
+mod2
+```
+
+### Prediction
+
+```{r prediction}
+
+pred = predict(mod, task = yeast.task, subset = 1:10)
+pred = predict(mod, newdata = yeast[1501:1600,])
+names(as.data.frame(pred))
+
+
+pred2 = predict(mod2, task = yeast.task)
+names(as.data.frame(pred2))
+```
+
+### Performance measurement
+
+```{r performance}
+listMeasures("multilabel")
+getDefaultMeasure(yeast.task)
+#performance(pred)
+performance(pred, measures = list(#multilabel.subset01,
+                                  hamloss, 
+                                  #multilabel.acc,
+                                  #multilabel.f1, 
+                                  timepredict)
+            )
+#performance(pred2)
+performance(pred2, measures =list(#multilabel.subset01,
+                                  hamloss, 
+                                  #multilabel.acc,
+                                  #multilabel.f1, 
+                                  timepredict)
+            )
+```
+
+# Evaluation on the CMET
+
+```{r evaluation_br}
+library(dplyr)
+edf <- data.frame()
+# the predictions are frames
+br.truth <- pred$data[,1:14]
+br.predicted <- pred$data[,29:42]
+#summary(br.predicted)
+assertthat::are_equal(ncol(br.truth), 
+                      ncol(br.predicted))
+edf <- rbind(edf,
+             cbind(method="br",
+                   jentropies(br.truth,br.predicted)
+                   )
+             )
+```
+
+```{r evaluation_rFerns}
+edf <- rbind(edf,
+             cbind(method="rFerns",
+                   jentropies(pred2$data[,1:14], pred2$data[,15:28])
+                   )
+             )
+edf
+```
+
+#### Visualization
+
+Visualize both the aggregate and the split entropies.
+
+```{r, fig.width=12, fig.height=16}
+fancy <- TRUE
+#fancy <- FALSE
+#select some entropies to visualize
+cmet <- ggmetern(edf %>% filter(type != "XY"), 
+                 #filter(edf, type != "XY"),#alternative not to visualize the aggregate
+                 fancy) +
+    geom_point(aes(color=type, shape=method), size=3) +
+    scale_shape_manual(values=c(4, 20, 1)) #+
+    #labs(color="Dataset name", shape="Var type")
+cmet #+ facet_wrap(~dsName, ncol=2)
+#dev.off()#Necessary to do the textual plot.
+#ggsave(str_interp("entropyEndToEnd_${dsName}_epoch_${thisEpoch}.jpeg"), plot=e2ePlot)
+```
+
+Interpretation...
+
+## TODO: interpret these results!!!
+
+
+
+# Postscriptum
+
+```{r ps}
+sessionInfo()
+```
+
+

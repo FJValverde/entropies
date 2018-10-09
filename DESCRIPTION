@@ -4,8 +4,17 @@ Title: Plotting ternary entropy diagrams for joint distributions, contingency
     matrices, etc.
 Version: 0.9.1
 Date: 2015-02-23
-Author: F.J. Valverde-Albacete
-Maintainer: F.J. Valverde-Albacete <franciscojvalverde@gmail.com>
+Authors@R:
+	c(person(given = "Francisco J.",
+		 family = "Valverde-Albacete",
+		 role = c("aut", "cre"),
+		 email = "fva@tsc.uc3m.es",
+             	 comment = c(ORCID = "0000-0002-5874-7604")),
+	  person(given = "Carmen",
+	  	 family = "Pelaez-Moreno",
+		 role = c("aut", "ctb"),
+		 email = "carmen@tsc.uc3m.es",
+		 comment = c(ORCID = "0000-0003-1425-6763")))
 Imports: 
     dplyr,
     entropy,

@@ -1,0 +1,179 @@
+---
+title: "Shifted Renyi Spectrum"
+author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
+date: "10/14/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
+#knitr::opts_chunk$set(echo = TRUE)
+forPrinting <- TRUE
+forPrinting <- FALSE
+```
+
+# Environment
+
+```{r}
+library(tidyverse)
+library(entropies)
+library(latex2exp)
+```
+
+
+# Data processing
+
+```{r get-distribution}
+dist <- as.data.frame.table(UCBAdmissions) %>% 
+    group_by(Dept) %>% 
+    summarise(Freq=sum(Freq))
+#dist <- tibble(Freq=1:10)
+```
+
+Working out the entropies and equivalent mass functions...
+
+```{r pressure, echo=FALSE}
+orders <- c(-10,-2,2,10)
+orders <- 2^(1:5)
+orders <- c(-orders,orders)
+# First we work in a positive measure, non probabilistic...
+resRenyi <- sRenyiEntropy(dist$Freq, orders)#base 2 by default
+#orders -Inf,-1,0,1,Inf are included by default
+#resRenyi$orders
+#equivalent mass function
+emf <- 2^(-resRenyi$entropies)
+# Now we work on a probability measure...
+pmf <- dist$Freq/sum(dist$Freq)#Distribution as probabilities
+hf <- -log2(pmf)#informations of the individual events.
+#equivalent probabilty function
+resRenyi2 <- sRenyiEntropy(pmf, orders)
+epf <- 2^(-resRenyi2$entropies)
+# Information potential function
+ipf <- epf^resRenyi2$orders
+# Put together into a data.frame for easier indexing and plotting
+thisData <- tibble(orders=resRenyi$orders, 
+               sentMass=resRenyi$entropies,
+               emf,
+               sentProbs=resRenyi2$entropies,
+               epf,
+               ipf)
+```
+
+Plotting needs to take take of finite and infinite (asymptotes) orders differently. 
+
+```{r entropy plot}
+fData <- thisData %>% filter(is.finite(orders))#finite order data
+iData <- thisData %>% filter(!is.finite(orders))#infinite order data
+sentAtInfty <- (iData %>% filter(orders==Inf))$sentProbs
+sentAtMinusInfty <- (iData %>% filter(orders==-Inf))$sentProbs
+sentRange <- (sentAtMinusInfty - sentAtInfty)
+# Finite orders are nicely plotted as a line
+p <- ggplot(fData, aes(x=orders, y=fData$sentProbs)) + 
+    ylab("entropy") + xlab("Rényi order, r") +
+    geom_line() + geom_point()
+#Adding annotations for the asymptotes
+lAsymp <- TeX("$\\tilde{H}_{\\infty}(P_X)$", output="character")#plot(lAsymp)
+hAsymp <- TeX("$\\tilde{H}_{-\\infty}(P_X)$", output="character")#plot(lAsymp)
+arrowAsymp <- arrow(length=unit(.3,"cm"))
+p <- p + geom_hline(yintercept=iData$sentProbs,
+                   linetype="dashed",
+                   colour="black") +
+    # lowest asymptote 
+    annotate("segment", arrow=arrowAsymp, 
+                x = max(fData$orders) - 5, xend=max(fData$orders),
+                y = sentAtInfty + 0.5*sentRange/20,
+                yend = sentAtInfty + 0.5*sentRange/20) +
+    annotate("text", parse= TRUE,label=lAsymp, size=4,
+             x=max(fData$orders) - 10, y=sentAtInfty + sentRange/20) +
+    # highest asymptote
+    annotate("segment", arrow=arrowAsymp,
+                x = min(fData$orders) + 5, xend=min(fData$orders),
+                y = sentAtMinusInfty - 0.5*sentRange/20,
+                yend = sentAtMinusInfty - 0.5*sentRange/20) +
+    annotate("text", parse= TRUE,label=hAsymp, size=4,
+             x=min(fData$orders) + 10, 
+             y=sentAtMinusInfty - 0.5*sentRange/20)
+#Drawing the original information of the individual events
+oriEntropies <- tibble(order=0,entropies=hf)
+p <- p + #geom_vline(xintercept=0) + 
+    geom_segment(aes(x=0,xend=0, 
+                     y=min(thisData$sentProbs) - sentRange/20, 
+                     yend=max(thisData$sentProbs) + sentRange/20
+                     #colour="black"
+                     #size=unit(1,"pt")
+                    ),
+                 alpha=0.1, 
+                 arrow = arrow(length = unit(0.03, "npc"))
+                 ) +
+    geom_point(data=oriEntropies,aes(x=order, y=hf), size=3, shape=1)
+p
+if (forPrinting){
+    dev.off()#Necessary to do the textual plot.
+    ggsave("RenyiEntropySpectrumExample.jpeg", plot=p)
+}
+```
+
+```{r epf plot}
+probAtInfty <- (iData %>% filter(orders==Inf))$epf
+probAtMinusInfty <- (iData %>% filter(orders==-Inf))$epf
+probRange <- (probAtMinusInfty - probAtInfty)
+q <- ggplot(fData, aes(x=orders, y=fData$epf)) + 
+    ylab("equivalent probability function") + xlab("Rényi order, r") +
+    geom_line() + geom_point()
+# Decorating the asymptotes
+hpAsymp <- TeX("$\\tilde{P}_{\\infty}(P_X) = \\max_i P_X(x_i)$", output="character")#plot(lAsymp)
+lpAsymp <- TeX("$\\tilde{P}_{-\\infty}(P_X) = \\min_i P_X(x_i)$", output="character")#plot(lAsymp)
+q <- q + geom_hline(yintercept=iData$epf,
+                   linetype="dashed",
+                   colour="black") +
+    # highest asymptote 
+    annotate("segment", arrow=arrowAsymp, 
+                x = max(fData$orders) - 5, xend=max(fData$orders),
+                y = probAtInfty + 0.5*probRange/20,
+                yend = probAtInfty + 0.5*probRange/20) +
+    annotate("text", parse= TRUE,label=hpAsymp, size=4,
+             x=max(fData$orders) -15 , y=probAtInfty + 0.5*probRange/20) +
+    # lowest asymptote
+    annotate("segment", arrow=arrowAsymp,
+                x = min(fData$orders) + 5, xend=min(fData$orders),
+                y = probAtMinusInfty - 0.5*probRange/20,
+                yend = probAtMinusInfty - 0.5*probRange/20) +
+    annotate("text", parse= TRUE,label=lpAsymp, size=4,
+             x=min(fData$orders) + 15, 
+             y=probAtMinusInfty - probRange/20)
+# drawing the original 
+oriProbs <- tibble(order=0,prob=pmf)
+q <- q + #geom_vline(xintercept=0) + 
+    geom_segment(aes(x=0,xend=0, 
+                     y=min(pmf) + 2*probRange/20, 
+                     yend=max(pmf) - 2*probRange/20
+                     #colour="black"
+                     #size=unit(1,"pt")
+                    ),
+                 alpha=0.1, 
+                 arrow = arrow(length = unit(0.03, "npc"))
+                 ) +
+    geom_point(data=oriProbs,aes(x=order, y=pmf), size=3, shape=1)
+q
+if (forPrinting){
+    dev.off()#Necessary to do the textual plot.
+    ggsave("RenyiEquivalentProbFunctionExample.jpeg", plot=q)
+}
+```
+
+
+```{r potential plot}
+#At high orders the data scales down everything else
+#probAtInfty <- (iData %>% filter(orders==Inf))$epf
+
+lowData <- thisData %>% filter(orders>=-2)
+ip <- ggplot(lowData, aes(x=orders, y=ipf)) + 
+    ylab("information potential") + xlab("Rényi order, r") +
+    geom_line() + geom_point()
+ip
+if (forPrinting){
+    dev.off()#Necessary to do the textual plot.
+    ggsave("RenyiEquivalentProbFunctionExample.jpeg", plot=ip)
+}
+```
+

@@ -261,6 +261,15 @@ ggplot2::ggsave(filename=sprintf("%s_entropy_pie_noAgg.jpeg", thisDsName))
 
 # Postscriptum
 
-```{r ps}
+More information about the evaluation of sources with the Source Multivariate Entropy Triangle can be found in 
+
+```{r echo=FALSE}
+library(bibtex)
+print(citation("entropies")['val:pel:17b'], style="text")
+```
+
+# Session information
+
+```{r}
 sessionInfo()
 ```
