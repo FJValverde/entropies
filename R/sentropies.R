@@ -11,7 +11,6 @@
 #' @details Unless specified by the user explicitly, this function uses base 2 
 #'   logarithms for the sentropies. 
 #' @seealso \code{\link[entropy]{entropy}, \link[infotheo]{entropy}}
-#' @import dplyr
 #' @export
 sentropies <- function(data, ...) UseMethod("sentropies")
 
@@ -25,7 +24,6 @@ sentropies <- function(data, ...) UseMethod("sentropies")
 #' \code{entropy}. Defaults to "log2".
 #' @export
 #' @importFrom entropy entropy
-# @importFrom dplyr left_join
 # @example sentropies(UCBAdmissions)
 sentropies.table <- function(Nxy, ...){
     # 0. Parameter checking
@@ -102,11 +100,8 @@ sentropies.confusionMatrix <- function(ct, ...){
 # @details Unless specified by the user explicitly, this function uses base 2 
 #   logarithms for the sentropies.
 #' @export
-#' @importFrom infotheo natstobits 
-#' @importFrom infotheo condentropy
-#' @importFrom infotheo entropy
-#' @importFrom infotheo discretize
-#' @import dplyr
+#' @importFrom infotheo natstobits condentropy entropy discretize
+#' @importFrom dplyr mutate
 sentropies.data.frame <- function(df, type="total", ...){
     if (ncol(df) == 0 || nrow(df) == 0)
         stop("Can only work with non-empty data.frames!")

@@ -11,7 +11,8 @@
 #' @seealso \code{\link{ggmetern}}, \code{\link{ggplot2::geom_bar}}
 #' @export
 #' @importFrom tidyr gather
-#' @import dplyr ggplot2
+#' @importFrom dplyr mutate filter
+#' @importFrom ggplot2 ggplot geom_bar scale_x_discrete scale_fill_manual
 #' @examples
 #' data(iris)
 #' sme <- sentropies(iris) # Considers class just another feature

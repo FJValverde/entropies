@@ -3,7 +3,7 @@
 #' 
 #' @param dsName A database name for a dataset present in the environment.
 #' @export
-#' @example ds <- evalDataset("iris")
+# @example ds <- evalDataset("iris")
 evalDataset <- function(dsName){
     dsName <- as.character(dsName)
     switch(dsName, #TODO: improve this way of "invoking" the dataset.

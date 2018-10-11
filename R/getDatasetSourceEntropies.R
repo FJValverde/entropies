@@ -9,10 +9,10 @@
 #' or not. Defaults to not. 
 #' @param type Whether to use the total + dual total correlations (type="total") 
 #' or just the dual  total (type= "dual") correelation.
-#' @import tidyverse
-#' @import tibble
+#' @importFrom dplyr select_
+# @import tibble
 #' @export
-#' @example edf <- getSourceEntropies(iris, className="Species", withClass=TRUE, type="dual")
+# @example edf <- getSourceEntropies(iris, className="Species", withClass=TRUE, type="dual")
 getDatasetSourceEntropies <- function(
     ds, #the dataset to be analysed
     dsName=NULL, #The database name in case it is provided.

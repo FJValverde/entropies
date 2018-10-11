@@ -8,7 +8,7 @@
 #' @return A numeric vector of the means, co-indexed with the vector of orders, p. 
 #' @export
 #'
-#' @examples
+# @examples
 wp.means <- function(x, w,  p=1){
     if (!length(x)==length(w)){
         stop(message("Inputs and weigths incomparable."))

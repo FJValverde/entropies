@@ -8,7 +8,7 @@
 #' @details Unless specified by the user explicitly, this function uses base 2 
 #'   logarithms for the entropies.
 #' @seealso \code{\link[entropy]{entropy}, \link[infotheo]{entropy}}
-#' @import dplyr
+# @import dplyr
 #' @export
 condentropies <- function(X, Y, ...) UseMethod("condentropies") 
 
@@ -17,8 +17,8 @@ condentropies <- function(X, Y, ...) UseMethod("condentropies")
 #' @return Another dataframe with the main entropy coordinates of every variable Xi
 #'   in the original conditioned on the datatables Y, which are now the rows of the returned data.frame.
 #' @export
-#' @import infotheo
-#' @import dplyr
+#' @importFrom infotheo discretize
+#' @importFrom dplyr mutate
 condentropies.data.frame <- function(X, Y, ...){
     if (ncol(X) == 0 || nrow(X) == 0 ) 
         stop("Can only work with non-empty data.frames X!")

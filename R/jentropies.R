@@ -8,7 +8,6 @@
 #' @details Unless specified by the user explicitly, this function uses base 2 
 #'   logarithms for the entropies.
 #' @seealso \code{\link[entropy]{entropy}, \link[infotheo]{entropy}, \link{sentropies}}
-#' @import dplyr
 #' @export
 jentropies <- function(X, Y, ...) UseMethod("jentropies") 
 
@@ -20,7 +19,7 @@ jentropies <- function(X, Y, ...) UseMethod("jentropies")
 #' @importFrom infotheo discretize
 #' @importFrom infotheo condentropy
 #' @importFrom infotheo entropy
-#' @import dplyr
+#' @importFrom dplyr mutate
 jentropies.data.frame <- function(X, Y, ...){
     if (ncol(X) == 0 | nrow(X) == 0 ) 
         stop("Can only work with non-empty data.frames X!")
@@ -53,40 +52,6 @@ jentropies.data.frame <- function(X, Y, ...){
         M_P = H_P - VI_P,
         VI_P = VI_P
     ) 
-    # #M_Pxi = H_Pxi - VI_Pxi)
-    # if (ncol(X) == 1){
-    #     warning("Single variable: providing only entropy")
-    #     #         edf <- data.frame(
-    #     #             name = colnames(df?append),
-    #     #             H_Uxi = log2(length(unique(df[,1]))),
-    #     #             H_Pxi = infotheo::entropy(df[,1])
-    #     #         ) %>% mutate(DeltaH_Pxi = H_Uxi - H_Pxi)
-    # } else {
-    #     #entropyNames <- c("name", "H_Uxi", "H_Pxi", "VI_Pxi", "DeltaH_Pxi","M_Pxi")
-    #     #colnames(edf) <- entropyNames
-    #     #name <- colnames(df) # get the colnames once and for all
-    #     #nn <- length(name)
-    #     #H_Uxi <-  unlist(lapply(df, function(v){log2(length(unique(v)))}))
-    #     #H_Pxi <- unlist(lapply(df, function(v){natstobits(infotheo::entropy(v))}))
-    #     #VI_Pxi <- sapply(name, function(n){infotheo::condentropy(df[,n], Y=df[,setdiff(name, n)])})
-    #     #         edf <- data.frame(
-    #     #             name = colnames(df), # After an idyosincracy of dplyr, the rownames donot survive a mutate.
-    #     #             H_Uxi = unlist(lapply(df, function(v){log2(length(unique(v)))})),
-    #     #             H_Pxi = unlist(lapply(df, function(v){natstobits(infotheo::entropy(v))})), 
-    #     #             VI_Pxi = sapply(name, function(n){infotheo::condentropy(df[,n], Y=df[,setdiff(name, n)])})
-    #     #         ) %>% 
-    #     #             mutate(DeltaH_Pxi = H_Uxi - H_Pxi, 
-    #     #                    M_Pxi = H_Pxi - VI_Pxi)
-    #     VI_Pxi <- vector("numeric", length(name))
-    #     for(i in 1:length(name)){
-    #         VI_Pxi[i] <- natstobits(condentropy(X=X[,i], Y=cbind(X[,-i], Y)))
-    #     }
-    #     edf <- mutate(edf, VI_Pxi, M_Pxi = H_Pxi - VI_Pxi)
-    #     #         edf <- mutate(edf,
-    #     #                       VI_Pxi = sapply(name, function(x){natstobits(infotheo::condentropy(df[,x], df[, setdiff(name, x)]))}),
-    #     #                       M_Pxi = H_Pxi - VI_Pxi
-    #     #                       )
-    # }
     # Add the joint balance equations
     return(rbind(edf,cbind(type="XY", as.data.frame(lapply(edf[,2:6], sum)))))
     #return(edf)
@@ -103,9 +68,6 @@ jentropies.data.frame <- function(X, Y, ...){
 #' @param unit The logarithm to be used in working out the sentropies as per 
 #' \code{\link[entropy]{entropy}}. Defaults to "log2".
 #' @export
-# @import infotheo
-# @import dplyr
-# @importFrom dplyr left_join
 ## @example library(datasets)
 ## @example jentropies(datasets::UCBAdmissions, unit="log10") # Entropies in dB
 ## @example jentropies(datasets::Titanic) # Entropies in bits
@@ -144,27 +106,7 @@ jentropies.table <- function(Nxy, ...){
         for(i in 1:length(cts)){#cts a list: add to entropies the remaining factors
             edf <- rbind(edf, cbind(cts[[i]], ctsGrid[i,]))
         }
-        # Nx <- margin.table(Nxy, c(1,3:length(dims)))
-        # Hx <- apply(Nx, c(2:length(dim(Nx))), function(x) {do.call(entropy, c(list(y=x), vars)) })
-        # #Ux <- apply(Nx, 2, function(x) { log2(length(x))})
-        # Ux <- apply(Nx, c(2:length(dim(Nx))), function(x) { log2(dims[1])})
-        # Ny <- margin.table(Nxy, c(2,3:length(dims)))
-        # Hy <- apply(Ny, c(2:length(dim(Ny))), function(x) {do.call(entropy, c(list(y=x), vars)) })
-        # #Uy <- apply(Ny, 2, function(x) { log2(length(x))})
-        # Uy <- apply(Ny, c(2:length(dim(Nx))), function(x) { log2(dims[1])})
-        # Hxy <- apply(Nxy, 3:length(dims), function(x) {do.call(entropy, c(list(y=x), vars))})
-        # #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
-        # THx <- as.data.frame.table(as.table(Hx), responseName = "Hx")
-        # TUx <- as.data.frame.table(as.table(Ux), responseName = "Ux")
-        # THy <- as.data.frame.table(as.table(Hy), responseName = "Hy")
-        # TUy <- as.data.frame.table(as.table(Uy), responseName = "Uy")
-        # THxy <- as.data.frame.table(as.table(Hxy), responseName = "Hxy")
-        # df <- left_join(left_join(left_join(TUx, TUy), left_join(THx, THy)), THxy)
-        # #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
-        # #df <- cbind(df, dimnames(Nxy)[3:length(dims)])# Keep the third  and greater dimension's names
-        # #name <- colnames(N[1,,]) # This is a hack to manifest the values in the 3rd dimension
     } 
-    #return(df)
     return(edf)
 }
 
@@ -175,9 +117,8 @@ jentropies.table <- function(Nxy, ...){
 #' @param unit The logarithm to be used in working out the sentropies as per 
 #' \code{\link[entropy]{entropy}}. Defaults to "log2".
 #' @export
-#' @import infotheo
 #' @importFrom entropy entropy
-#' @import dplyr
+#' @importFrom dplyr mutate
 jentropies2d.table<- function(Nxy, ...){
     Nx <- apply(Nxy, 1, sum) # to be transformed into a probability
     #N <- sum(Nx)
@@ -205,6 +146,5 @@ jentropies2d.table<- function(Nxy, ...){
         M_P = H_P - VI_P,
         VI_P = VI_P #The ordering of the fields is important for exploratory purposes.s
     ) 
-    #df <- data.frame(Ux = Ux, Uy = Uy, Hx = Hx, Hy = Hy, Hxy = Hxy)
     return(rbind(edf,cbind(type="XY", as.data.frame(lapply(edf[,2:6], sum)))))
 }    

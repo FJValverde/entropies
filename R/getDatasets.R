@@ -7,10 +7,9 @@
 #' - K: cardinality of class
 #' - m: number of instances in the dataset.
 #' - n: number of variables in the dataset.
-#' @import tidyverse
-#' @import tibble
+#' @importFrom tibble tibble
 #' @export
-#' @example edf <- getDatasets()
+# @example edf <- getDatasets()
 getDatasets <- function(){
     # the inventory of databases you can access through this interface
     #library(datasets)
