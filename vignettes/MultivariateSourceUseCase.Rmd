@@ -290,7 +290,8 @@ if ((nrow(thisEdf) - 1)/2 >= 14){#too many points to be represented with glpsh
     thisEt <- thisEt + geom_point(aes(shape=name, colour=withClass), size=3) +
         scale_shape_manual(values=1:14) + 
         #scale_color_discrete("color_blind")
-        scale_colour_manual(values=cbbPalette)
+        #scale_colour_manual(values=cbbPalette)
+        scale_color_manual(values=c("TRUE" = "blue", "FALSE"="black"))
     #ggtitle("Source Multivariate Entropies per Feature")
 }
 thisEt + labs(shape="Feature", color="Using class") #+
@@ -359,9 +360,10 @@ if (getPlot){
 }
 ```
 
-Note how this is a necessary exploratory step prior to a multivariate transformation to gain independence between features, etc. 
+Note how this is a necessary exploratory step prior to envisage any later feature transformation.
 
-However, turning the stacked bar graph into a pie chart is a bad idea, since the remaining information $VI_{P_{X_i}}$ is de-emphasized (that is, compare with the area in the stacked bar graph above). To a certain extent, this is equivalent to the Source Multivariate Entropy Triangle:
+Another representation for this type of data are pie charts. 
+However, turning the stacked bar graph into a pie chart is a bad idea, since the remaining information $VI_{P_{X_i}}$ is de-emphasized (that is, compare with the area in the stacked bar graph above). 
 
 ```{r entropy-pie}
  p + ylab("Source Multivariate Entropy") + xlab("Feature/Variable") + coord_polar() #+
@@ -372,6 +374,8 @@ if (getPlot){
                                      thisDsName))
 }
 ```
+
+We firmly believe the SMET is a better representation to this. 
 
 # Postscriptum
 
