@@ -49,14 +49,18 @@ getDatasetSourceEntropies <- function(
     # 2. Data analysis
     edf <- tibble()#TODO: decide whether working with tibbles is advantageous.
     for(withClass in withClasses){# we profit from the fact what we go over TRUE first
-        if (!withClass)
-            ds <- dplyr::select(ds, -thisClass)
-        edf <- rbind(edf,
-                     sentropies(ds, type,...) %>% 
-                         mutate(withClass,
-                                isClass = (className == as.character(name))
-                         )
-        )
+        if (!withClass){
+            sent <- sentropies(dplyr::select(ds, -thisClass), type,...)
+        } else {
+            sent <- sentropies(ds, type,...)
+        }
+        # if (!withClass)
+        #     ds <- dplyr::select(ds, -thisClass)
+        sent <- mutate(sent, 
+                       withClass,
+                       isClass = (className == as.character(name))
+                       )
+        edf <- rbind(edf, sent)
     }
     # Return with a name, if available
     if (is.null(dsName))
