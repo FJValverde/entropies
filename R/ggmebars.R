@@ -8,7 +8,7 @@
 #' @param smdef A source multisplit entropy dataframe to be plotted, typically obtained with 
 #' \code{\link{sentropies}}.
 #' @return A plot object in the ggplot2 class of plots ready to be plotted.
-#' @seealso \code{\link{ggmetern}}, \code{\link{ggplot2::geom_bar}}
+#' @seealso \code{\link{ggmetern}}, \code{\link[ggplot2]{geom_bar}}
 #' @export
 #' @importFrom tidyr gather
 #' @importFrom dplyr mutate filter

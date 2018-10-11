@@ -10,7 +10,7 @@ entropicCoords(df, split = FALSE, purge = FALSE, norm = TRUE)
 \item{df}{A data frame containing values for the entropies related to a joint
 distribution or sets of them.}
 
-\item{split=FALSe}{A flag to select obtaining split coordinates.}
+\item{split=FALSE}{A flag to select obtaining split coordinates.}
 
 \item{purge=FALSE}{A flag to purge the entropies in \code{df}. If \code{purge=FALSE}
 the new entropies are added to the input entropies, otherwise they are purged.}
@@ -28,7 +28,7 @@ Generate the entropic coordinates from the component entropies of a joint
 - with split=TRUE, generate independen coordinates for X and Y distributions.
 }
 \examples{
-coords <- entropicCoords(entropies(UCBAdmissions))
+coords <- entropicCoords(entropicCoords(UCBAdmissions))
 # Note there is almost no information being transmitted
 unnormCoords <- entropicCoords(entropies(UCBAdmissions), norm=FALSE)
 all(apply(unnormCoords[8:10], 1, sum) == unnormCoords$Uxy)

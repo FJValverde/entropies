@@ -1,6 +1,6 @@
 #' Shifted Renyi entropy calculations. 
 #'
-#' Calculate the shifted Rényi entropy of a vector of orders. Recall r=0 is 
+#' Calculate the shifted Renyi entropy of a vector of orders. Recall r=0 is 
 #' Shannon's! By default, orders -Inf, -1, 0, 1 and Inf are included. 
 #' 
 #' @param x A vector of positive numbers, possibly a probability mass function.

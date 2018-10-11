@@ -7,11 +7,11 @@
 ggmetern(ed, fancy = TRUE, ...)
 }
 \arguments{
-\item{ed}{A dataframe with the entropy data to be plotted, typically obtained with \code{\link{infotheo::entropy}}.
+\item{ed}{A dataframe with the entropy data to be plotted, typically obtained with \code{\link[infotheo]{entropy}}.
 To plot the *split entropy triangle* this dataframe must have  at least the following variables \code{c("DeltaHx", "DeltaHx","MIxyX","MIxyY", "VIx", "VIy")}.
 To plot the *entropy triangle* this dataframe must have  either of the two configurations.}
 
-\item{fancy}{A switch whether to use a fancier (coloured) or terser (B&W) \code{\link{ggplot2::theme}} in the plot.
+\item{fancy}{A switch whether to use a fancier (coloured) or terser (B&W) \code{\link[ggplot2]{theme}} in the plot.
 Defaults to fancy=TRUE, for exploratory analysis. fancy=FALSE is better for printed matter.}
 }
 \value{
@@ -31,5 +31,5 @@ Only the plot and aesthetics are generated, the geometry is not decided. A furth
 column, including the name of the original variables may be used to annotate the plot.
 }
 \seealso{
-\code{\link{ggtern}}, \code{\link{entropies}}, \code{\link{entropicCoordinates}}
+\pkg{ggtern}, \pkg{entropies}, \pkg{entropicCoordinates}
 }

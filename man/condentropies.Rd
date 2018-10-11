@@ -7,7 +7,9 @@
 condentropies(X, Y, ...)
 }
 \arguments{
-\item{data}{The data being provided to the function.}
+\item{X}{The input random vector}
+
+\item{Y}{The conditioning random vector}
 }
 \value{
 A dataframe with the entropies of the marginals

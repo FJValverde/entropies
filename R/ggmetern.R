@@ -10,14 +10,14 @@
 #'   Note that no geometry is imposed on the plot.
 #' @details Only the plot and aesthetics are generated, the geometry is not decided. A further 
 #' column, including the name of the original variables may be used to annotate the plot. 
-#' @param ed A dataframe with the entropy data to be plotted, typically obtained with \code{\link{infotheo::entropy}}.
+#' @param ed A dataframe with the entropy data to be plotted, typically obtained with \code{\link[infotheo]{entropy}}.
 #' To plot the *split entropy triangle* this dataframe must have  at least the following variables \code{c("DeltaHx", "DeltaHx","MIxyX","MIxyY", "VIx", "VIy")}.
 #' To plot the *entropy triangle* this dataframe must have  either of the two configurations. 
 # # @param split A toggle whether we want to use the split entropy diagram. Defaults to FALSE
-#' @param fancy A switch whether to use a fancier (coloured) or terser (B&W) \code{\link{ggplot2::theme}} in the plot.
+#' @param fancy A switch whether to use a fancier (coloured) or terser (B&W) \code{\link[ggplot2]{theme}} in the plot.
 #' Defaults to fancy=TRUE, for exploratory analysis. fancy=FALSE is better for printed matter. 
 #' @return A plot object in the ggplot2 class of plots ready to be plotted.
-#' @seealso \code{\link{ggtern}}, \code{\link{entropies}}, \code{\link{entropicCoordinates}}
+#' @seealso \pkg{ggtern}, \pkg{entropies}, \pkg{entropicCoordinates}
 #' @export
 #' @importFrom ggtern ggtern theme theme_bw theme_rgbw theme_custom 
 #' @importFrom ggtern theme_latex Tlab Rlab Llab theme_showarrows 

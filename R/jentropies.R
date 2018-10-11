@@ -61,7 +61,7 @@ jentropies.data.frame <- function(X, Y, ...){
 #' 
 #' Given a contingency matrix, provide one row of entropy coordinates. 
 #' NOTE: the reference variable has to index the ROWS of the table, while the predicted
-#' variable indexes the columns, unlike, e.g. \code{\link[caret]{contingencyTable}}. 
+#' variable indexes the columns, unlike, e.g. \code{\link[caret]{confusionMatrix}}. 
 #' That is the entropies are obtained for the first two margins. If other margins are 
 #' needed you will need to reorder them.
 #' @param Nxy An n-contingency matrix where n > 2

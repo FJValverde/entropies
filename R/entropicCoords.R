@@ -5,7 +5,7 @@
 #' - with split=TRUE, generate independen coordinates for X and Y distributions.
 #' @param df A data frame containing values for the entropies related to a joint
 #' distribution or sets of them.
-#' @param split=FALSe A flag to select obtaining split coordinates.
+#' @param split=FALSE A flag to select obtaining split coordinates.
 #' @param purge=FALSE A flag to purge the entropies in \code{df}. If \code{purge=FALSE}
 #' the new entropies are added to the input entropies, otherwise they are purged.
 #' @param norm=TRUE A flag to request normalized coordinates. If norm=TRUE, the 
@@ -15,7 +15,7 @@
 #' @seealso \code{entropies}
 #' @export
 #' @examples 
-#' coords <- entropicCoords(entropies(UCBAdmissions))
+#' coords <- entropicCoords(entropicCoords(UCBAdmissions))
 #' # Note there is almost no information being transmitted
 #' unnormCoords <- entropicCoords(entropies(UCBAdmissions), norm=FALSE)
 #' all(apply(unnormCoords[8:10], 1, sum) == unnormCoords$Uxy)
@@ -59,34 +59,6 @@ entropicCoords <- function(df, split=FALSE, purge=FALSE, norm = TRUE){
             )
             
     }
-#     newDF <- with(df,
-#                   if (split){#split coordinates
-#                       data.frame(
-#                           Ux = Ux, Uy = Uy,
-#                           DeltaHx = (Ux - Hx)/normx,
-#                           DeltaHy = (Uy - Hy)/normy,
-#                           MIxyX = (Hx + Hy - Hxy)/normx, # May be different due to normalization
-#                           MIxyY = (Hx + Hy - Hxy)/normy, # May be different due to normalization
-#                           VIx = (Hxy - Hy)/normx,
-#                           VIy = (Hxy - Hx)/normy
-#                       )
-#                   } else{#not split
-#                       data.frame(
-#                           Uxy = Ux + Uy,
-#                           DeltaHxy = (Ux - Hx + Uy -Hy)/norm,
-#                           MIxy2 = 2*(Hx + Hy - Hxy)/norm,
-#                           VIxy = (Hxy + Hxy - Hx - Hy)/norm
-#                       )
-#                   }
-#     )
-#     # If necessary pass through everything but the original entropies
-#     if (purge){
-#         if (ncol(df) > 5)
-#             newDF <- cbind(newDF, df %>% select(-(one_of(simpleEntropies)))
-#         #otherwise, just return newDF as is.
-#     } else {
-#         newDF <- cbind(newDF, df)
-#     }
     return(newDF)
 }
 #coords <- entropicCoords(entropies(N, unit="log2"))
