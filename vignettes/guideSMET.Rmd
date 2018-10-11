@@ -172,6 +172,14 @@ ggsave(filename="annotated_multisplit_SMET.jpeg", plot=et)
 
 # Postscriptum
 
+More information about the evaluation of sources with the Source Multivariate Entropy Triangle can be found in 
+
+```{r echo=FALSE}
+library(bibtex)
+print(citation("entropies")['val:pel:17b'], style="text")
+```
+
+# Session information
 ```{r ps}
 sessionInfo()
 ```

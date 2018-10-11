@@ -2,9 +2,9 @@
 title: "Analysis of the performance of one classifier (caret::knn) on several datasets with the CBET"
 author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
 date: "July, 4th, 2018"
-output: html_document
+output: rmarkdown::html_vignette
 vignette: > 
-  %\VignetteIndexEntry{A first guide to use the CBET for evaluation a classifier on different datasets}
+  %\VignetteIndexEntry{A first guide to use the CBET for evaluating a classifier on different datasets}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

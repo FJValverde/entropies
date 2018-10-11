@@ -2,9 +2,7 @@
 title: "Analysis of Confusion Matrices"
 author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
 date: "June, 21st, 2018"
-output:
-  pdf_document: default
-  html_document: default
+output: rmarkdown::html_vignette
 vignette: > 
   %\VignetteIndexEntry{A first guide to use the CBET for confusion matrix evaluation}
   %\VignetteEngine{knitr::rmarkdown}

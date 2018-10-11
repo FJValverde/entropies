@@ -2,7 +2,9 @@
 title: "Comparing Discretizations"
 author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
 date: "9/7/2018"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 This almost-vignette tries to demonstrate the differences in source entropy calculation by using several distinct methods of discretization of any of a number of databases.

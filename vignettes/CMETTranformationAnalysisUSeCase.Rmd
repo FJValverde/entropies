@@ -2,9 +2,7 @@
 title: "Transformation Analysis with the CMET"
 author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
 date: "8/30/2017"
-output:
-  pdf_document: default
-  html_document: default
+output: rmarkdown::html_vignette
 vignette: > 
   %\VignetteIndexEntry{A guide to use the CMET for the analysis of data transformation as applied to PCA and ICA}
   %\VignetteEngine{knitr::rmarkdown}

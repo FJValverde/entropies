@@ -1,5 +1,6 @@
-#' A function to evaluate confusion matrices, and contingency tables. Provides also the EMA 
-#' and NIT over that provided by perplexities. 
+#' A function to evaluate confusion matrices and contingency tables. 
+#' 
+#' Provides also the EMA and NIT over that provided by perplexities. 
 #' 
 #' @param data Either a \code{\link[base]{table}} working as an n-way contingency 
 #' table or a \code{\link[caret]{confusionMatrix}}
