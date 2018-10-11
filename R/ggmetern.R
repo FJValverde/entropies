@@ -19,7 +19,9 @@
 #' @return A plot object in the ggplot2 class of plots ready to be plotted.
 #' @seealso \code{\link{ggtern}}, \code{\link{entropies}}, \code{\link{entropicCoordinates}}
 #' @export
-#' @importFrom ggtern ggtern theme theme_bw theme_rgbw theme_custom theme_latex Tlab Rlab Llab theme_showarrows theme_rotate geom_mask
+#' @importFrom ggtern ggtern theme theme_bw theme_rgbw theme_custom 
+#' @importFrom ggtern theme_latex Tlab Rlab Llab theme_showarrows 
+#' @importFrom ggtern theme_rotate geom_mask
 # @examples
 # data(UCBAdmissions)
 # experiments <- entropicCoords(entropies(UCBAdmissions)) # Non-split data
