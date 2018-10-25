@@ -17,7 +17,7 @@ This vignettes tries to present instances of features that have specific stochas
 ```{r , message=F, warning=F, environment}
 #library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
 #library(entropy)  # To work out the appropriate coordinates.
-library(dplyr)     # That infamous Mr. Wickham!
+library(dplyr)     # That famous Mr. Wickham!
 library(tidyr)     # Tidying tall & wide dataframes
 library(infotheo)  # The functionality provided by this has to be rerouted through entropies
 library(entropies) # This package

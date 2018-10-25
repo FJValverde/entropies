@@ -4,10 +4,15 @@
 \alias{sentropies}
 \title{Multivariate Source Entropy decomposition of a dataframe.}
 \usage{
-sentropies(data, ...)
+sentropies(data, type = "total", ...)
 }
 \arguments{
 \item{data}{The data being provided to the function.}
+
+\item{type}{The type of analysis being requested. Unles type=="dual" it will perform 
+a normal analysis providing total + dual total correlation. If "dual" is used, then
+only the dual total correlation will be provided. In this case, no individual split equations 
+will be output, only a single aggregate, and the names of the columns are changed accordingly.}
 
 \item{unit}{The logarithm to be used in working out the sentropies as per 
 \code{entropy}. Defaults to "log2".}

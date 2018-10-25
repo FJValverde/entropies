@@ -1,6 +1,6 @@
 ---
 title: "Use case for the Multivariate Source Entropy Triangle (SMET)"
-author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
+author: "Francisco J. Valverde-Albacete & Carmen Pelaez Moreno"
 date: "14 de diciembre de 2015"
 output: rmarkdown::html_vignette
 vignette: >
@@ -301,7 +301,7 @@ if (getPlot){
 }
 ```
 
-Since the database being analyzed is iris, recall that its class variable is name ´Species´. In this diagram we see:
+Since the database being analyzed is iris, recall that its class variable is name ??Species??. In this diagram we see:
 
 * how the information of Species is completely redundant, despite the fact that none of the individual features was individually redundant.
 

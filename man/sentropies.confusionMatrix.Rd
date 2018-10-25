@@ -4,7 +4,7 @@
 \alias{sentropies.confusionMatrix}
 \title{Entropy decomposition of a confusion table from caret}
 \usage{
-\method{sentropies}{confusionMatrix}(ct, ...)
+\method{sentropies}{confusionMatrix}(data, type = "total", ...)
 }
 \description{
 Given a contingency matrix, provide one row of entropy coordinates. 

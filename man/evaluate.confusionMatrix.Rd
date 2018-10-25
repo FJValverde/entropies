@@ -4,7 +4,7 @@
 \alias{evaluate.confusionMatrix}
 \title{A function to evaluate a confusion matrix}
 \usage{
-\method{evaluate}{confusionMatrix}(cm, ...)
+\method{evaluate}{confusionMatrix}(data, ...)
 }
 \arguments{
 \item{cm}{A confusion matrix as per \code{\link[caret]{confusionMatrix}}}

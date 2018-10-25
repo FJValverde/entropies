@@ -4,7 +4,7 @@
 \alias{evaluate.table}
 \title{A primitive to evaluate a contingency table}
 \usage{
-\method{evaluate}{table}(cm, ...)
+\method{evaluate}{table}(data, ...)
 }
 \arguments{
 \item{cm}{A contingency table as per \code{\link[base]{table}}}

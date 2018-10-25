@@ -4,7 +4,7 @@
 \alias{sentropies.table}
 \title{Entropy decomposition of a contingency matrix}
 \usage{
-\method{sentropies}{table}(Nxy, ...)
+\method{sentropies}{table}(data, type = "total", ...)
 }
 \arguments{
 \item{Nxy}{An n-contingency matrix where n > 2}

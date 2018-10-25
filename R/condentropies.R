@@ -19,7 +19,7 @@ condentropies <- function(X, Y, ...) UseMethod("condentropies")
 #'   in the original conditioned on the datatables Y, which are now the rows of the returned data.frame.
 #' @export
 #' @importFrom infotheo discretize condentropy
-#' @importFrom dplyr mutate
+#' @importFrom dplyr mutate %>% 
 condentropies.data.frame <- function(X, Y, ...){
     if (ncol(X) == 0 || nrow(X) == 0 ) 
         stop("Can only work with non-empty data.frames X!")

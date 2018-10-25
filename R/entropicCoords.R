@@ -13,6 +13,7 @@
 #' entropy triangle. 
 #' @return A data frame with the entropy points for 
 #' @seealso \code{entropies}
+#' @importFrom dplyr %>% one_of
 #' @export
 #' @examples 
 #' coords <- entropicCoords(entropicCoords(UCBAdmissions))

@@ -11,10 +11,8 @@
 #' @export
 # @example edf <- getDatasets()
 getDatasets <- function(){
-    # the inventory of databases you can access through this interface
-    #library(datasets)
     # TODO: import these datasets from the corresponding libraries
-    dsNames <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
+    dsName <- c("Ionosphere", "iris", "Glass", "Arthritis", "BreastCancer", "Sonar", "Wine") # 
     packName <- c("mlbench", "datasets", "mlbench", "vcd", "mlbench", "mlbench", "candisc")
     # The following are vectors, so that multilabel datasets are allowed!
     className <- c(c("Class"),c("Species"), c("Type"), c("Improved"), 
@@ -28,8 +26,8 @@ getDatasets <- function(){
     m <- sapply(dsNames, function(n){nrow(evalDataset(n))}) # no. of instances in the dataset
     n <- sapply(dsNames, function(n){ncol(evalDataset(n))}) - 1 - as.numeric(!is.nan(idNumber)) # no. of features in the dataset.
     datasets <- tibble(name=dsNames, 
-                       className, 
                        packName,
+                       className, 
                        idNumber=idNumber, 
                        K=as.integer(K), 
                        n=as.integer(n), 

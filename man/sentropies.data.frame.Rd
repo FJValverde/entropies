@@ -4,14 +4,9 @@
 \alias{sentropies.data.frame}
 \title{Multivariate source entropy decomposition of a data frame}
 \usage{
-\method{sentropies}{data.frame}(df, type = "total", ...)
+\method{sentropies}{data.frame}(datf, type = "total", ...)
 }
 \arguments{
-\item{type}{The type of analysis being requested. Unles type=="dual" it will perform 
-a normal analysis providing total + dual total correlation. If "dual" is used, then
-only the dual total correlation will be provided. In this case, no individual split equations 
-will be output, only a single aggregate, and the names of the columns are changed accordingly.}
-
 \item{data}{The data being provided to the function.}
 }
 \value{

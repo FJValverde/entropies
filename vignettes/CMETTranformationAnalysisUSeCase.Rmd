@@ -20,10 +20,10 @@ Take into consideration that this is NOT an investigation of whether PCA is ''be
 ## Environment construction
 
 ```{r, message=F, warning=F, environment}
-library(tidyverse) # That (in)famous Mr. Wickham!;)
+library(tidyverse) # That nofamous Mr. Wickham!;)
 library(RColorBrewer) # Facilities for palettes
 library(entropies) # This package. Depends heavily on "entropy", "infotheory".
-library(ggtern)    # Ternary diagrams on ggplot
+#library(ggtern)    # Ternary diagrams on ggplot, already attached
 library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
 library(candisc)   # Wine dataset
@@ -196,7 +196,8 @@ Next we see how the information from the original data is transferred to the pri
 ```{r PCA vis in CMET}
 for( i in (1:ncols)){
     etdf <- rbind(etdf,
-                  cbind(data=paste0("1_",i), transform="PCA",
+                  cbind(data=paste0("1_",i), 
+                        transform="PCA",
                         jentropies(dsDiscretized,
                                    as.tibble(dsPcaDiscretized[ ,1:i]))
                   )

@@ -14,7 +14,7 @@ This vignette aims at presenting the features of the Channel Binary Entropy Tria
 # Environment construction
 
 ```{r, message=F, warning=F, environment}
-library(tidyverse) # That (in)famous Mr. Wickham!
+library(tidyverse) # That famous Mr. Wickham!
 library(caret)    # To build the classifiers.
 library(e1071)
 library(mlbench)  # Many databases for ML tasks

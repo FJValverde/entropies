@@ -10,6 +10,7 @@
 evaluate <- function(data, ...) UseMethod("evaluate")
 
 #' A function to evaluate the entropic coordinates of a distribution
+#' @importFrom dplyr %>% 
 #' @export
 evaluate.data.frame <- function(data, ...){
     if(hasCmetEntropicCoords(data)){
@@ -36,7 +37,7 @@ evaluate.data.frame <- function(data, ...){
 #'  and \code{NIT} rate as explained in \cite{val:pel:14a}.
 #' @importFrom caret confusionMatrix
 #' @export
-evaluate.confusionMatrix <- function(cm, ...){
+evaluate.confusionMatrix <- function(data, ...){
     #require(caret) # for class "confusionMatrix" # Do NOT use require in packages!
     # if (class(cm) != "confusionMatrix")
     #     stop("evaluate.confusionMatrix: not a confusion matrix")
@@ -53,7 +54,7 @@ evaluate.confusionMatrix <- function(cm, ...){
     #              )
     # )
     #return(perplexities(data) %>% mutate(EMA=1/kx_y, NIT=muxy/k))
-    return(evaluate(jentropies(cm)))
+    return(evaluate(jentropies(data)))
 }
 
 #' A primitive to evaluate a contingency table
@@ -67,11 +68,11 @@ evaluate.confusionMatrix <- function(cm, ...){
 ##' @param split=FALSE Whether to evaluat the split entropies or not.
 #' @examples evaluate.table(UCBAdmissions) # from package datasets
 #' @export
-evaluate.table <- function(cm, ...){
+evaluate.table <- function(data, ...){
     # #data <- as.table(cm) # Is this necessary after dispatch?
     # dataEntropies <- jentropies(data,...)
     # dataPerp <- perplexities(dataEntropies)
-    return(evaluate(jentropies(cm)))
+    return(evaluate(jentropies(data)))
     # return(perplexities(data) %>% mutate(EMA=1/kx_y, NIT=muxy/k))
     # return(cbind(dataEntropies, 
     #              dataPerp, 
