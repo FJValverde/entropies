@@ -67,7 +67,7 @@ if (getPlot){# For papers, it helps to have the table in latex.
 dsName <- "Arthritis"#It has non-numeric factors.
 # dsName <- "Sonar"
 dsRecord <-  filter(datasets, name == dsName)
-ds <- evalDataset(dsName) 
+ds <- loadDataset(dsRecord$name,dsRecord$packName) 
 ```
 We'll use the  `r dsName` data throughout this vignette.
 

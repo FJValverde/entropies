@@ -70,7 +70,7 @@ dsName <- "iris"
 # dsName <- "Sonar"
 # Suggestions: choose: "iris", "BreastCancer" or "Glass" to replicate Entropy 2018 paper.
 dsRecord <-  filter(datasets, name == dsName)
-ds <- evalDataset(dsName) 
+ds <- loadDataset(dsRecord$name,dsRecord$packName) 
 
 #id columns, if existent in dsRecord$idNumber
 # log transform of everything but the class and any id if existant. 

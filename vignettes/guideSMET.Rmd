@@ -1,6 +1,6 @@
 ---
 title: "SMET Reading aid"
-author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
+author: "Francisco J. Valverde-Albacete & Carmen Pelaez-Moreno"
 date: "May, 10th, 2016"
 output: rmarkdown::html_vignette
 vignette: >

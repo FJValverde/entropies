@@ -98,7 +98,7 @@ for(i in 1:nrow(datasets)){
     edf <- rbind(
         edf,
         getDatasetSourceEntropies(
-            evalDataset(dsName), 
+            loadDataset(dsName,dsRecord$packName) , 
             dsName, 
             className = dsRecord$className,
             idNumber= dsRecord$idNumber,

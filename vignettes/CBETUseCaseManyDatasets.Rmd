@@ -75,7 +75,7 @@ results <- data.frame()
 for (dsName in dsNames){
     #dsName <- "Glass"
     dsRecord <-  filter(datasets, name == dsName)
-    ds <- evalDataset(dsName) 
+    ds <- loadDataset(dsRecord$name,dsRecord$packName)
     
     #id columns, if existent in dsRecord$idNumber
     if (!is.na(dsRecord$idNumber)){
