@@ -1,0 +1,9 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^README\.Rmd$
+^README-.*\.png$
+^altvignettes$
+^inst/CITATION.R$
+^data-raw$
+^obsolete$
+

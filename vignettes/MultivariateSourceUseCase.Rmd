@@ -67,11 +67,10 @@ if (getPlot)
 Firts we bring in an inventory of databases to be explored. In a "real" application this would be the data to be explored. 
 
 ```{r dataset processing}
-datasets <- getDatasets()
-datasets
+data(datasets)
 if(interactive()){#latex-ing the table for publications
     library(xtable)
-    ds4latexing <- datasets %>% select(-className, -idNumber)
+    ds4latexing <- datasets %>% select(name, K, n, m) 
     row.names(ds4latexing) <- NULL
     names(ds4latexing) <- c("Dataset Name", 
                             "class card.", 

@@ -15,15 +15,8 @@ This vignettes tries to present instances of features that have specific stochas
 # Environment construction
 
 ```{r , message=F, warning=F, environment}
-#library(ggtern)   # Excellent package for ternary diagrams in the gg tradition
-#library(entropy)  # To work out the appropriate coordinates.
 library(dplyr)     # That famous Mr. Wickham!
-library(tidyr)     # Tidying tall & wide dataframes
-library(infotheo)  # The functionality provided by this has to be rerouted through entropies
 library(entropies) # This package
-library(ggtern)    # Ternary diagrams on ggplot
-library(vcd)       # Categorical benchmarks
-library(mlbench)   # ml benchmarkss
 #knitr::opts_chunk$set(dev = 'pdf') # plots in pdf, better for publication
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)

@@ -49,8 +49,7 @@ splitShapesForTypes <- c("X"=4, "Y"=1, "XY"=20) #To draw split diagrams
 ## Datasets available for entropy analysis in this package
 
 ```{r data-munging}
-datasets <- getDatasets()
-datasets
+data(datasets)
 if (getPlot){# For papers, it helps to have the table in latex.
     library(xtable)
     print.xtable(xtable(dplyr::select(datasets, name, K, n, m)))

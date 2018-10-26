@@ -50,8 +50,7 @@ factor.as.numeric <- function(f){
 ## Datasets available for entropy analysis in this package
 
 ```{r generic dataset initialization}
-datasets <- getDatasets()
-datasets
+data(datasets)
 if (getPlot){# For papers, it helps to have the table in latex.
     library(xtable)
     print.xtable(xtable(dplyr::select(datasets, name, K, n, m)))
