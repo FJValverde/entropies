@@ -1,0 +1,504 @@
+---
+title: "An example Analysis of Stacked Autoencoder Training"
+author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
+date: "11/28/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This vignette tries to reproduce in Keras the Stacked Autoencoder of 
+([Yu and Principe, 2018](https://arxiv.org/abs/1804.00057))
+
+## Installation
+
+```{r general-libraries, echo=FALSE}
+library(tidyverse)
+library(entropies)
+library(tensorflow)
+install_tensorflow()
+```
+
+```{r pressure, echo=FALSE}
+library(keras)
+#install_keras()#this should only be done once, seemingly!
+GPU <- TRUE
+GPU <- FALSE
+#check this to enable GPU
+use_session_with_seed(27, 
+                      disable_gpu = !GPU,
+                      disable_parallel_cpu = GPU
+                      )
+```
+
+```{r load-data}
+#library(ggplot2)#in tidyverse
+library(reshape2)
+
+mnist <- dataset_mnist()#Accesses aws!
+
+# try plotting the pixel intensities for a random sample of 32 images, adapted from 
+#https://tensorflow.rstudio.com/tfestimators/articles/examples/mnist.html
+n <- 36
+indices <- sample(nrow(mnist$train$x), size = n)
+imageData <- mnist$train$x[indices, ,]
+#original: #data <- array(mnist$train$x[indices, ,], dim = c(n, 28, 28))
+melted <- melt(imageData, varnames = c("image", "x", "y"), value.name = "intensity")
+ggplot(melted, aes(x = y, y = x, fill = intensity)) +
+#ggplot(melted, aes(x = x, y = y, fill = intensity)) +
+  geom_tile() +
+  scale_fill_continuous(name = "Pixel Intensity") +
+  scale_y_reverse() +
+  facet_wrap(~ image, nrow = sqrt(n), ncol = sqrt(n)) +
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    panel.spacing = unit(0, "lines"),
+    axis.text = element_blank(),
+    axis.ticks = element_blank()
+  ) +
+  labs(
+    title = "MNIST Image Data",
+    subtitle = "Visualization of a sample of images contained in MNIST data set.",
+    x = NULL,
+    y = NULL
+  )
+```
+
+```{r data-exploration}
+x_train <- mnist$train$x
+y_train <- mnist$train$y
+x_test <- mnist$test$x
+y_test <- mnist$test$y
+# reshape
+x_train <- array_reshape(x_train, c(nrow(x_train), 28*28))
+x_test <- array_reshape(x_test, c(nrow(x_test), 28*28))
+# consult entropies
+```
+
+# The source analysis
+
+This analysis is very costly in terms of entropy, due to the `r dimInput` input variables.
+
+```{r source-entropy-analysis}
+dsX <- infotheo::discretize(x_test, disc="equalwidth")
+if (!exists("dataEntropies"))#only when we do not have this value
+    dataEntropies <- sentropies(dsX)#Takes very long to work out
+
+dataEntropies %>% filter(name=="ALL")#to see the overall entropy
+printable <- dataEntropies
+if (any((dataEntropies$H_Uxi == 0))){
+    dataEntropies %>% filter(H_Uxi == 0)
+    print(sprintf(
+    "There are %d zero-entropy variables. Eliminating for smet...", 
+    sum(as.numeric(dataEntropies$H_Uxi == 0))#Num of 0 entropy vars
+    ))
+    printable <- dataEntropies %>% filter(H_Uxi != 0)
+}
+#some variables are totally predictable
+printable <- printable %>% filter(name != "ALL")
+#draw the source triangle
+smetX <- ggmetern( printable)  + 
+        stat_density_tern(geom='polygon',
+                        aes(fill=..level..),
+                        #base=base,  ###NB Base Specification
+                        colour='grey50') + 
+        scale_fill_gradient(low='green',high='red')  +
+        geom_point(size=1)
+smetX
+summary(printable$DeltaH_Pxi)
+printable %>% filter(DeltaH_Pxi/H_Uxi > 0.9)
+#printable %>% filter(!is.finite(H_Uxi) || !is.finite(M_Pxi))
+```
+
+So in essence:
+
+* The features are really redundant
+* Many of them do not really have any information
+* The features are really far from uniformity
+
+
+# Exploring a Stacked Autoencoder with Entropies
+
+Try to transform the observation data to continuous form.
+
+```{r data-massaging}
+# rescale
+x_train <- x_train / 255
+x_test <- x_test / 255
+y_train <- to_categorical(y_train, 10)
+y_test <- to_categorical(y_test, 10)
+```
+
+## Defining the model
+
+From [Yu and Principe, 2018]:
+
+`The topology of SAEs on MNIST and
+Fashion-MNIST is fixed to be “784-1000-500-250-K-250-500-1000-784”
+* The first layer is the actual 28 x 28 image linearized.
+* The K represents a variable number of neurons designed to enforce the information bottleneck with K = 2, 11, 15 and 32 
+
+(N.b.: Although it might be 26, following the illustration 6 in the paper).
+
+Define the actual model by creating layers for all of those dimensions: 
+
+```{r experiment controls}
+# The dimensions of the layers
+dimInput <- ncol(x_train)
+dims <- c(1000,500,250) #and backwards
+# The dimensions of the bottlenecks
+bottleneckDims <- c(4)#ceil log(num_classes) 
+#bottleneckDims <- c(2,4) # tiny test: c(4)#ceil log(num_classes) 
+#bottleneckDims <- c(2,4,11,15,32)#Yu & Principe's + 4
+#bottleneckDims <- 1:10 # Quick exploration of firts orders
+#
+# The training control, e.g. see keras::fit
+epochs <- 2 #10
+batch_size <- 100
+shuffle <- TRUE
+# Preparing the entropic evaluation
+dsX <- infotheo::discretize(x_test, disc="equalwidth")
+```
+
+## Training observation process
+
+Create the names of the layers in order: these will create a kind of forward references pointing at what to observe in the model. 
+
+```{r}
+# The names of the layers come from Yu & Principe, 2018
+layerNames <- c("X",paste0("T",1:(length(dims))))
+layerNames <- c(
+    layerNames, "Z", sprintf("%sprime", rev(layerNames))
+    )
+```
+
+Create a callback to work out entropies while training. 
+
+##### FIRST ATTEMPT THROUGH Tensors and their on the fly evaluation
+
+```{r callback-building}
+library(R6)
+
+#Set the coindexed pairs of layers that have to be visited
+obsPairs <- tibble(
+    expmnt = c("i-to-o", #input to output
+                    "i-to-z"),#input to middle rep.
+    iLayer = c(1,1), #input layer
+    oLayer = c(9,5) #output layer
+    )
+
+watchEntropies <- R6Class("watchEntropies",
+    inherit = KerasCallback,
+    
+    public = list(
+        
+        ents = data.frame( 
+            row.names=c("batch", "expmnt", 
+                        "H_U", "H_P", "DeltaH_P", "M_P", "VI_P")),
+        #numBatch = 0, # To record which batch
+        #numEpoch = numBatch %/% batch_size
+        
+        # on_train_begin = function(logs=list()){
+        # },
+        
+        # this has to work out the entropies and store them
+        # jentropies(
+        #     SAE$layers[[obsPairs$iLayer[i]]]$input[,],
+        #     SAE$layers[[obsPairs$oLayer[i]]]$output
+        # )
+        #     get_output_at(
+        #         SAE,
+        #         node_index = obsPairs$iLayer[i])[,],
+        #     get_output_at(
+        #         SAE, 
+        #         node_index = obsPairs$oLayer[i])
+        # ),
+        on_batch_end = function(batch, logs=list()){
+            for (i in 1:nrow(obsPairs)){
+                self$ents <- rbind(
+                    self$ents, 
+                    cbind(
+                        batch, 
+                        expmnt=obsPairs$expmnt[i],
+                        jentropies(
+                 k_eval(self$layers[[obsPairs$iLayer[i]]]$input),
+                 k_eval(self$layers[[obsPairs$oLayer[i]]]$output)
+                        )
+                    )
+                    # data.frame(batch, 
+                    #            expmnt=obsPairs$expmnt[i],
+                    #            H_U = log(4), H_P = log(4),
+                    #         DeltaH_P = 0, M_P = log(4), VI_P = 0)
+                )
+            }
+        }
+    )
+)
+#instantiate then insert into the fitting
+callback_entropies <- watchEntropies$new() 
+#To be used as in the example below (last line of 'fit')
+        # SAE %>% fit(
+        #     x=x_train, 
+        #     y=x_train, # same target as input, since this is an AE
+        #     epochs=epochs, #60, #similar to Principe et al. settings
+        #     batch_size = batch_size,
+        #     shuffle,
+        #     validation_data = list(x_test, x_test), 
+        #     callbacks= list(callback_entropies)
+        # )
+## Visualize the data as: 
+# trainEnts <- callback_entropies$ents
+## Add the epoch as:
+# trainEnts <- trainEnts %>% 
+#     mutate(epoch=(batch %/% batch_size) +1, 
+#            batch=batch %% batch_size)
+```
+
+##### SECOND  ATTEMPT THROUGH metric tensors
+
+The trick is to add whatever output tensors you want to see to model.metrics_tensors after calling model.compile():
+
+```{r callback-building}
+library(R6)
+
+#from https://github.com/keras-team/keras/issues/3469
+
+#Set the coindexed pairs of layers that have to be visited
+obsPairs <- tibble(
+    expmnt = c("i-to-o", #input to output
+                    "i-to-z"),#input to middle rep.
+    iLayer = c(1,1), #input layer
+    oLayer = c(9,5) #output layer
+    )
+# #... below, after model compile, do
+# SAE$metrics_tensors <- c(
+#     SAE$metrics_Tensors,
+#     SAE$layers[[obsPairs$iLayer[1,]]]$input,
+#     SAE$layers[[obsPairs$oLayer[1]]]$output
+# #    SAE$layers[[obsPairs$oLayer[1]]]$output,
+# )
+    
+watchEntropies <- R6Class("watchEntropies",
+    inherit = KerasCallback,
+    
+    public = list(
+        
+        ents = data.frame( 
+            row.names=c("batch", "expmnt", 
+                        "H_U", "H_P", "DeltaH_P", "M_P", "VI_P")),
+        #numBatch = 0, # To record which batch
+        #numEpoch = numBatch %/% batch_size
+        
+        # on_train_begin = function(logs=list()){
+        # },
+        
+        # this has to work out the entropies and store them
+        # jentropies(
+        #     SAE$layers[[obsPairs$iLayer[i]]]$input[,],
+        #     SAE$layers[[obsPairs$oLayer[i]]]$output
+        # )
+        #     get_output_at(
+        #         SAE,
+        #         node_index = obsPairs$iLayer[i])[,],
+        #     get_output_at(
+        #         SAE, 
+        #         node_index = obsPairs$oLayer[i])
+        # ),
+        on_batch_end = function(batch, logs=list()){
+            for (i in 1:nrow(obsPairs)){
+                self$ents <- rbind(
+                    self$ents, 
+                    cbind(
+                        batch, 
+                        expmnt=obsPairs$expmnt[i],
+                        jentropies(
+                            self$metrics_tensors[[2]],
+                            self$metrics_tensors[[3]]
+                 # k_eval(self$layers[[obsPairs$iLayer[i]]]$input),
+                 # k_eval(self$layers[[obsPairs$oLayer[i]]]$output)
+                        )
+                    )
+                    # data.frame(batch, 
+                    #            expmnt=obsPairs$expmnt[i],
+                    #            H_U = log(4), H_P = log(4),
+                    #         DeltaH_P = 0, M_P = log(4), VI_P = 0)
+                )
+            }
+        }
+    )
+)
+#instantiate then insert into the fitting
+callback_entropies <- watchEntropies$new() 
+#To be used as in the example below (last line of 'fit')
+        # SAE %>% fit(
+        #     x=x_train, 
+        #     y=x_train, # same target as input, since this is an AE
+        #     epochs=epochs, #60, #similar to Principe et al. settings
+        #     batch_size = batch_size,
+        #     shuffle,
+        #     validation_data = list(x_test, x_test), 
+        #     callbacks= list(callback_entropies)
+        # )
+## Visualize the data as: 
+# trainEnts <- callback_entropies$ents
+## Add the epoch as:
+# trainEnts <- trainEnts %>% 
+#     mutate(epoch=(batch %/% batch_size) +1, 
+#            batch=batch %% batch_size)
+```
+
+## The Stacked Autoencoder itself 
+
+A general keras architecture allows for more symmetry in the model:
+
+```{r SAE-functional}
+numLayers <- length(layerNames)
+# Make room for som training and testing results
+numBottleneckDims <- length(bottleneckDims)
+historyList <- vector('list', numBottleneckDims)#keeps the training
+metricList <- vector('list', numBottleneckDims)#keeps the testing metrics
+saeEntropies <- tibble()
+#First create the layers in a list then build the model with the list
+for(i in 1:numBottleneckDims){# index into bottleneck dimensions
+    k <- bottleneckDims[i]
+    # Dimensions coindexed with layerNames
+    layerDims <- c(dimInput, dims)
+    layerDims <- c(layerDims, k, rev(layerDims))
+    logName <- sprintf("ASE_%s_log", paste(layerDims, collapse="_"))
+    # create and populate list of layers for this BNdim
+    layerList <- vector('list', numLayers)
+    layerList[[1]] <- #start the model
+        layer_input(
+            name = layerNames[[1]],
+            shape = dimInput
+        )
+    #to go over intermediate layers
+    for(j in 2:numLayers){
+        layerList[[j]] <- #create and store layer
+            layer_dense( object=layerList[[j-1]],
+                name = layerNames[[j]], 
+                units = layerDims[j], 
+                #activation = 'relu'
+                activation="sigmoid"
+                )
+     }
+
+    # Build the model from input to output
+    SAE <- keras_model(layerList[[1]], layerList[[numLayers]])
+    summary(SAE)
+    # Build the model from input to middle layer
+    SAEtransform <- keras_model(layerList[[1]], 
+                               layerList[[ceiling(numLayers/2)]])
+    
+    # Compile the model, following Yu & Principe's recipe
+    SAE %>% compile(
+        #optimizer='adadelta',#sgd
+        optimize="sgd",#stochastic gradient descent
+        #loss='binary_crossentropy'
+        loss='mse',  # mean square error
+        metrics=list("mae") # mean absolute error
+    )
+    #... below, after model compile, do
+    SAE$metrics_tensors <- c(
+        SAE$metrics_tensors,
+        #SAE$input,
+        x_train,
+        SAE$output
+        # SAE$layers[[obsPairs$iLayer[1]]]$output,
+        # SAE$layers[[obsPairs$oLayer[1]]]$output
+        #    SAE$layers[[obsPairs$oLayer[1]]]$output,
+    )
+    
+    # Training
+    historyList[[i]] <- 
+        SAE %>% fit(
+            x=x_train, 
+            y=x_train, # same target as input, since this is an AE
+            epochs=epochs, #60, #similar to Principe et al. settings
+            batch_size = batch_size,
+            shuffle,
+            validation_data = list(x_test, x_test), 
+            callbacks= list(callback_entropies)
+        )
+    #The history object returned by fit() includes loss and accuracy 
+    #metrics which we can plot:
+    plot(historyList[[i]])
+    
+    #Evaluate the model performance on the training metric:
+    metricList[[i]] <- SAE %>% evaluate(x_test, x_test)
+    print(metricList[[i]])
+
+    # Generate predictions on test data
+    x_test_prime <- SAE %>% predict(x_test)
+    z_test <- SAEtransform %>% predict(x_test)
+    
+    # Working out the entropies
+    dsXprime <- infotheo::discretize(x_test_prime, disc="equalwidth")
+    saeEntropies <- rbind(
+        saeEntropies,
+        cbind(
+            bnDim = k,
+            endpoint = layerNames[numLayers],
+           jentropies(dsX,dsXprime)#pretty quick!,
+        )
+    )
+    dsZ <- infotheo::discretize(z_test, disc="equalwidth")
+    saeEntropies <- rbind(
+        saeEntropies,
+        cbind(
+            bnDim = k,
+            endpoint = "Z",
+           jentropies(dsX,dsZ)#pretty quick!,
+        )
+    )
+}
+```
+
+Now we visualize the efficiency of changing the dimension of the bottleneck in terms of the entropy transmitted to the final stage.
+
+```{r assess-info-xmission}
+fancy <- TRUE
+#fancy <- FALSE
+totalEntropies <- saeEntropies %>% filter(endpoint== "Xprime", type=="Y")
+cmetXprime <- ggmetern(totalEntropies,fancy) +
+    geom_point(aes(color=bnDim, shape=type), size=3)
+cmetXprime
+```
+
+```{r asses-info-encoding}
+encodingEntropies <- saeEntropies %>% filter(endpoint== "Z", type=="Y")
+cmetZ <- ggmetern(encodingEntropies,fancy) +
+    geom_point(aes(color=bnDim, shape=type), size=3)
+cmetZ
+# The normalized entropies seem to be worth plotting
+encodingEntropies <- encodingEntropies %>% 
+    mutate(normM_P = encodingEntropies$M_P/encodingEntropies$H_U)
+ggplot(encodingEntropies, aes(x=bottleneckDims, y=H_U)) + 
+    geom_line(color="blue") + geom_point(color="blue") +
+    scale_x_continuous(breaks=bottleneckDims) +
+    geom_line(aes(x=bottleneckDims, y=M_P)) + 
+    geom_point(aes(x=bottleneckDims, y=M_P))
+```
+
+```{r visualize-metrics}
+metricsDf <- cbind(
+        bn =  bottleneckDims,
+        do.call(rbind.data.frame,metricList)
+)
+```
+
+
+```{r}
+## Visualize the data as: 
+trainEnts <- callback_entropies$ents
+## Add the epoch as:
+trainEnts <- trainEnts %>%
+    mutate(epoch=(batch %/% batch_size) +1,
+           batch=batch %% batch_size)
+
+```
+
+

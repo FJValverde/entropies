@@ -71,9 +71,9 @@ jentropies.data.frame <- function(X, Y, ...){
 ## @example library(datasets)
 ## @example jentropies(datasets::UCBAdmissions, unit="log10") # Entropies in dB
 ## @example jentropies(datasets::Titanic) # Entropies in bits
-jentropies.table <- function(Nxy, ...){
+jentropies.table <- function(X, ...){
     # 0. Parameter checking
-    #Nxy <- as.table(Nxy) # is this necessary? Can it be called without this?
+    Nxy <- as.table(X) # is this necessary? Can it be called without this?
     dims <- dim(Nxy)
     if (length(dims) < 2)
         stop("Cannot process joint entropies for tables with less than 2 dimensions.")

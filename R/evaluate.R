@@ -38,22 +38,6 @@ evaluate.data.frame <- function(data, ...){
 #' @importFrom caret confusionMatrix
 #' @export
 evaluate.confusionMatrix <- function(data, ...){
-    #require(caret) # for class "confusionMatrix" # Do NOT use require in packages!
-    # if (class(cm) != "confusionMatrix")
-    #     stop("evaluate.confusionMatrix: not a confusion matrix")
-    #vars <- list(...) # in case we have to split
-    #cmEntropies <- entropies(cm, vars)
-    #FVA: obsolete cmEntropicCoords <- entropicCoords(entropies(cm), ...)
-    #cmEntropicCoordds <- jentropies2d.table(cm, ...)
-    #cmPerplexities <- perplexities(cmEntropicCoords)
-    # return(cbind(data.frame(as.list(cm$overall)),
-    #              cmEntropicCoords, 
-    #              cmPerplexities,
-    #              EMA = 1/cmPerplexities$kx_y, 
-    #              NIT = cmPerplexities$muxy/cmPerplexities$k
-    #              )
-    # )
-    #return(perplexities(data) %>% mutate(EMA=1/kx_y, NIT=muxy/k))
     return(evaluate(jentropies(data)))
 }
 

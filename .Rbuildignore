@@ -6,4 +6,7 @@
 ^inst/CITATION.R$
 ^data-raw$
 ^obsolete$
+^inst/doc$
+^scripts$
+^test$
 

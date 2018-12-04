@@ -50,7 +50,6 @@ perplexities.data.frame<- function(data, ...){
 #' @examples perplexities(UCBAdmissions)
 #' @export
 perplexities.table <- function(data, ...){
-    #data <- as.table(data) #Is this needed when it has been dispatched already?
     return(perplexities(jentropies(data, ...), ...))
 }
 
@@ -62,29 +61,10 @@ perplexities.table <- function(data, ...){
 #' @importFrom caret confusionMatrix
 #' @export
 perplexities.confusionMatrix <- function(data, ...){
-    #require(caret) # For the confusionMatrix class. 
-    #e <- entropies(data) # Work out the entropies and from there, work out the perplexities
     return(perplexities(jentropies(data, ...), ...))
 }
 
 
-# #' The default form to obtain the perplexities from some data.
-# #' 
-# #' @description Given a data.frame with certain variables related to the entropies 
-# #' of a joint distribution, specifically, "Uxy", "DeltaHxy", "MIxy2", "VIxy"   
-# #' @inheritParams perplexities
-# #' @export
-# perplexities.default <- function(data, ...){
-#     require(dplyr)
-#     data <- as.data.frame(data)
-#     if (!all(derivedEntropies %in% colnames(data)))
-#         stop("Not a valid entropic description of data")
-#     MIxy <- MIxy2/2
-#     newData <- with(data,
-#         data_frame(nx=2^Hx, my=2^Hy, gMIxy = 2^MIxy, )
-#         )
-#     return(data)
-# }
 # FROM THE ORIGINAL MATLAB DEFINITION
 # [H_Pxy, H_Px,H_Py, EMI_Pxy]=entropies(Pxy);
 # n_Px = 2.^(H_Px);

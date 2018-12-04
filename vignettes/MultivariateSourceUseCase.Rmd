@@ -184,7 +184,7 @@ if (getPlot){
     ggsave("aggregated_without_label.jpeg", plot=aggregateSMET)
 }
 ```
-We can see tha.
+We can see that:
 
 * Arthritis and, to a lesser extent  Iris and Breastcancer are less redundant than expected. That is, there are many features with irredundant information (with respect to their peers). Later processing stages have to worry about all features, in general. 
 

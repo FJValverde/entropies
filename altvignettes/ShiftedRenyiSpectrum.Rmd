@@ -17,7 +17,7 @@ forPrinting <- FALSE
 ```{r}
 library(tidyverse)
 library(entropies)
-library(latex2exp)
+library(latex2exp)#Adding latex expressions to plots
 ```
 
 
@@ -33,7 +33,7 @@ dist <- as.data.frame.table(UCBAdmissions) %>%
 Working out the entropies and equivalent mass functions...
 
 ```{r pressure, echo=FALSE}
-orders <- c(-10,-2,2,10)
+#orders <- c(-10,-2,2,10)
 orders <- 2^(1:5)
 orders <- c(-orders,orders)
 # First we work in a positive measure, non probabilistic...
@@ -53,7 +53,7 @@ ipf <- epf^resRenyi2$orders
 # Put together into a data.frame for easier indexing and plotting
 thisData <- tibble(orders=resRenyi$orders, 
                sentMass=resRenyi$entropies,
-               emf,
+               emf,#equivalent mass function
                sentProbs=resRenyi2$entropies,
                epf,
                ipf)
@@ -72,8 +72,10 @@ p <- ggplot(fData, aes(x=orders, y=fData$sentProbs)) +
     ylab("entropy") + xlab("Rényi order, r") +
     geom_line() + geom_point()
 #Adding annotations for the asymptotes
-lAsymp <- TeX("$\\tilde{H}_{\\infty}(P_X)$", output="character")#plot(lAsymp)
-hAsymp <- TeX("$\\tilde{H}_{-\\infty}(P_X)$", output="character")#plot(lAsymp)
+lAsymp <- TeX("$\\tilde{H}_{\\infty}(P_X)$",
+              output="character")#plot(lAsymp)
+hAsymp <- TeX("$\\tilde{H}_{-\\infty}(P_X)$",
+              output="character")#plot(lAsymp)
 arrowAsymp <- arrow(length=unit(.3,"cm"))
 p <- p + geom_hline(yintercept=iData$sentProbs,
                    linetype="dashed",
@@ -105,7 +107,8 @@ p <- p + #geom_vline(xintercept=0) +
                  alpha=0.1, 
                  arrow = arrow(length = unit(0.03, "npc"))
                  ) +
-    geom_point(data=oriEntropies,aes(x=order, y=hf), size=3, shape=1)
+    geom_point(data=oriEntropies,
+               aes(x=order, y=hf), size=3, shape=1)
 p
 if (forPrinting){
     dev.off()#Necessary to do the textual plot.
@@ -173,7 +176,21 @@ ip <- ggplot(lowData, aes(x=orders, y=ipf)) +
 ip
 if (forPrinting){
     dev.off()#Necessary to do the textual plot.
-    ggsave("RenyiEquivalentProbFunctionExample.jpeg", plot=ip)
+    ggsave("RenyiInformationPotentialExample.jpeg", plot=ip)
 }
 ```
 
+# Postscriptum
+
+More information about shifting the Renyi entropy can be found in 
+
+```{r echo=FALSE}
+library(bibtex)
+print(citation("entropies")['val:pel:14a'])
+```
+
+# Session information
+
+```{r}
+sessionInfo()
+```

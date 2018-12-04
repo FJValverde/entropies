@@ -15,20 +15,11 @@
 #' @seealso \code{entropies}
 #' @importFrom dplyr %>% one_of
 #' @export
-#' @examples 
-#' coords <- entropicCoords(entropicCoords(UCBAdmissions))
-#' # Note there is almost no information being transmitted
-#' unnormCoords <- entropicCoords(entropies(UCBAdmissions), norm=FALSE)
-#' all(apply(unnormCoords[8:10], 1, sum) == unnormCoords$Uxy)
-#' entropicCoords(entropies(UCBAdmissions), purge=TRUE)
-#' # To obtain the split entropies (In this case the normalization makes no sense)
-#' entropicCoords(entropies(UCBAdmissions), purge=TRUE, split=TRUE)
 entropicCoords <- function(df, split=FALSE, purge=FALSE, norm = TRUE){
     # 0. signature checking for df. 
     if (!hasSimpleEntropies(df))
         stop("Cannot work out entropic coordinates: some basic entropies are missing")
     # 1. real operation
-    require(dplyr)
     if (norm){
         if (split){
             normx <- df$Ux

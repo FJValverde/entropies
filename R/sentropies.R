@@ -3,20 +3,20 @@
 #' Returns several different flavours of sentropies depending on the structure 
 #' the data is provided to the function. There are specialized versions for
 #' (contingency) tables, confusion matrices and data frames.
-#' @param data The data being provided to the function. 
+#' @param dat The data being provided to the function. 
 #' @param type The type of analysis being requested. Unles type=="dual" it will perform 
 #' a normal analysis providing total + dual total correlation. If "dual" is used, then
 #' only the dual total correlation will be provided. In this case, no individual split equations 
 #' will be output, only a single aggregate, and the names of the columns are changed accordingly. 
 #' @param unit The logarithm to be used in working out the sentropies as per 
 #' \code{entropy}. Defaults to "log2".
-#' @return  A dataframe with the sentropies of the marginals. If type="dual" then \code{hasAggregateSmetCoords(sentropies(data, type="dual"))}, 
-#' otherwise, \code{hasSplitSmetCoords(sentropies(data))}.
+#' @return  A dataframe with the sentropies of the marginals. If type="dual" then \code{hasAggregateSmetCoords(sentropies(dat, type="dual"))}, 
+#' otherwise, \code{hasSplitSmetCoords(sentropies(dat))}.
 #' @details Unless specified by the user explicitly, this function uses base 2 
 #'   logarithms for the sentropies. 
 #' @seealso \code{\link[entropy]{entropy}, \link[infotheo]{entropy}}
 #' @export
-sentropies <- function(data, type="total", ...) UseMethod("sentropies")
+sentropies <- function(dat, type="total", ...) UseMethod("sentropies")
 
 #' Entropy decomposition of a contingency matrix
 #' 
@@ -29,9 +29,9 @@ sentropies <- function(data, type="total", ...) UseMethod("sentropies")
 #' @export
 #' @importFrom entropy entropy
 # @example sentropies(UCBAdmissions)
-sentropies.table <- function(data, type="total", ...){
+sentropies.table <- function(dat, type="total", ...){
     # 0. Parameter checking
-    Nxy <- as.table(data) # is this necessary?
+    Nxy <- as.table(dat) # is this necessary? Not really. 
     dims <- dim(Nxy)
     if (length(dims) < 2)
         stop("Cannot process tables with less than 2 dimensions.")
@@ -40,7 +40,6 @@ sentropies.table <- function(data, type="total", ...){
     if (dims[1] < 2 | dims[2] < 2)
         stop("sentropies are not defined for distributions with a singleton domain.")
     # 1. Start processing: this is a candidate por sentropies_raw
-    #require(entropy)
     #unless otherwise specified, we use log2 logarithms
     # CAVEAT: use a more elegant kludge
     theseVars <- list(...);
@@ -84,8 +83,8 @@ sentropies.table <- function(data, type="total", ...){
 #' @inherit sentropies.table
 #' @export
 #' @importFrom caret confusionMatrix
-sentropies.confusionMatrix <- function(data, type="total",...){
-    return(sentropies(t(data$table), type, ...))
+sentropies.confusionMatrix <- function(dat, type="total",...){
+    return(sentropies(t(dat$table), type, ...))
 }
 
 #' Multivariate source entropy decomposition of a data frame
@@ -94,7 +93,7 @@ sentropies.confusionMatrix <- function(data, type="total",...){
 #'   in the original, which are now the rows of the returned data.frame. If the columns have no
 #'   names, artificial ones are returned based in pre prefix "x" and their column number. 
 #'   The entropies are always in bits.
-#' @param data The data being provided to the function. 
+#' @param dat The data being provided to the function. 
 # @param unit The logarithm to be used in working out the sentropies as per 
 # \code{entropy}. Defaults to "log2".
 # @details Unless specified by the user explicitly, this function uses base 2 

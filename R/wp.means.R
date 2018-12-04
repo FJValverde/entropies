@@ -6,6 +6,8 @@
 #' @param p Order of the mean. An extended real number. If missing, p=1, the arithmetic means is supposed. 
 #'
 #' @return A numeric vector of the means, co-indexed with the vector of orders, p. 
+#' @importFrom stats weighted.mean
+#' 
 #' @export
 #'
 # @examples
