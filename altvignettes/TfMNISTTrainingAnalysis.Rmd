@@ -34,40 +34,7 @@ use_session_with_seed(27,
 ```
 
 ```{r load-data}
-#library(ggplot2)#in tidyverse
-library(reshape2)
-
 mnist <- dataset_mnist()#Accesses aws!
-
-# try plotting the pixel intensities for a random sample of 32 images, adapted from 
-#https://tensorflow.rstudio.com/tfestimators/articles/examples/mnist.html
-n <- 36
-indices <- sample(nrow(mnist$train$x), size = n)
-imageData <- mnist$train$x[indices, ,]
-#original: #data <- array(mnist$train$x[indices, ,], dim = c(n, 28, 28))
-melted <- melt(imageData, varnames = c("image", "x", "y"), value.name = "intensity")
-ggplot(melted, aes(x = y, y = x, fill = intensity)) +
-#ggplot(melted, aes(x = x, y = y, fill = intensity)) +
-  geom_tile() +
-  scale_fill_continuous(name = "Pixel Intensity") +
-  scale_y_reverse() +
-  facet_wrap(~ image, nrow = sqrt(n), ncol = sqrt(n)) +
-  theme(
-    strip.background = element_blank(),
-    strip.text.x = element_blank(),
-    panel.spacing = unit(0, "lines"),
-    axis.text = element_blank(),
-    axis.ticks = element_blank()
-  ) +
-  labs(
-    title = "MNIST Image Data",
-    subtitle = "Visualization of a sample of images contained in MNIST data set.",
-    x = NULL,
-    y = NULL
-  )
-```
-
-```{r data-exploration}
 x_train <- mnist$train$x
 y_train <- mnist$train$y
 x_test <- mnist$test$x
@@ -401,16 +368,16 @@ for(i in 1:numBottleneckDims){# index into bottleneck dimensions
         loss='mse',  # mean square error
         metrics=list("mae") # mean absolute error
     )
-    #... below, after model compile, do
-    SAE$metrics_tensors <- c(
-        SAE$metrics_tensors,
-        #SAE$input,
-        x_train,
-        SAE$output
-        # SAE$layers[[obsPairs$iLayer[1]]]$output,
-        # SAE$layers[[obsPairs$oLayer[1]]]$output
-        #    SAE$layers[[obsPairs$oLayer[1]]]$output,
-    )
+    # #... below, after model compile, do
+    # SAE$metrics_tensors <- c(
+    #     SAE$metrics_tensors,
+    #     #SAE$input,
+    #     x_train,
+    #     SAE$output
+    #     # SAE$layers[[obsPairs$iLayer[1]]]$output,
+    #     # SAE$layers[[obsPairs$oLayer[1]]]$output
+    #     #    SAE$layers[[obsPairs$oLayer[1]]]$output,
+    # )
     
     # Training
     historyList[[i]] <- 

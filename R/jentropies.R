@@ -27,7 +27,7 @@ jentropies.data.frame <- function(X, Y, ...){
         stop("Can only condition on non-empty data.frame Y! ")
     if (nrow(X) != nrow(Y) )
         stop("Can only condition on variable lists with the same number of instances!")
-    if (!all(sapply(X, is.integer) | sapply(Y, is.factor))){
+    if (!all(sapply(X, is.integer) | sapply(X, is.factor))){
         warning("Discretizing primary data before entropy calculation!")
         X <- infotheo::discretize(X, disc="equalwidth", ...) # infotheo::str(dfdiscretize generates ints, not factors.
     }

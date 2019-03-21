@@ -44,9 +44,9 @@ library(mlbench)   # ml benchmarkss
 ## Data preparation
 
 ```{r data}
-yeast = getTaskData(yeast.task)
-labels = colnames(yeast)[1:14]
-yeast.task = makeMultilabelTask(id = "multi", data = yeast, target = labels)
+yeast <- getTaskData(yeast.task)
+labels <- colnames(yeast)[1:14]
+yeast.task <- makeMultilabelTask(id = "multi", data = yeast, target = labels)
 yeast.task
 ```
 
@@ -134,14 +134,14 @@ listMeasures("multilabel")
 getDefaultMeasure(yeast.task)
 #performance(pred)
 performance(pred, measures = list(#multilabel.subset01,
-                                  hamloss, 
+                                  multilabel.hamloss, 
                                   #multilabel.acc,
                                   #multilabel.f1, 
                                   timepredict)
             )
 #performance(pred2)
 performance(pred2, measures =list(#multilabel.subset01,
-                                  hamloss, 
+                                  multilabel.hamloss, 
                                   #multilabel.acc,
                                   #multilabel.f1, 
                                   timepredict)
@@ -179,14 +179,15 @@ edf
 
 Visualize both the aggregate and the split entropies.
 
-```{r, fig.width=12, fig.height=16}
+```{r, visualization} 
+#fig.width=12, fig.height=16}
 fancy <- TRUE
 #fancy <- FALSE
 #select some entropies to visualize
 cmet <- ggmetern(edf %>% filter(type != "XY"), 
                  #filter(edf, type != "XY"),#alternative not to visualize the aggregate
                  fancy) +
-    geom_point(aes(color=type, shape=method), size=3) +
+    geom_point(aes(color=type, shape=method), size=8) +
     scale_shape_manual(values=c(4, 20, 1)) #+
     #labs(color="Dataset name", shape="Var type")
 cmet #+ facet_wrap(~dsName, ncol=2)
