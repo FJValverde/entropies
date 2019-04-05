@@ -1,5 +1,5 @@
-#' Multivariate Source Entropy decomposition of a dataframe.
-#' 
+#' Multivariate Source Entropy decomposition of a random vector
+#'
 #' Returns several different flavours of sentropies depending on the structure 
 #' the data is provided to the function. There are specialized versions for
 #' (contingency) tables, confusion matrices and data frames.

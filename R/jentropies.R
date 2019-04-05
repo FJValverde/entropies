@@ -1,17 +1,17 @@
-#' Multivariate joint entropy decomposition of dataframes
+#' Multivariate joint entropy decomposition of random vectors
 #' 
 #' Returns several different flavours of entropies depending on the structure 
 #' the data is provided to the function. There are specialized versions for
 #' (contingency) tables, confusion matrices and data frames.
-#' @param data The data being provided to the function. 
+#' @param X One random vector being provided to the function. 
+#' @param Y Another random vector being provided to the function. 
 #' @return  A dataframe with the entropies of the marginals
-#' @details Unless specified by the user explicitly, this function uses base 2 
-#'   logarithms for the entropies.
-#' @seealso \code{\link[entropy]{entropy}, \link[infotheo]{entropy}, \link{sentropies}}
+#' @details This function uses base 2 logarithms for the entropies.
+#' @seealso \code{\link[entropy]{entropy::entropy}, \link[infotheo]{infotheo::entropy}, \link{sentropies}}
 #' @export
 jentropies <- function(X, Y, ...) UseMethod("jentropies") 
 
-#' Mutivariate Joint Entropy decomposition of a data frame
+#' Multivariate Joint Entropy decomposition of two data frames
 #' 
 #' @return Another dataframe with the main entropy coordinates of every variable Xi
 #'   in the original conditioned on the datatables Y, which are now the rows of the returned data.frame.

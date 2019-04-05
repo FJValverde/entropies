@@ -2,7 +2,8 @@
 
 # This is mainly what package entropies needs to run. 
 library(devtools)
-install.packages(c("tidyverse", "ggtern", "caret", "mlbench","candisc", "vcd"), dependencies = TRUE)
+install.packages(c("tidyverse", "ggtern", "caret", "mlbench","candisc", "vcd"), 
+                 dependencies = TRUE)
 # test, just ignore this line: remove.packages(c("caret"))
 devtools::install_github("FJValverde/entropies", dependencies=TRUE)#Dependencies is passed onto devtools::install
 

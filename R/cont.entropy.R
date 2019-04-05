@@ -1,0 +1,100 @@
+#' Calculates the continuous entropy of data (generic)
+#' 
+#' @param d The data structure to obtain the entropy from. This has to 
+#'          be ALL continuous data.
+#' @seealso \code{\link[entropy]{entropy::entropy}, 
+#' \link[infotheo]{infotheo::entropy}} for discrete data, and 
+#' \code{\link[entropies]{raw.entropies}} for mixed data. 
+#' @export
+cont.entropy <- function(d, ...) UseMethod("cont.entropy") 
+
+#' @describeIn cont.entropy Calculates the continuous entropy of data matrices by the KNN 
+#' method
+#' 
+#' These matrices are supposed to have one observation per row and
+#' one feature per column.
+#' 
+#' CAVEAT: if the columns of the matrix are not continuous it may
+#' return a nonsensical result.
+#' @inheritParams cont.entropy
+#' @param k The number of neighbours to test the algorithm with. 
+#' @param disType A parameter distinguishing the object of estimation: 
+#'   With \code{"P_X"} (default), the continuous entropy 
+#'   of the data \code{d} is requested. With \code{"U_X"} the KNN estimator
+#'   used on a uniform distribution of points obtained from the ranges of \code{d}.
+#'   With \code{"UU_X"} the (arbitray) entropy of a discretization carried out
+#'   by \code{\link[infotheo]{infotheo::discretize}} is carried out. 
+#' @importFrom FNN entropy
+#' @importFrom IndepTest KLentropy
+#' @importFrom purrr map_int
+#' @importFrom infotheo discretize 
+#' @export
+cont.entropy.matrix <- function(d, k, disType="P_X"){
+    if (nrow(d) == 1)
+        return(0.0)#just one class possible
+    else{
+        match.arg(disType, choices=c("P_X","U_X","UU_X"))
+        switch (disType,
+            P_X = return(# Q.FVA: See what alternatives are possible
+                IndepTest::KLentropy(
+                    d, k #, weights = TRUE
+                    # and we want to believe that knn.dist uses "kd_tree"
+                    #)$Estimate#returns nonsense when there are Inf's in est.
+                )$Unweighted[k]/log(2)
+                #FVA: FNN::entropy seems to be in Hartleys
+                # FNN::entropy(
+                #     d, 
+                #     k, #obtains k measures, so returns a vector
+                #     algorithm="kd_tree"
+                # )
+            ),
+            # The following fails long tables with many bins
+            U_X = return(
+                IndepTest::KLentropy(
+                    multivariate.grid(d,type="uniform"), k=1
+                )$Unweighted[1]/log(2)
+            ),
+            # Rationale for below:
+            # Obtain a discretization, then just count the actual bins
+            # Pity: There is no reduce for data.frames!
+            UU_X = {
+                return(
+                log2(reduce(
+                    infotheo::discretize(d,
+                                         #nbins=nrow(d)^(1/3),#default bins
+                                         #disc = "equalwidth"),
+                                         disc = "equalfreq"), #seems to be the analogue
+                    function(acc,v) acc*n_distinct(v),
+                    .init=1.0))
+                )
+            },
+            # UU_X = return(log2(prod(
+            #     map_int(
+            #         infotheo::discretize(d,
+            #                              #nbins=nrow(d)^(1/3),#default bins
+            #                              #disc = "equalwidth"),
+            #                              disc = "equalfreq"), #seems to be the analogue
+            #         n_distinct)
+            #     ))),
+            stop(sprintf("Unknown distribution %s", disType))
+        )
+    }
+}
+
+#' @describeIn cont.entropy Calculates the continuous entropy of a data frame using the KNN
+#' estimate.
+#' 
+#' The rows in the data frame index observations and the columns 
+#' features. 
+#' 
+#' CAVEAT: if the columns of the matrix are not continuous it may
+#' return a nonsensical result. Always check for this with e.g. 
+#' \code{all(map_lgl(d,is.numeric))}
+#' @inheritParams cont.entropy
+#' @export
+cont.entropy.data.frame <- function(d,...){
+    if (nrow(d) != 1)
+        return(cont.entropy(as.matrix(d),...))
+    else
+        return(0.0)
+}
