@@ -33,40 +33,45 @@ cont.entropy.matrix <- function(d, k, disType="P_X"){
     if (nrow(d) == 1)
         return(0.0)#just one class possible
     else{
-        match.arg(disType, choices=c("P_X","U_X","UU_X"))
+        #match.arg(disType, choices=c("P_X","U_X","UU_X"))
+        # Q.FVA: See what alternatives are possible
+        #FVA: FNN::entropy seems to be in Hartleys, and so is IndepTest::entropy
         switch (disType,
-            P_X = return(# Q.FVA: See what alternatives are possible
+            P_X = {
+                est <- 
                 IndepTest::KLentropy(
                     d, k #, weights = TRUE
                     # and we want to believe that knn.dist uses "kd_tree"
                     #)$Estimate#returns nonsense when there are Inf's in est.
-                )$Unweighted[k]/log(2)
-                #FVA: FNN::entropy seems to be in Hartleys
+                )$Unweighted
                 # FNN::entropy(
                 #     d, 
                 #     k, #obtains k measures, so returns a vector
                 #     algorithm="kd_tree"
                 # )
-            ),
+                weights <- L2OptW(k, ncol(d)) 
+                mask <- is.finite(est)
+                value <- (weights[mask] %*% est[mask])/sum(weights[mask])
+            },
             # The following fails long tables with many bins
-            U_X = return(
+            U_X = value <- 
                 IndepTest::KLentropy(
                     multivariate.grid(d,type="uniform"), k=1
-                )$Unweighted[1]/log(2)
-            ),
+                )$Unweighted[1]
+            ,
             # Rationale for below:
             # Obtain a discretization, then just count the actual bins
             # Pity: There is no reduce for data.frames!
+            # Suppposing Equalfreq is the analogue of KNN in discretizatinon
             UU_X = {
-                return(
-                log2(reduce(
+                value <- 
+                log(reduce(
                     infotheo::discretize(d,
                                          #nbins=nrow(d)^(1/3),#default bins
                                          #disc = "equalwidth"),
-                                         disc = "equalfreq"), #seems to be the analogue
+                                         disc = "equalfreq"),
                     function(acc,v) acc*n_distinct(v),
                     .init=1.0))
-                )
             },
             # UU_X = return(log2(prod(
             #     map_int(
@@ -78,6 +83,7 @@ cont.entropy.matrix <- function(d, k, disType="P_X"){
             #     ))),
             stop(sprintf("Unknown distribution %s", disType))
         )
+        return(value/log(2))
     }
 }
 

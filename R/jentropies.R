@@ -3,6 +3,7 @@
 #' Returns several different flavours of entropies depending on the structure 
 #' the data is provided to the function. There are specialized versions for
 #' (contingency) tables, confusion matrices and data frames.
+#' 
 #' @param X One random vector being provided to the function. 
 #' @param Y Another random vector being provided to the function. 
 #' @return  A dataframe with the entropies of the marginals
@@ -13,20 +14,22 @@ jentropies <- function(X, Y, ...) UseMethod("jentropies")
 
 #' Multivariate Joint Entropy decomposition of two data frames
 #' 
+#' @describeIn jentropies
 #' @return Another dataframe with the main entropy coordinates of every variable Xi
 #'   in the original conditioned on the datatables Y, which are now the rows of the returned data.frame.
 #' @export
-#' @importFrom infotheo discretize
-#' @importFrom infotheo condentropy
-#' @importFrom infotheo entropy
+#' @importFrom infotheo discretize condentropy entropy
+# @importFrom infotheo condentropy
+# @importFrom infotheo entropy
 #' @importFrom dplyr mutate
+#' @importFrom purrr map_lgl 
 jentropies.data.frame <- function(X, Y, ...){
     if (ncol(X) == 0 | nrow(X) == 0 ) 
         stop("Can only work with non-empty data.frames X!")
     if (ncol(Y) == 0 | nrow(Y) == 0 )
         stop("Can only condition on non-empty data.frame Y! ")
     if (nrow(X) != nrow(Y) )
-        stop("Can only condition on variable lists with the same number of instances!")
+        stop("Can only condition on data frames with the same number of rows!")
     if (!all(sapply(X, is.integer) | sapply(X, is.factor))){
         warning("Discretizing primary data before entropy calculation!")
         X <- infotheo::discretize(X, disc="equalwidth", ...) # infotheo::str(dfdiscretize generates ints, not factors.
@@ -41,8 +44,10 @@ jentropies.data.frame <- function(X, Y, ...){
     edf <- data.frame(
         type = c("X", "Y"), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
         H_U = c(
-            sum(sapply(X, function(v){log2(length(unique(v)))})),
-            sum(sapply(Y, function(v){log2(length(unique(v)))}))
+            log2(prod(sapply(X, n_distinct))),
+            #sum(sapply(X, function(v){log2())})),
+            log2(prod(sapply(X, n_distinct)))
+            #sum(sapply(Y, function(v){log2(length(unique(v)))}))
         ),
         # TODO: check the "other" way to worl out H_U
         H_P = natstobits(c(infotheo::entropy(X), infotheo::entropy(Y))),
@@ -64,6 +69,9 @@ jentropies.data.frame <- function(X, Y, ...){
 #' variable indexes the columns, unlike, e.g. \code{\link[caret]{confusionMatrix}}. 
 #' That is the entropies are obtained for the first two margins. If other margins are 
 #' needed you will need to reorder them.
+#' 
+#' @describeIn jentropies
+#' 
 #' @param Nxy An n-contingency matrix where n > 2
 #' @param unit The logarithm to be used in working out the sentropies as per 
 #' \code{\link[entropy]{entropy}}. Defaults to "log2".

@@ -43,7 +43,7 @@ raw.entropies <- function(X, ...) UseMethod("raw.entropies")
 #' @importFrom purrr map_lgl map_int
 #' @importFrom tools assertCondition
 #' @export
-raw.entropies.data.frame <- function(X, k=10){
+raw.entropies.data.frame <- function(X, k=ncol(X)){
     #TODO: add an option .method for estimating continuous entropy.
     # "discretize" : bad option, but sometimes the only available
     # "knn": better for continuous entropy, but then we have to decide
