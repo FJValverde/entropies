@@ -43,7 +43,8 @@ raw.entropies <- function(X, ...) UseMethod("raw.entropies")
 #' @importFrom purrr map_lgl map_int
 #' @importFrom tools assertCondition
 #' @export
-raw.entropies.data.frame <- function(X, k=ncol(X)){
+raw.entropies.data.frame <- 
+    function(X, k=min(nrow(X) -1, 4*(floor(ncol(X)/4)))){
     #TODO: add an option .method for estimating continuous entropy.
     # "discretize" : bad option, but sometimes the only available
     # "knn": better for continuous entropy, but then we have to decide
@@ -54,7 +55,7 @@ raw.entropies.data.frame <- function(X, k=ncol(X)){
         H_P_Xd=NA_real_, H_U_Xd=NA_real_, 
         H_P_Xc=NA_real_, H_U_Xc=NA_real_)
     if(nrow(X) == 1){
-        warning(sprintf("calling raw.entropis on data.frame with one row!"))
+        warning(sprintf("calling raw.entropies on data.frame with one row!"))
     }
     # Detect the continuous part 
     cPart <- map_lgl(X,is.double)
@@ -71,7 +72,7 @@ raw.entropies.data.frame <- function(X, k=ncol(X)){
         thisResult$H_P_Xc <- cont.entropy(X, k, disType="P_X")
         #TODO: FVA: estimate of uniform missing.
         # U_x <- multivariate.grid(X,type="uniform")
-        thisResult$H_U_Xc <- cont.entropy(X, k, disType="UU_X")
+        thisResult$H_U_Xc <- cont.entropy(X, k, disType="U_X_sample")
     }else{#There is a discrete component, since X is not 0-column
         #assertCondition(any(dPart))#, .exprString="Could not find discrete part!")
         #assert_that(any(dPart),
@@ -99,7 +100,7 @@ raw.entropies.data.frame <- function(X, k=ncol(X)){
             #varnames <- enquos(varnames)
             #Xc <- X %>% select(X , !!!syms(cvarnames))#Select continuous
             thisResult$H_U_Xc <- 
-                cont.entropy(select(X , !!!syms(cvarnames)), k, disType="UU_X")
+                cont.entropy(select(X , !!!syms(cvarnames)), k, disType="U_X_sample")
             # Not try to estimate the entropy using the KNN approx.
             # 1. Condition the numeric vars on the categoricals
             ###########

@@ -12,9 +12,7 @@
 #' @export
 jentropies <- function(X, Y, ...) UseMethod("jentropies") 
 
-#' Multivariate Joint Entropy decomposition of two data frames
-#' 
-#' @describeIn jentropies
+#' @describeIn jentropies Multivariate Joint Entropy decomposition of two data frames
 #' @return Another dataframe with the main entropy coordinates of every variable Xi
 #'   in the original conditioned on the datatables Y, which are now the rows of the returned data.frame.
 #' @export
