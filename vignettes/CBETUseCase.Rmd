@@ -60,11 +60,11 @@ if (getPlot){# For papers, it helps to have the table in latex.
 ```{r dataset choice}
 # Uncomment the name of the database to be analyzed
 # dsName <- "Ionosphere"
-# dsName <- "iris"
+dsName <- "iris"
 # dsName <- "BreastCancer"#Supply the name of the database to be analyzed#FACTORS
 # dsName <- "Wine"
 # dsName <- "Glass"#Cannot take logarithms for PCA: zeros returns -Inf
-dsName <- "Arthritis"#It has non-numeric factors.
+#dsName <- "Arthritis"#It has non-numeric factors.
 # dsName <- "Sonar"
 dsRecord <-  filter(datasets, name == dsName)
 ds <- loadDataset(dsRecord$name,dsRecord$packName) 
@@ -237,7 +237,8 @@ We show the plot for the result on a per-plot basis.
 eT <- ggmetern(ed=results %>% filter(type=="XY"), fancy) + 
     geom_point(aes(colour=Phase, shape=dSet), size=2)  +
     labs(shape="Dataset") + 
-    scale_colour_manual(values=c("blue","red")) # Don't trust the training, that is the red
+    # scale_colour_manual(values=c("blue","red")) # Don't trust the training, that is the red
+    scale_colour_manual(values=c("red", "blue")) # Don't trust the training, that is the blue
 eT
 ```
 
@@ -252,7 +253,7 @@ results %>% filter(type=="XY") %>% select(-one_of(c("method"))) %>%
 
 This agrees with the theory that insists on the variance of the testing instances being higher. 
 
-Note that the Entropy-Modified Accuracy (EMA) is an alternative, and more pessimistic, measure than the Accuracy.
+Note that the Entropy-Modified Accuracy (EMA) is a more pessimistic alternative measure to Accuracy.
 
 ## Visualization with the split triangle
 
