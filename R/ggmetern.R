@@ -19,7 +19,7 @@
 #' @return A plot object in the ggplot2 class of plots ready to be plotted.
 #' @seealso \pkg{ggtern}, \pkg{entropies}, \pkg{entropicCoordinates}
 #' @export
-#' @importFrom ggtern ggtern theme theme_bw theme_rgbw theme_custom 
+#' @importFrom ggtern ggtern theme_bw theme_rgbw theme_custom 
 #' @importFrom ggtern theme_latex Tlab Rlab Llab theme_showarrows 
 #' @importFrom ggtern theme_rotate geom_mask
 # @examples
@@ -76,10 +76,12 @@ ggmetern <- function(ed, fancy=TRUE, ...) {
         ep <- ep + ggtern::theme_bw()
     }
     ep <- ep + 
-        ggtern::theme(complete=FALSE, 
-                       tern.axis.text.show=TRUE,
-                       tern.axis.arrow.show=TRUE,
-                       tern.axis.clockwise=FALSE) +
+        ggtern::theme_anticlockwise()+
+        # FVA: this no longer belongs here
+        # ggtern::theme(complete=FALSE, 
+        #                tern.axis.text.show=TRUE,
+        #                tern.axis.arrow.show=TRUE,
+        #                tern.axis.clockwise=FALSE) +
         ggtern::theme_latex(TRUE) + #global switch to latex: ON by default
         ggtern::Tlab(TlabExp) + 
         ggtern::Rlab(RlabExp) + 

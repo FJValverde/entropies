@@ -58,6 +58,24 @@ if (getPlot){# For papers, it helps to have the table in latex.
 ```
 
 ```{r dataset choice}
+## ----dataset processing----------------------------------
+#data(datasets)
+if(interactive()){#latex-ing the table for publications
+    library(xtable)
+    ds4latexing <- datasets %>% select(name, K, n, m) 
+    row.names(ds4latexing) <- NULL
+    names(ds4latexing) <- c("Dataset Name", 
+                            "class card.", 
+                            "num. features", 
+                            "num. instances")
+    thisLatex <- xtable(ds4latexing, 
+                    caption="Some datasets considered in this study",
+                    label="tab:datasets")
+    align(thisLatex) <- xalign(thisLatex)
+    thisLatex
+}
+
+
 # Uncomment the name of the database to be analyzed
 # dsName <- "Ionosphere"
 dsName <- "iris"
