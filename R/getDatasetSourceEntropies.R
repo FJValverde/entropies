@@ -8,7 +8,7 @@
 #' @param withClass A logical whether to consider the class as part of the database
 #' or not. Defaults to not. 
 #' @param type Whether to use the total + dual total correlations (type="total") 
-#' or just the dual  total (type= "dual") correelation.
+#' or just the dual  total (type= "dual") correlation.
 #' @importFrom dplyr select_
 # @import tibble
 #' @export
@@ -23,16 +23,16 @@ getDatasetSourceEntropies <- function(
     ...
 ){
     # 1. Parameter analysis
-    # 1.1. Find the number of unique classes
+    # 1.1. Wipeout any possible identifiers (They have artificial info about the class)
+    if (is.numeric(idNumber) & !(is.nan(idNumber)) & !(is.na(idNumber)))
+        ds <- dplyr::select(ds, !(idNumber))
+    # 1.2. Find the number of unique classes
     theseNames <- names(ds)#list of features
     thisClass <- which(className == theseNames)#partition into labels or not
     #print("The class is number:", thisClass)
     if (thisClass == 0)
         stop("Unknown column variable:",className)
     K <- nrow(unique(dplyr::select_(ds, thisClass)))# Obtain the actual number of classes
-    # 1.2. Wipeout any possible identifiers (They have artificial info about the class)
-    if (is.numeric(idNumber) & !(is.nan(idNumber)))
-        ds <- dplyr::select_(ds, -idNumber)
     # 1.3 Record whether to analyze with the Class or not
     if (withClass)
         withClasses <- c(TRUE,FALSE)
@@ -50,7 +50,7 @@ getDatasetSourceEntropies <- function(
     edf <- tibble()#TODO: decide whether working with tibbles is advantageous.
     for(withClass in withClasses){# we profit from the fact what we go over TRUE first
         if (!withClass){
-            sent <- sentropies(dplyr::select(ds, -thisClass), type,...)
+            sent <- sentropies(dplyr::select(ds, !(thisClass)), type,...)
         } else {
             sent <- sentropies(ds, type,...)
         }

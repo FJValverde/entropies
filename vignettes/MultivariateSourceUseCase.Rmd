@@ -20,6 +20,9 @@ knitr::include_graphics('./figs/classifierChain.jpeg')
 ```
 In this script we use datasets whose sources are single random variables (RV), but multiple features as observations, and we will use the Source Multivariate Entropy Triangle (SMET) to build these expectations. 
 
+```{r echo=FALSE, out.width='100%'}
+knitr::include_graphics('./figs/annotatedSMET_ESWAFig6.jpeg')
+```
 
 # Environment construction
 
@@ -88,7 +91,7 @@ if(interactive()){#latex-ing the table for publications
 
 The beginning step of the exploration is to obtain the entropies from all datasets and some other data for plotting. In a typical application this would involve only the particular datasets being considered. 
 
-We provide a convenience function getDatasetSourceEntropies for this vignette and others, coupled to the getDataset function above. 
+We provide a convenience function $getDatasetSourceEntropies$ for this vignette and others, coupled to the $loadDataset$ function above. 
 
 ```{r find-entropies, warning=FALSE}
 edf <- data.frame()
@@ -310,7 +313,7 @@ Since the database being analyzed is iris, recall that its class variable is nam
 
 We are next comparing two visualizations for the entropy in the features of a dataset. 
 
-### The decomposition of feature entropies
+### A comparison with stacked bars
 
 The first one are stacked bars, where each of the components is marked in the standard colors in the decomposition. 
 
@@ -361,6 +364,8 @@ if (getPlot){
 
 Note how this is a necessary exploratory step prior to envisage any later feature transformation.
 
+### A comparison with pie charts
+
 Another representation for this type of data are pie charts. 
 However, turning the stacked bar graph into a pie chart is a bad idea, since the remaining information $VI_{P_{X_i}}$ is de-emphasized (that is, compare with the area in the stacked bar graph above). 
 
@@ -374,7 +379,7 @@ if (getPlot){
 }
 ```
 
-We firmly believe the SMET is a better representation to this. 
+We firmly believe the SMET is a better representation than this. 
 
 # Postscriptum
 
