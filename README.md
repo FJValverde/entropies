@@ -2,7 +2,7 @@
 
 An R project to work with entropic coordinates, the entropy triangle, NIT and EMA as defined in: 
 
-- [(2010) Two information-theoretic tools to assess the performance of multi-class classifiers](https://www.sciencedirect. com/science/article/pii/S0167865510001662)
+- [(2010) Two information-theoretic tools to assess the performance of multi-class classifiers](https://www.sciencedirect.com/science/article/pii/S0167865510001662)
 
 - [(2014) 100% Classification Accuracy Considered Harmful: The Normalized Information Transfer Factor Explains the Accuracy Paradox](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0084217)
 
