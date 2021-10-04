@@ -17,14 +17,14 @@
 #' data(iris)
 #' sme <- sentropies(iris) # Considers class just another feature
 #' ggmebars(sme[-6,])
-ggmebars <- function(smedf, excludeAggregate=FALSE, proportional=FALSE){
+ggmebars <- function(smedf, excludeAVERAGE=FALSE, proportional=FALSE){
     # 1. THe recipe to build a stacked bar graph
     if (!hasSplitSmetCoords(smedf))# Needs to be split source entropy!!
         stop("Data do not represent source multivariate entropies")
-    if (excludeAggregate){
-        smedf <- filter(smedf, name != "@AGGREGATE")
+    if (excludeAVERAGE){
+        smedf <- filter(smedf, name != "@AVERAGE")
     } else {
-        totalRow <- which(smedf$name == "@AGGREGATE") # find aggregate rows
+        totalRow <- which(smedf$name == "@AVERAGE") # find AVERAGE rows
         if (length(totalRow) > 1)
             stop("Cannot handle more than one triangle decomposition")
     }

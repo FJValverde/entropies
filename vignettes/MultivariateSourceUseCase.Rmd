@@ -2,12 +2,15 @@
 title: "Use case for the Multivariate Source Entropy Triangle (SMET)"
 author: "Francisco J. Valverde-Albacete & Carmen Pelaez Moreno"
 date: "14 de diciembre de 2015"
+bibliography: entropyTriangles.bib
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Example of use of the SMET}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+# Introduction
 
 This vignette shows how to carry out Exploratory Data Analysis (EDA) on datasets prior to building classifiers, feature engineering or any other processing.
 
@@ -18,17 +21,26 @@ The illustration below suggest the setting of this exploration: we initially hav
 ```{r echo=FALSE, out.width='100%'}
 knitr::include_graphics('./figs/classifierChain.jpeg')
 ```
-In this script we use datasets whose sources are single random variables (RV), but multiple features as observations, and we will use the Source Multivariate Entropy Triangle (SMET) to build these expectations. 
+In this script we use datasets whose sources are single random variables (RV), but multiple features as observations, and we will use the Source Multivariate Entropy Triangle (SMET) to explore the random vector of the observations as if it were the actual source of information.  
 
-```{r echo=FALSE, out.width='100%'}
+To help build an understanding, we reproduce the Figure 6 from [@val:pel:17b]. 
+
+```{r reference_striangle, echo=FALSE, out.width='60%',fig.align = 'center'}
 knitr::include_graphics('./figs/annotatedSMET_ESWAFig6.jpeg')
 ```
+
+* Random variables part of a random vector that are (almost) deterministic appear (almost) at the bottom of the triangle.
+
+* Random variables whose information is (almost) redundant given that of others appear (almost) on the right hand side vertex, while
+
+* Random variables whose information is (almost) irredundant, that is exclusive of them, appear on the left-hand side vertex. 
 
 # Environment construction
 
 ## Knitting options
 
 ```{r setup}
+options(rmarkdown.html_vignette.check_title = FALSE)
 knitr::opts_chunk$set(comment=NA, fig.width=6, fig.height=4)
 knitr::opts_chunk$set(warning=FALSE)# Should not appear in the knitted document
 ```
@@ -240,7 +252,7 @@ thisEdf <- edf %>% filter(dsName == thisDsName & name != "ALL") %>%
 thisEdf <- rbind(thisEdf,
                  ungroup(aggregateEdf) %>% 
                       filter(name == thisDsName) %>% 
-                      mutate(dsName=name, name = "@AGGREGATE") %>%
+                      mutate(dsName=name, name = "@AVERAGE") %>%
                       select(name, 
                              H_Uxi=H_Ux, H_Pxi=H_Px, 
                              DeltaH_Pxi=DeltaH_Px,
@@ -349,7 +361,7 @@ This is certainly illustrative and shows the partition nicely to the trained eye
 The multisplit SMET can also offer this ordering information with a different encoding: using the fill color on the glyphs used to represent the maximum entropy per feature. The other informations in the balance are not ordered but simply stem off from the diagram: in particular de remanent entropy correlates with distance from the right side. 
 
 ```{r absolute-SMET}
-ggmetern(filter(smedf, name != "@AGGREGATE"), fancy) +
+ggmetern(filter(smedf, name != "@AVERAGE"), fancy) +
     geom_point(size=4, aes(shape=name, colour=H_Uxi)) + 
     scale_shape_manual(values=1:14) +
     scale_color_gradient(low="grey", high="black") +

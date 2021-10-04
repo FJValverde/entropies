@@ -1,7 +1,7 @@
 #' Multivariate Source Entropy decomposition of a random vector
 #'
 #' Returns several different flavours of sentropies (source entropies) depending on the structure 
-#' the data is provided to the function. There are specialized versions for
+#' of the data provided to the function. There are specialized versions for
 #' (contingency) tables, confusion matrices and data frames.
 #' @param dat The data being provided to the function. 
 #' @param type The type of analysis being requested. If type=="total" (default) it will perform 
@@ -155,11 +155,11 @@ sentropies.data.frame <- function(dat, type="total", ...){
             DeltaH_Pxi = H_Uxi - H_Pxi, 
             M_Pxi = H_Pxi - VI_Pxi, 
             VI_Pxi)
-        edf <- rbind(edf,cbind(name="ALL", as.data.frame(lapply(edf[,2:6], sum))))
+        edf <- rbind(edf,cbind(name="@AVERAGE", as.data.frame(lapply(edf[,2:6], sum))))
     } else {#return only an aggregate with the DUAL total correlation D_Px
         H_Px <-  natstobits(entropy(dat,theseVars)) #a single number!
         VI_Px <-  sum(VI_Pxi)
-        edf <- data.frame(name="ALL", H_Ux = sum(H_Uxi), H_Px) %>% 
+        edf <- data.frame(name="@AVERAGE", H_Ux = sum(H_Uxi), H_Px) %>% 
             dplyr::mutate(
                 DeltaH_Px = H_Ux - H_Px, 
                 D_Px = H_Px - VI_Px, 
