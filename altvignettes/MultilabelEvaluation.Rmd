@@ -29,7 +29,7 @@ knitr::opts_chunk$set(warning=FALSE)# Should not appear in the knitted document
 
 ```{r libraries, include=FALSE}
 library(mlr)
-library(tidyverse)  # Acceding to that infamous Mr. Wickham's requests!
+library(tidyverse)  #  That infamous Mr. Wickham!
 # library(dplyr)     # That infamous Mr. Wickham!
 # library(tidyr)     # Tidying tall & wide dataframes
 library(infotheo)  # The functionality provided by this has to be rerouted through entropies
@@ -69,6 +69,7 @@ sedf
 We visualize the real labels with the Source Multivariate Entropy Triangle (SMET)
 
 ```{r SMET_vis}
+fancy <- TRUE
 smet <-  ggmetern(sedf, fancy) + 
     geom_point(mapping=aes(colour=name), size=3)+
     scale_shape_manual(values=1:ncol(labels)) #+

@@ -56,12 +56,12 @@ ggmetern <- function(ed, fancy=TRUE, ...) {
         RlabExp <- "$\\Delta\\textit{H'}_{P_X}"#\\overline X does not work!
         LlabExp <-  "$\\textit{VI'}_{P_{X}}"
         titleExp <- "Dual Aggregate Source Multivariate entropies"
-    } else if (hasCmetEntropicCoords((ed))) {
+    } else if (hasCmetEntropicCoords(ed)) {
         ep <- ggtern(ed, aes(x=VI_P, y=M_P, z=DeltaH_P), vars) #+ geom_point(...)
         # Vertex labels for the channel multivariate entropy triangle
         TlabExp <- "$2\\cdot\\textit{I'}_{P_{XY}}$"#FVA 24/07/17: Changed text to reflect theoretical work.
         RlabExp <- "$\\Delta\\textit{H'}_{P_{XY}}$"
-        LlabExp <-  "$\\textit{VI'}_{P_{XY}$"
+        LlabExp <-  "$\\textit{VI'}_{P_{XY}}$"
         titleExp <- "Aggregate Channel Multivariate entropies"
     } else {
         stop("Non-appropiate ed")
