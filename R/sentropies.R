@@ -10,13 +10,14 @@
 #' will be output-only a single aggregate-, and the names of the columns will be changed accordingly. 
 #' @param unit The logarithm to be used in working out the sentropies as per 
 #' \code{entropy}. Defaults to "log2".
+#' @param r The order of the shifted Renyi entropy being calculated. r=0 is Shannon's.
 #' @return  A dataframe with the sentropies of the marginals. If type="dual" then \code{hasAggregateSmetCoords(sentropies(dat, type="dual"))}, 
 #' otherwise it has the default type="total", \code{hasSplitSmetCoords(sentropies(dat, typt="total"))}.
 #' @details Unless specified by the user explicitly, this function uses base 2 
 #'   logarithms for the sentropies. 
 #' @seealso \code{\link[entropy]{entropy}, \link[infotheo]{entropy}}
 #' @export
-sentropies <- function(dat, type="total", ...) UseMethod("sentropies")
+sentropies <- function(dat, type="total", r=0, ...) UseMethod("sentropies")
 
 #' Entropy decomposition of a contingency matrix
 #' 
@@ -83,8 +84,8 @@ sentropies.table <- function(dat, type="total", ...){
 #' @inherit sentropies.table
 #' @export
 #' @importFrom caret confusionMatrix
-sentropies.confusionMatrix <- function(dat, type="total",...){
-    return(sentropies(t(dat$table), type, ...))
+sentropies.confusionMatrix <- function(dat, type="total", r=0, ...){
+    return(sentropies(t(dat$table), type, r, ...))
 }
 
 #' Multivariate source entropy decomposition of a data frame
@@ -101,7 +102,7 @@ sentropies.confusionMatrix <- function(dat, type="total",...){
 #' @export
 #' @importFrom infotheo natstobits condentropy entropy discretize
 #' @importFrom dplyr mutate
-sentropies.data.frame <- function(dat, type="total", ...){
+sentropies.data.frame <- function(dat, type="total", r = 0, ...){
     if (ncol(dat) == 0 || nrow(dat) == 0)
         stop("Can only work with non-empty data.frames!")
     if (!all(sapply(dat, is.integer) | sapply(dat, is.factor))){
@@ -126,7 +127,13 @@ sentropies.data.frame <- function(dat, type="total", ...){
     if ((length(newVars) == 0) | !is.null(theseVars$method)){#Kludge. THis should actually be passed from top.
         newVars$method <- "emp"
     }
-    H_Uxi <- sapply(dat, function(v){log2(length(unique(v)))})
+    # FVA: There is a problem here: how to deal with deterministic signals?
+    # Solution: 1. We set the H_Uxi for at least at two values, 
+    #           2. The entropy for deterministic is zero.
+    #           3. Likewise for VI_Pxi
+    #           4. The SMET coordinates are worked out from these correctly. 
+    H_Uxi <- sapply(dat, function(v){log2(max(2,length(unique(v))))})
+    #H_Uxi <- sapply(dat, function(v){log2(length(unique(v)))})
     #H_Uxi <- unlist(lapply(df, function(v){log2(length(unique(v)))}))
     # H_Pxi <- unlist(lapply(dat, 
     #                        function(v){natstobits(infotheo::entropy(v,newVars))}))
@@ -140,21 +147,21 @@ sentropies.data.frame <- function(dat, type="total", ...){
             VI_Pxi[i] <- natstobits(condentropy(dat[,i], dat[,-i],newVars))
         }
     }
-    if(TOTAL){#return the TOTAl decomposition and aggregates
+    if(TOTAL){#return the TOTAL decomposition and aggregates
         if (is.null(names(dat))){
             warning("No names for columns: providing dummy names!")
             names(dat) <- paste0("x",1:ncol(dat))
         }
         # Find simple sentropies, divergences and sentropies of the uniform marginals. 
         edf <- data.frame(
-            name = names(dat), # After an idyosincracy of dplyr, the rownames do not survive a mutate.
+            name = names(dat), # After an idiosyncrasy of dplyr, the rownames do not survive a mutate.
             H_Uxi = H_Uxi,
             H_Pxi = H_Pxi,
             stringsAsFactors = FALSE #Keep the original variable names as factors!
         ) %>% dplyr::mutate(
             DeltaH_Pxi = H_Uxi - H_Pxi, 
             M_Pxi = H_Pxi - VI_Pxi, 
-            VI_Pxi)
+            VI_Pxi)# This is placed here so that the last 3 columns read the ET coordinates
         edf <- rbind(edf,cbind(name="@AVERAGE", as.data.frame(lapply(edf[,2:6], sum))))
     } else {#return only an aggregate with the DUAL total correlation D_Px
         H_Px <-  natstobits(entropy(dat,theseVars)) #a single number!

@@ -16,11 +16,11 @@ wp.means <- function(x, w,  p=1){
         stop(message("Inputs and weigths incomparable."))
     }else if (any((x < 0) || (w < 0))) {
         stop(message("Some inputs are negative"))
-    } else if (r <0 && any(x == 0 || w == 0))
+    } else if (p <0 && any(x == 0 || w == 0))
         return(rep(0,length(x)))
-    else if (r > 0 && any(x == Inf || w == Inf))
+    else if (p > 0 && any(x == Inf || w == Inf))
         return(rep(Inf,length(x)))
-    w <- w/sum(x)
+    w <- w/sum(w)
     return(wp.means.raw(x,w ,p))#normalize and send
 }
 wp.means.raw <- function(x, w,  p){
