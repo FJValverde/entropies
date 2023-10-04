@@ -1,0 +1,137 @@
+---
+title: "Tests for discrete + continuous entropies"
+author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
+date: "3/28/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(entropies)
+```
+
+## Data
+
+The following data is defined in the help for mtcars.
+
+```{r cars}
+mtcars2 <- within(mtcars, {
+   vs <- factor(vs, labels = c("V", "S"))
+   am <- factor(am, labels = c("automatic", "manual"))
+   cyl  <- ordered(cyl)
+   gear <- ordered(gear)
+   carb <- ordered(carb)
+})
+summary(mtcars2)
+```
+
+Now work the simple entropies for that. 
+```{r}
+raw.entropies(mtcars2)#should return an error!
+```
+The problem with this dataset is that there is only one observation per group of discrete variables. This makes it impossible to estimate the entropy for 1-KNN which returns -Inf. 
+
+## Another test on Iris
+
+Iris only has one discrete component, hence it is not a very complex example of estimation.
+
+First analyze the continuous component. 
+
+```{r analyze iris continuouss}
+# Select only the continuous component
+X <- iris %>% select_if(function(x) is.double(x))
+raw.entropies(X)
+```
+
+Then analyze the discrete component.
+
+```{r analyze iris discrete}
+X <- iris %>% select_if(function(x) !is.double(x))
+raw.entropies(X)
+```
+Next just analyze everything.
+
+```{r iris analyze all}
+X <- iris
+raw.entropies(X)
+```
+
+We can also do it with other datasets which are a mix of categorical and numerical observations. But NOT with EVERY dataset. Some are just not observations of a process, but data tables.  
+
+```{r analyze all}
+raw.entropies(mtcars2)#Will raise an error due to too few observations
+```
+Yet others do not have enough observations for the combinatorial entropy estimator for uniform distributions. 
+
+```{r}
+library(mlbench)
+data("Ionosphere")
+str(Ionosphere)
+# X <- Ionosphere
+thisCmap <- sapply(Ionosphere,function(x) is.numeric(x))
+print(sprintf("There are %d continuous and %d discrete features", 
+      sum(thisCmap), sum(!thisCmap)))
+# sum(thisDmap)
+# # To test multivariate.grid
+# X <- Ionosphere[!thisDmap]
+raw.entropies(Ionosphere)
+# IndepTest::KLentropy(
+    # multivariate.grid(Ionosphere[!thisDmap],type="uniform"),
+    # k=10
+    # )$Unweighted[1]/log(2)
+```
+A good point to go on exploring would be to go to the vignettes on the SMET and CMET whose datasets have mixes of discrete and continuous data. 
+
+# Testing the joint entropies
+
+In the following use cases we test primitive raw.jentropies
+
+A first case just test iris against iris, to see how much information is there in this null transformation
+
+First compare with raw.entropies on two copies of iris and a single copy.
+
+```{r}
+X <- iris
+Y <- iris
+# Since R will not allow these two to be column-bound, we modify their colnames to make them unique in this context of cbind.
+colnames(X) <- map_chr(colnames(X), function(x) sprintf("x%s", x))
+colnames(Y) <- map_chr(colnames(Y), function(y) sprintf("y%s", y))
+XY <- cbind(X,Y)
+bed <- raw.entropies(XY) 
+#compare to the basic iris entropy
+comparison <- 
+    rbind(
+        cbind(dname="iris", raw.entropies(iris)),
+        cbind(dname="double iris", bed)
+   )
+comparison
+```
+Observations: 
+
+* The uniform entropy seems to be working properly, because we enforce the calculation of the entropies for each component RV in the vector. 
+
+* However, we would expect that the entropy for the continuous component *does not* increase due to duplication, but it does (colum H_P_Xc).
+
+* Q.FVA: Is this an indirect method to select the k in FNN::entropy?
+
+Next compare on the joint entropies to see how this affects M_P_X and VI_P_X. 
+
+```{r}
+X <- iris
+Y <- iris
+jed <- raw.jentropies(X,Y)
+# Some checks
+print(mutate(jed, balance=DeltaH_P + VI_P + M_P))
+```
+
+
+# Session information
+
+```{r}
+sessionInfo()
+```
+
+
+
+

@@ -1,6 +1,6 @@
-# entropies
+# entropies --- Entropy Triangles
 
-An R project to work with entropic coordinates, the entropy triangle, NIT and EMA as defined in: 
+An R project to work with entropic coordinates, entropy triangles, NIT and EMA as defined in: 
 
 - [(2010) Two information-theoretic tools to assess the performance of multi-class classifiers](https://www.sciencedirect.com/science/article/pii/S0167865510001662)
 
@@ -10,9 +10,9 @@ An R project to work with entropic coordinates, the entropy triangle, NIT and EM
 
 - [(2018) Assessing Information Transmission in Data Transformations with the Channel Multivariate Entropy Triangle](https://www.mdpi.com/1099-4300/20/7/498)
 
-- [(2020) A framework for supervised clas- sification performance analysis with information-theoretic methods](https://ieeexplore.ieee.org/document/8709846)
+- [(2020) A framework for supervised classification performance analysis with information-theoretic methods](https://ieeexplore.ieee.org/document/8709846)
 
-Uses packages ggtern and entropy to provide basic functionality.
+Uses packages `ggtern` and `entropy` to provide basic functionality.
 
 Forever in beta testing, since this is the main tool to help me develop the theory, for the time being. At present you can:
 

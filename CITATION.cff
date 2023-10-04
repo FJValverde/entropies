@@ -1,0 +1,9 @@
+cff-version: 1.0.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Valverde-Albacete
+    given-names: Francisco J.
+    orcid: https://orcid.org/0000-0002-5874-7604
+title: "entropies --- Entropy Triangles"
+version: v0.2.0-beta
+date-released: 2023-09-04
