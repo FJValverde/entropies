@@ -3,6 +3,10 @@ title: "Tests for discrete + continuous entropies"
 author: "F.J. Valverde-Albacete and C. Pelaez-Moreno"
 date: "3/28/2019"
 output: html_document
+vignette: > 
+  %\VignetteIndexEntry{Tests for discrete + continuous entropies}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
@@ -74,8 +78,7 @@ print(sprintf("There are %d continuous and %d discrete features",
       sum(thisCmap), sum(!thisCmap)))
 # sum(thisDmap)
 # # To test multivariate.grid
-# X <- Ionosphere[!thisDmap]
-raw.entropies(Ionosphere)
+####raw.entropies(Ionosphere)#FVA: generates a conditioning error 13/03/25
 # IndepTest::KLentropy(
     # multivariate.grid(Ionosphere[!thisDmap],type="uniform"),
     # k=10

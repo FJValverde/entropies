@@ -37,6 +37,7 @@ library(entropies) # This package
 library(ggtern)    # Excellent package for ternary diagrams in the gg tradition
 library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
+library(rFerns)
 ```
 
 # Multilabel Classification

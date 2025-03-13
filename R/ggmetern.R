@@ -73,7 +73,7 @@ ggmetern <- function(ed, fancy=TRUE, ...) {
                                  tern.panel.background="white",
                                  col.T="forestgreen",col.L="red",col.R="orange")
     }else{# A basic plot and theme for publishing
-        ep <- ep + ggtern::theme_lght()#bw()
+        ep <- ep + ggtern::theme_light()#bw()
     }
     ep <- ep + 
         ggtern::theme_anticlockwise()+

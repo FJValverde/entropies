@@ -24,9 +24,14 @@ Depends:
 Imports:
     caret (>= 6.0-80),
     dplyr (>= 0.7.6),
+    purrrlyr (>= 0.0.8), 
+    purrr (>= 1.0.4), 
     ggplot2 (>= 3.0.0), 
     tibble (>= 1.4.2),
-    tidyr(>= 0.8.1)
+    tidyr(>= 0.8.1),
+    FNN(>= 1.1.4.1),
+    IndepTest(>= 0.2.0),
+    rlang(>= 1.1.5)
 Extends: 
     caret (>= 6.0-80)
 Suggests:
@@ -37,5 +42,5 @@ Suggests:
     mlbench (>= 2.1-1),
     vcd (>= 1.4-4)
 License: GPL-3
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 VignetteBuilder: knitr
