@@ -208,9 +208,10 @@ transfo_cmet <-
     geom_point(aes(color=data, shape=type), size=3) +
     scale_shape_manual(values=typeShapes) +
     scale_color_manual(values=orderingColors) + 
-    labs(color="Feature set", shape="Entropy type") +
+    #labs(color="Feature set", shape="Entropy type") +
+    #geom_text(aes(label = dsName), vjust=1) + #From N. Hamilton: https://stackoverflow.com/questions/50441843/how-can-i-add-specific-labeled-points-to-a-ggtern-plot
     theme(legend.key=element_blank())
-transfo_cmet
+transfo_cmet + annotate(geom  = 'text', x = 0.5, y = 0, z = 0.5, label=dsName, color="black")
 if (getPlot){
     dev.off()#Necessary to do the textual plot.
     ggsave(stringr::str_interp("featureSel_CMET_PCA_${dsName}.jpeg"),

@@ -44,10 +44,10 @@ jentropies.data.frame <- function(X, Y, ...){
         H_U = c(
             log2(prod(sapply(X, n_distinct))),
             #sum(sapply(X, function(v){log2())})),
-            log2(prod(sapply(X, n_distinct)))
+            log2(prod(sapply(Y, n_distinct)))
             #sum(sapply(Y, function(v){log2(length(unique(v)))}))
         ),
-        # TODO: check the "other" way to worl out H_U
+        # TODO: check the "other" way to word out H_U
         H_P = natstobits(c(infotheo::entropy(X), infotheo::entropy(Y))),
         stringsAsFactors = FALSE #Keep the original variable names as factors!
     ) %>% dplyr::mutate(
