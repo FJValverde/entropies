@@ -1,9 +1,13 @@
 ---
 title: "Multilabelling Evaluation with the CMET"
 author: "Francisco J. Valverde-Albacete & Carmen Peláez Moreno"
-date: "5/15/2017"
+date: "`r Sys.Date()`" 
 output: html_document
 ---
+
+MLC with mlr (now obsolete, see mlr3) and the SMET and CMET.
+
+Original from "5/15/2017" at least.
 
 # Introduction
 
@@ -14,6 +18,25 @@ This vignette follows the scheme to carry out multilabel evaluation proposed by
 https://mlr-org.github.io/mlr-tutorial/devel/html/multilabel/index.html
 
 # Environment construction
+
+Rolling back ggplot2 to a version where ggtern works:
+
+```{r}
+rollbackGgplot2 <- TRUE
+# rollbackGgplot2 <- FALSE
+# # FVA 9/11/2022: 
+# # ggplot2_3.3.6.tgz seems to be the last version that was compatible with ggtern
+if (rollbackGgplot2){
+# download.file("http://cran.r-project.org/src/contrib/Archive/ggplot2/ggplot2_3.3.6.tar.gz",
+# dest="ggplot2_3.3.6.tar.gz")
+# install.packages("ggplot2_3.3.6.tar.gz",repos=NULL,type="source")
+
+#ON 15/10/25 is seems to be ggplot2_3.5.0
+download.file("http://cran.r-project.org/src/contrib/Archive/ggplot2/ggplot2_3.5.0.tar.gz",
+dest="ggplot2_3.5.0.tar.gz")
+install.packages("ggplot2_3.5.0.tar.gz",repos=NULL,type="source")
+}
+```
 
 ## Knitting options
 
@@ -28,16 +51,23 @@ knitr::opts_chunk$set(warning=FALSE)# Should not appear in the knitted document
 ## Library loading
 
 ```{r libraries, include=FALSE}
-library(mlr)
+library(mlr)#Obsolete. Substitute by ml3
 library(tidyverse)  #  That infamous Mr. Wickham!
 # library(dplyr)     # That infamous Mr. Wickham!
 # library(tidyr)     # Tidying tall & wide dataframes
 library(infotheo)  # The functionality provided by this has to be rerouted through entropies
-library(entropies) # This package
 library(ggtern)    # Excellent package for ternary diagrams in the gg tradition
+library(entropies) # This package
 library(vcd)       # Categorical benchmarks
 library(mlbench)   # ml benchmarkss
 library(rFerns)
+```
+
+Importing code...
+
+```{r import code}
+#library(utiml)#no longer available!See above for direct importing. 
+#source('my_utiml.R', echo = F)#FVA: this is too lengthy!
 ```
 
 # Multilabel Classification
@@ -45,7 +75,7 @@ library(rFerns)
 ## Data preparation
 
 ```{r data}
-yeast <- getTaskData(yeast.task)
+yeast <- mlr::getTaskData(yeast.task)
 labels <- colnames(yeast)[1:14]
 yeast.task <- makeMultilabelTask(id = "multi", data = yeast, target = labels)
 yeast.task
@@ -90,7 +120,7 @@ smet
 ```{r adaptation}
 # lrn.rfsrc = makeLearner("multilabel.randomForestSRC", predict.type="response")
 # lrn.rfsrc
-lrn.rFerns = makeLearner("multilabel.rFerns")
+lrn.rFerns = mlr::makeLearner("multilabel.rFerns")
 lrn.rFerns
 ```
 

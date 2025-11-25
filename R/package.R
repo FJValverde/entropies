@@ -54,3 +54,4 @@ hasMultiSplitEntropicCoords <- function(df){all(derivedSplitSmetCoords %in% name
 
 #' A function to detect if the the channel multivariate entropic coordinates are present
 hasCmetEntropicCoords <- function(df){all(cmetEntropicCoords %in% names(df))}
+#FVA after paper Concepts25: a hasSplitCmetEntropicCoords should be defined to change the labels on the axes on ggmeters.

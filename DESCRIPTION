@@ -17,7 +17,7 @@ Authors@R:
 		 comment = c(ORCID = "0000-0003-1425-6763")))
 Description: Plot ternary entropy diagrams for sources and channels, multivariate or not. 
 Depends:
-    R (>= 2.10), 
+    R (>= 3.5),
     entropy (>= 1.2.1),
     ggtern (>= 3.0.0),
     infotheo (>= 1.2.0)
@@ -44,3 +44,4 @@ Suggests:
 License: GPL-3
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
+LazyData: true

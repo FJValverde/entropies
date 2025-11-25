@@ -29,7 +29,10 @@ fancy <- FALSE # Set this for either printing matter or...
 ## Datasets available for entropy analysis in this package
 
 ```{r dataset-preparation}
-datasets <- getDatasets()
+#datasets <- getDatasets()
+#datasets can be created from createDatasets???
+datasets
+#FVA: These are NOT the MLC datasets!
 ```
 
 Let's print this information to latex:

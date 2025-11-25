@@ -37,4 +37,5 @@ datasets <- tibble(name=dsName,
                    n=as.integer(n), 
                    m=as.integer(m))
 # run
-devtools::use_data(datasets,overwrite = TRUE)#Regenerate the tibble
+usethis::use_data(datasets,overwrite = TRUE)#Regenerate the tibble
+
