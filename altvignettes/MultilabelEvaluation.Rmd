@@ -11,7 +11,7 @@ Original from "5/15/2017" at least.
 
 # Introduction
 
-This vignette esplores the capabilities of the Channel Multivariate Entropy Triangle (CMET) to explore the results of multilabel classification.
+This vignette explores the capabilities of the Channel Multivariate Entropy Triangle (CMET) to explore the results of multilabel classification.
 
 This vignette follows the scheme to carry out multilabel evaluation proposed by 
 
@@ -84,7 +84,7 @@ yeast.task
 ### Source exploration with the SMET
 
 ```{r source_exploration}
-sedf <- frame()
+sedf <- dataframe()!!!
 labels <- yeast[,1:14]
 sedf <- rbind(
         sedf,

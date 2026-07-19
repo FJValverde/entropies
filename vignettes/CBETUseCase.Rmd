@@ -94,7 +94,6 @@ We'll use the  `r dsName` data throughout this vignette.
 ## Basic data from the set for classification
 
 ```{r}
-
 #id columns, if existent in dsRecord$idNumber
 # log transform of everything but the class and any id if existant. 
 if (!is.na(dsRecord$idNumber)){
@@ -102,6 +101,7 @@ if (!is.na(dsRecord$idNumber)){
 }
 #class column
 ds.classNum <- which(names(ds)==dsRecord$className)
+factor.as.numeric <- function(f){as.numeric.(levels(f))}
 #take away the class, but keep it just in case.
 class.ds <- ds[, ds.classNum]#saving the class. Warning A FACTOR!
 ds <- ds[,-ds.classNum]
