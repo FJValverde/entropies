@@ -13,7 +13,7 @@ evaluate <- function(data, ...) UseMethod("evaluate")
 #' @importFrom dplyr %>% 
 #' @export
 evaluate.data.frame <- function(data, ...){
-    if(hasCmetEntropicCoords(data)){
+    if(hasCmetEntropicCoords(data)|| hasSplitCmetEntropicCoords(data)){
         return(perplexities(data) %>% ##filter(type!="XY") %>% 
                    mutate(EMA=1/kx_y, NIT=muxy/k))
     } else

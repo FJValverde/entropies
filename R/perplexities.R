@@ -18,7 +18,7 @@ perplexities <- function(data, ...) UseMethod("perplexities")
 #' @importFrom dplyr mutate
 #' @importFrom dplyr transmute
 perplexities.data.frame<- function(data, ...){
-    if(hasCmetEntropicCoords(data)){
+    if(hasCmetEntropicCoords(data) || hasSplitCmetEntropicCoords(data)){
         return(
             data %>% ##filter(type!="XY") %>% 
                 mutate(k = 2^H_U, kx = 2^H_P, muxy= 2^M_P, kx_y = kx/muxy)

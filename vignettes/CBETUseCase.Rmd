@@ -173,7 +173,11 @@ experiments <- rbind(cbind(trCoords, Phase="train", method="knn"),
                      )
 experiments <- cbind(dSet=dsName, experiments)
 # The basic plot for the entropy triangle training and testX in different colours and glyphs
-gp <- ggmetern(ed=experiments %>% filter(type=="XY"), fancy) +
+gp <- ggmetern(
+    ed=experiments %>% filter(type=="XY"), 
+    fancy,
+    labs=c(r"($2 * I\'_{P_{XY}}$)", r"($\Delta H\'_{P_{XY}}$)", r"($VI\'_{P_{XY}}$)")
+    ) +
     geom_point(aes(colour=Phase, shape=dSet), size=1)  +
     labs(shape="Dataset") + 
     scale_colour_brewer(palette="Set1")
@@ -280,7 +284,8 @@ To use the split triangle to advantage we have to use an unbalanced dataset, e.g
 First we look at the entropies of the different folds. 
 
 ```{r split triangle on one dataset}
-eTsplit <- ggmetern(ed=results %>% filter(type!="XY"), fancy) + 
+eTsplit <- ggmetern(ed=results %>% filter(type!="XY"), 
+                    fancy=FALSE) + 
     geom_point(aes(colour=Phase, shape=type), size=2)  +
     labs(shape="Split Entropies") + 
     scale_shape_manual(values=splitShapesForTypes) +
@@ -330,6 +335,22 @@ eTsplit + geom_point(data=meanCompositions, aes(colour=Phase, shape=type), size=
 ```
 
 This shows that there is very little mutual information transfer. It was made worse by the classifier specializing, that is, increasing $\Delta H_{P_{XY}}$ at the expense of mutual information. 
+
+If we only want to see the entropy decomposition either at the input or output
+```{r}
+eTsplitX <- ggmetern(ed=results %>% filter(type =="X"), 
+                    fancy=FALSE) + 
+    geom_point(aes(colour=Phase, shape=type), size=2)  +
+    labs(shape="Split Entropies") + 
+    scale_shape_manual(values=splitShapesForTypes) +
+    scale_colour_manual(values=c("train"="blue","test"="red"))
+
+eTsplitX + geom_point(
+    data=meanCompositions %>% filter(type == "X"),
+    aes(colour=Phase, shape=type), 
+    size=4) + 
+    facet_grid(~ type)
+```
 
 All in all, `r  models` is a very bad classifier for `r dsName`. 
 

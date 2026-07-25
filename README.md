@@ -12,12 +12,9 @@ An R project to work with entropic coordinates, entropy triangles, NIT and EMA a
 
 - [(2020) A framework for supervised classification performance analysis with information-theoretic methods](https://ieeexplore.ieee.org/document/8709846)
 
-
-
-
 - [(2024) A Formalization of Multilabel Classification in Terms of Lattice Theory and Information Theory: Concerning Datasets](https://www.mdpi.com/2227-7390/12/2/346)
 
-Uses packages `ggtern` and `entropy` to provide basic functionality.
+Uses packages `ggtern` (> = 4.0.0) and `entropy` to provide basic functionality.
 
 Forever in beta testing, since this is the main tool to help me develop the theory, for the time being. At present you can:
 
