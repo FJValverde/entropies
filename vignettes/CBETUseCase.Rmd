@@ -336,7 +336,7 @@ eTsplit + geom_point(data=meanCompositions, aes(colour=Phase, shape=type), size=
 
 This shows that there is very little mutual information transfer. It was made worse by the classifier specializing, that is, increasing $\Delta H_{P_{XY}}$ at the expense of mutual information. 
 
-If we only want to see the entropy decomposition either at the input or output
+If we only want to see the entropy decomposition either at the input or output (here shown the input by filtering)
 ```{r}
 eTsplitX <- ggmetern(ed=results %>% filter(type =="X"), 
                     fancy=FALSE) + 
