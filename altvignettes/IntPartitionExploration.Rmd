@@ -1,0 +1,26 @@
+---
+title: "Entropy exploration of integer partitions"
+author: "Francisco J. Valverde-Albacete"
+date: "5/14/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Prelude
+
+```{r}
+library(tidyverse)
+library(partitions)
+library(entropies)#max-min-plus operation
+```
+
+# Exploring the entropy in integer partitions
+
+## Poslude
+
+```{r pressure, echo=FALSE}
+session_info()
+```

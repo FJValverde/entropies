@@ -1,0 +1,162 @@
+---
+title: "Exploration of integer partition entropy"
+author: "Francisco J. Valverde-Albacete"
+date: "5/16/2020"
+output: rmarkdown::html_vignette
+vignette: > 
+  %\VignetteIndexEntry{An example analysis of integer partition entropy}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(tidyverse)
+library(partitions)
+library(entropies)
+```
+
+# Partitions
+
+The list of partitions obtained with `parts`:
+
+```{r}
+n <- 10
+pn <- parts(n)
+#To obtain the intparts with strictly some number of bins we have
+p10in3atmost <- restrictedparts(10,3)
+p10in3 <- restrictedparts(10,3,include.zero=FALSE)
+```
+
+Conjugates are the "transposes of Ferrers diagrams"
+
+```{r conjugates}
+conjugate(pn)
+```
+
+The primitive `setparts`returns a set partition on the conventional set of `n`elements that has that integer partition.
+```{r}
+setparts(pn[,2])
+```
+
+# Entropy exploration
+
+The dominance order between partitions is also reflected by their entropies. This is probably a property of axiomatically defined entropy. 
+
+```{r}
+pnH <- apply(pn,2,entropy::entropy)
+p10in3H <- apply(p10in3, 2, entropy::entropy)
+p10in3H
+```
+
+## Auxiliary function
+
+A function that transforms an integer partition in its standard formula with the non-zero parts separated by plus signs.
+
+```{r}
+toFormula <- function(p){
+    stringr::str_c(p[p!=0], collapse="+")
+}
+apply(pn,2,toFormula)
+partLength <- function(p){length(p[p!=0])}
+# A parsing function
+fromFormula <- function(sp,n=0){
+    intlist <- as.integer(
+        str_split(sp,pattern="\\+", simplify=TRUE))
+    #n <- max(n,length(intlist))
+    mat <- matrix(
+        data = 0, 
+        nrow=1,
+        ncol=max(n,length(intlist)))
+    mat[1:length(intlist)] <-  intlist
+    return(as.partition(mat))
+}
+# The dominance order
+dom <- function(p1,p2){
+    all(cumsum(p1) >= cumsum(p2))
+}
+```
+
+
+# Exploration of partitions
+
+# Obtaining info from partitions
+With the partition list previously studied, record a dataframe of partitions 
+
+```{r}
+n <- 10
+pn <- parts(n)
+partsN <- data.frame(
+    name = apply(pn,2,toFormula),
+    length = apply(pn,2,partLength),
+    H = apply(pn,2,entropy::entropy),
+    partition = apply(t(as.matrix(pn)),2, as.partition)
+)
+partsN 
+```
+
+## Creating concept lattices of partitions
+
+```{r fca analysis}
+#install.packages("BiocManager")
+BiocManager::install("Rgraphviz")
+library(Rgraphviz)
+library(hasseDiagram)
+library(fcaR)
+n <- 8
+pn <- parts(n)
+numpn <- ncol(pn)
+I <- matrix(data=FALSE, nrow=numpn, ncol=numpn)
+for(i in 1:numpn){
+    for (j in 1:numpn){
+        I[i,j] <- dom(pn[,i],pn[,j])#Actually transpose!
+    }
+}
+objectNames <- apply(pn, 2, toFormula)
+attributeNames <- objectNames
+colnames(I) <- attributeNames
+rownames(I) <- objectNames
+k <- FormalContext$new(I)
+k$reduce()
+k$find_concepts()
+k$concepts$plot()
+```
+# Aggregating all 
+
+Generating the data:
+
+```{r}
+nparts <- data.frame()
+for (n in 1:10){
+    pn <- parts(n)
+    nparts <- rbind(
+        nparts,
+        data.frame(
+            n,#count to be distributed
+            name = apply(pn,2,toFormula),
+            length = apply(pn,2,partLength),
+            H = apply(pn,2,entropy::entropy)#,
+            # partition = apply(t(as.matrix(pn)),
+            #                   2, as.partition)
+            )
+        )
+}
+```
+
+Exploration. TO BE DONE. 
+
+```{r}
+
+```
+
+
+
+
+# Postlude
+
+```{r}
+sessionInfo()
+```
+
